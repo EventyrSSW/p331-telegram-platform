@@ -39,26 +39,26 @@ class ApiService {
   }
 
   async getGames(): Promise<{ games: Game[] }> {
-    return this.fetch<{ games: Game[] }>('/games');
+    return this.fetch<{ games: Game[] }>('/api/games');
   }
 
   async getFeaturedGame(): Promise<{ game: Game }> {
-    return this.fetch<{ game: Game }>('/games/featured');
+    return this.fetch<{ game: Game }>('/api/games/featured');
   }
 
   async getGame(id: string): Promise<{ game: Game }> {
-    return this.fetch<{ game: Game }>(`/games/${id}`);
+    return this.fetch<{ game: Game }>(`/api/games/${id}`);
   }
 
   async getUserBalance(walletAddress: string): Promise<UserBalance> {
-    return this.fetch<UserBalance>(`/balance/${walletAddress}`);
+    return this.fetch<UserBalance>(`/api/users/balance/${walletAddress}`);
   }
 
   async addCoins(
     walletAddress: string,
     amount: number
   ): Promise<UserBalance & { added: number }> {
-    return this.fetch<UserBalance & { added: number }>('/balance/add', {
+    return this.fetch<UserBalance & { added: number }>('/api/users/balance/add', {
       method: 'POST',
       body: JSON.stringify({ walletAddress, amount }),
     });
@@ -68,7 +68,7 @@ class ApiService {
     walletAddress: string,
     amount: number
   ): Promise<UserBalance & { deducted: number }> {
-    return this.fetch<UserBalance & { deducted: number }>('/balance/deduct', {
+    return this.fetch<UserBalance & { deducted: number }>('/api/users/balance/deduct', {
       method: 'POST',
       body: JSON.stringify({ walletAddress, amount }),
     });
