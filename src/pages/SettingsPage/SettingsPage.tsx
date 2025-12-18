@@ -6,7 +6,7 @@ import styles from './SettingsPage.module.css';
 
 // Your business wallet address to receive TON payments
 // Replace with your actual wallet address!
-const PAYMENT_RECEIVER_ADDRESS = 'UQBExample_Replace_With_Your_Wallet_Address';
+const PAYMENT_RECEIVER_ADDRESS = 'UQCNMVjrNzzj3aKxytmiqxHI9FEsmwjZh5BhDndglxyB-Dba';
 
 const coinPackages: CoinPackage[] = [
   { id: 'small', amount: 100, price: 1 },
