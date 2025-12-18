@@ -5,8 +5,12 @@
 
 set -e
 
+# Get absolute paths at script start
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
 BACKEND_PORT=${BACKEND_PORT:-3001}
-NGROK_LOG=".ngrok.log"
+NGROK_LOG="$PROJECT_DIR/.ngrok.log"
 
 echo "🚀 Starting development environment with ngrok..."
 
@@ -27,7 +31,7 @@ pkill -f "ngrok http" 2>/dev/null || true
 
 # Start backend server in background
 echo "📦 Starting backend server on port $BACKEND_PORT..."
-cd "$(dirname "$0")/../server"
+cd "$PROJECT_DIR/server"
 npm run dev &
 BACKEND_PID=$!
 
@@ -36,7 +40,7 @@ sleep 3
 
 # Start ngrok tunnel
 echo "🌐 Starting ngrok tunnel..."
-cd "$(dirname "$0")/.."
+cd "$PROJECT_DIR"
 ngrok http $BACKEND_PORT --log=stdout > "$NGROK_LOG" 2>&1 &
 NGROK_PID=$!
 
