@@ -1,0 +1,33 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(superpowers:writing-plans)",
+      "Bash(mkdir:*)",
+      "Skill(superpowers:subagent-driven-development)",
+      "Bash(git rev-parse:*)",
+      "Bash(npm create:*)",
+      "Bash(npx create-vite@latest . --template react-ts)",
+      "Bash(yes:*)",
+      "Bash(printf:*)",
+      "Bash(npm init:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run dev:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nfeat: initialize React + Vite + TypeScript project\n\n- Set up Vite development environment with React and TypeScript\n- Configured TypeScript with strict mode and modern ESNext settings\n- Added Telegram Mini Apps SDK (@tma.js/sdk, @tma.js/sdk-react)\n- Added TON Connect UI integration (@tonconnect/ui-react)\n- Created standard Vite project structure with React components\n- Verified dev server runs successfully on http://localhost:5173\n\nGenerated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(tree:*)",
+      "Bash(git commit:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm ls:*)",
+      "Bash(cat:*)",
+      "Bash(git -C /Users/olegvoytenko/Development/p331-telegram-platform status)",
+      "Bash(git -C /Users/olegvoytenko/Development/p331-telegram-platform diff server/src/index.ts)",
+      "Bash(git -C /Users/olegvoytenko/Development/p331-telegram-platform add server/src/data/games.ts server/src/routes/games.ts server/src/index.ts)",
+      "Bash(git -C /Users/olegvoytenko/Development/p331-telegram-platform commit -m \"$(cat <<''EOF''\nfeat: add games API endpoints\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git -C /Users/olegvoytenko/Development/p331-telegram-platform log -1 --format='%H')",
+      "Bash(npm run dev:all:*)",
+      "Bash(curl:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

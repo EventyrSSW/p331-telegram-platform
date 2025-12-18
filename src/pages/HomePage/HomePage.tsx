@@ -74,7 +74,7 @@ export const HomePage = () => {
         {/* Featured Section */}
         {featuredGame && (
           <Section title="Featured">
-            <FeaturedCard game={featuredGame} onClick={handleGameClick} />
+            <FeaturedCard game={featuredGame} onPlay={handleGameClick} />
           </Section>
         )}
 
