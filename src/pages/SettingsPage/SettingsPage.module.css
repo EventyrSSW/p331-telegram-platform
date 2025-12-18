@@ -79,3 +79,11 @@
   grid-template-columns: repeat(2, 1fr);
   gap: 16px;
 }
+
+.balanceLoading {
+  padding: 24px;
+  background-color: var(--color-bg-card);
+  border-radius: 16px;
+  color: var(--color-text-secondary);
+  text-align: center;
+}

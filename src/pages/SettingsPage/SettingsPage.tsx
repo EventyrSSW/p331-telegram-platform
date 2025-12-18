@@ -1,5 +1,6 @@
 import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
 import { Header, Section, CoinBalance, BuyCoinsCard, CoinPackage } from '../../components';
+import { useUserBalance } from '../../hooks/useUserBalance';
 import styles from './SettingsPage.module.css';
 
 const coinPackages: CoinPackage[] = [
@@ -12,7 +13,7 @@ const coinPackages: CoinPackage[] = [
 export const SettingsPage = () => {
   const [tonConnectUI] = useTonConnectUI();
   const wallet = useTonWallet();
-  const userBalance = 250.50;
+  const { balance, isLoading, addCoins } = useUserBalance();
 
   const handleConnectWallet = () => {
     tonConnectUI.openModal();
@@ -22,14 +23,28 @@ export const SettingsPage = () => {
     tonConnectUI.disconnect();
   };
 
-  const handleBuyCoins = (pkg: CoinPackage) => {
+  const handleBuyCoins = async (pkg: CoinPackage) => {
     if (!wallet) {
       tonConnectUI.openModal();
       return;
     }
 
-    // TODO: Implement TON transaction
-    console.log('Purchase initiated:', pkg);
+    try {
+      // Calculate total coins including bonus
+      const totalCoins = pkg.amount + (pkg.bonus || 0);
+
+      // Add coins to user balance
+      await addCoins(totalCoins);
+
+      // Show success message
+      alert(`Successfully purchased ${totalCoins} coins!`);
+
+      // TODO: Implement TON transaction
+      console.log('Purchase initiated:', pkg);
+    } catch (error) {
+      console.error('Failed to purchase coins:', error);
+      alert('Failed to purchase coins. Please try again.');
+    }
   };
 
   const truncateAddress = (address: string) => {
@@ -70,7 +85,11 @@ export const SettingsPage = () => {
         </Section>
 
         <Section title="Game Coins">
-          <CoinBalance balance={userBalance} symbol="COINS" />
+          {isLoading ? (
+            <div className={styles.balanceLoading}>Loading balance...</div>
+          ) : (
+            <CoinBalance balance={balance} symbol="COINS" />
+          )}
         </Section>
 
         <Section title="Buy Coins">
