@@ -1,4 +1,5 @@
 import { TelegramProvider, useTelegram } from './providers/TelegramProvider'
+import { TonConnectProvider } from './providers/TonConnectProvider'
 
 function AppContent() {
   const { isReady, isTelegram, colorScheme } = useTelegram()
@@ -15,6 +16,7 @@ function AppContent() {
         <p>Environment: {isTelegram ? 'Telegram Mini App' : 'Browser (Development)'}</p>
         <p>Color Scheme: {colorScheme}</p>
         <p>Ready: {isReady ? 'Yes' : 'No'}</p>
+        <p>TON Connect Ready</p>
       </div>
     </div>
   )
@@ -22,9 +24,11 @@ function AppContent() {
 
 function App() {
   return (
-    <TelegramProvider>
-      <AppContent />
-    </TelegramProvider>
+    <TonConnectProvider>
+      <TelegramProvider>
+        <AppContent />
+      </TelegramProvider>
+    </TonConnectProvider>
   )
 }
 
