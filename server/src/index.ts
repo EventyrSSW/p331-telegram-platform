@@ -1,6 +1,7 @@
 import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
+import gamesRouter from './routes/games'
 
 dotenv.config()
 
@@ -13,6 +14,8 @@ app.use(express.json())
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() })
 })
+
+app.use('/api/games', gamesRouter)
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
