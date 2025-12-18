@@ -1,25 +1,15 @@
 import { TelegramProvider, useTelegram } from './providers/TelegramProvider'
 import { TonConnectProvider } from './providers/TonConnectProvider'
+import { HomePage } from './pages/HomePage'
 
 function AppContent() {
-  const { isReady, isTelegram, colorScheme } = useTelegram()
+  const { isReady } = useTelegram()
 
   if (!isReady) {
     return <div>Loading...</div>
   }
 
-  return (
-    <div>
-      <h1>Telegram Gaming Platform</h1>
-      <div style={{ marginTop: '20px', padding: '10px', backgroundColor: '#f0f0f0', borderRadius: '5px' }}>
-        <h2>Status</h2>
-        <p>Environment: {isTelegram ? 'Telegram Mini App' : 'Browser (Development)'}</p>
-        <p>Color Scheme: {colorScheme}</p>
-        <p>Ready: {isReady ? 'Yes' : 'No'}</p>
-        <p>TON Connect Ready</p>
-      </div>
-    </div>
-  )
+  return <HomePage />
 }
 
 function App() {
