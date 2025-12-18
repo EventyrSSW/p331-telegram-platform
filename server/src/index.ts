@@ -2,6 +2,7 @@ import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
 import gamesRouter from './routes/games'
+import usersRouter from './routes/users'
 
 dotenv.config()
 
@@ -16,6 +17,7 @@ app.get('/api/health', (req, res) => {
 })
 
 app.use('/api/games', gamesRouter)
+app.use('/api/users', usersRouter)
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
