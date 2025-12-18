@@ -1,0 +1,81 @@
+.page {
+  min-height: 100vh;
+  background-color: var(--color-bg-primary);
+}
+
+.main {
+  padding-bottom: 48px;
+}
+
+.walletConnected {
+  padding: 16px;
+  background-color: var(--color-bg-card);
+  border-radius: 16px;
+}
+
+.walletInfo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.walletLabel {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  margin-bottom: 4px;
+}
+
+.walletAddress {
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+  font-size: 14px;
+  color: var(--color-text-primary);
+  font-weight: 500;
+}
+
+.disconnectButton {
+  padding: 8px 16px;
+  background-color: transparent;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 9999px;
+  color: var(--color-text-primary);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.disconnectButton:hover {
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+.connectButton {
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 16px;
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: transform 0.2s ease;
+}
+
+.connectButton:hover {
+  transform: translateY(-1px);
+}
+
+.connectButton:active {
+  transform: translateY(0);
+}
+
+.packagesGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
