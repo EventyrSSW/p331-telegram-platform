@@ -6,3 +6,4 @@ export { PlaceholderCard } from './PlaceholderCard';
 export { Section, type SectionProps } from './Section';
 export { GameGrid } from './GameGrid';
 export { CoinBalance } from './CoinBalance';
+export { BuyCoinsCard, type CoinPackage } from './BuyCoinsCard';
