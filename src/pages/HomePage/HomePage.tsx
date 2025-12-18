@@ -7,19 +7,47 @@ import {
   GameGrid,
   Game,
 } from '../../components';
-import { featuredGame, popularGames, newGames } from '../../data/games';
+import { useGames } from '../../hooks/useGames';
 import styles from './HomePage.module.css';
 
 export const HomePage = () => {
+  const { games, featuredGame, isLoading, error, refetch } = useGames();
+
   const handleGameClick = (game: Game) => {
     console.log(game.id);
   };
 
   const handleSurpriseMe = () => {
-    const allGames = [...popularGames, ...newGames];
-    const randomGame = allGames[Math.floor(Math.random() * allGames.length)];
-    console.log(randomGame.id);
+    if (games.length > 0) {
+      const randomGame = games[Math.floor(Math.random() * games.length)];
+      console.log(randomGame.id);
+    }
   };
+
+  if (error) {
+    return (
+      <div className={styles.page}>
+        <Header />
+        <main className={styles.main}>
+          <div className={styles.error}>
+            <p>Error: {error}</p>
+            <button onClick={refetch}>Retry</button>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className={styles.page}>
+        <Header />
+        <main className={styles.main}>
+          <div className={styles.loading}>Loading games...</div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.page}>
@@ -44,18 +72,20 @@ export const HomePage = () => {
         </div>
 
         {/* Featured Section */}
-        <Section title="Featured">
-          <FeaturedCard game={featuredGame} onClick={handleGameClick} />
-        </Section>
+        {featuredGame && (
+          <Section title="Featured">
+            <FeaturedCard game={featuredGame} onClick={handleGameClick} />
+          </Section>
+        )}
 
         {/* Popular Games Section */}
         <Section title="Popular Games">
-          <GameGrid games={popularGames} onGameClick={handleGameClick} />
+          <GameGrid games={games} onGameClick={handleGameClick} />
         </Section>
 
         {/* New Games Section */}
         <Section title="New Games">
-          <GameGrid games={newGames} onGameClick={handleGameClick} />
+          <GameGrid games={games} onGameClick={handleGameClick} />
         </Section>
       </main>
     </div>
