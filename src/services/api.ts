@@ -52,26 +52,26 @@ class ApiService {
   }
 
   async getUserBalance(walletAddress: string): Promise<UserBalance> {
-    return this.fetch<UserBalance>(`/api/users/balance/${walletAddress}`);
+    return this.fetch<UserBalance>(`/api/users/${walletAddress}/balance`);
   }
 
   async addCoins(
     walletAddress: string,
     amount: number
-  ): Promise<UserBalance & { added: number }> {
-    return this.fetch<UserBalance & { added: number }>('/api/users/balance/add', {
+  ): Promise<UserBalance> {
+    return this.fetch<UserBalance>(`/api/users/${walletAddress}/add-coins`, {
       method: 'POST',
-      body: JSON.stringify({ walletAddress, amount }),
+      body: JSON.stringify({ amount }),
     });
   }
 
   async deductCoins(
     walletAddress: string,
     amount: number
-  ): Promise<UserBalance & { deducted: number }> {
-    return this.fetch<UserBalance & { deducted: number }>('/api/users/balance/deduct', {
+  ): Promise<UserBalance> {
+    return this.fetch<UserBalance>(`/api/users/${walletAddress}/deduct-coins`, {
       method: 'POST',
-      body: JSON.stringify({ walletAddress, amount }),
+      body: JSON.stringify({ amount }),
     });
   }
 }

@@ -28,7 +28,8 @@
       "Bash(curl:*)",
       "Bash(git push:*)",
       "Bash(vercel:*)",
-      "Bash(chmod:*)"
+      "Bash(chmod:*)",
+      "Bash(VITE_API_URL=https://bernardina-nonadaptable-zoie.ngrok-free.dev npm run build:*)"
     ],
     "deny": [],
     "ask": []
