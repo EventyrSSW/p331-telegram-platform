@@ -1,0 +1,27 @@
+.page {
+  min-height: 100vh;
+  background-color: var(--color-bg-primary);
+}
+
+.main {
+  padding-bottom: 48px;
+}
+
+.quickActions {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  scroll-snap-type: x mandatory;
+}
+
+.quickActions::-webkit-scrollbar {
+  display: none;
+}
+
+.actionItem {
+  flex-shrink: 0;
+  scroll-snap-align: start;
+}
