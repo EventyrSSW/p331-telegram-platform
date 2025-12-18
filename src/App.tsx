@@ -1,6 +1,7 @@
+import { RouterProvider } from 'react-router-dom'
 import { TelegramProvider, useTelegram } from './providers/TelegramProvider'
 import { TonConnectProvider } from './providers/TonConnectProvider'
-import { HomePage } from './pages/HomePage'
+import { router } from './router'
 
 function AppContent() {
   const { isReady } = useTelegram()
@@ -9,7 +10,7 @@ function AppContent() {
     return <div>Loading...</div>
   }
 
-  return <HomePage />
+  return <RouterProvider router={router} />
 }
 
 function App() {
