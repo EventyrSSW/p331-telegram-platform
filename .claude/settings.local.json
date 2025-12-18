@@ -25,7 +25,9 @@
       "Bash(git -C /Users/olegvoytenko/Development/p331-telegram-platform commit -m \"$(cat <<''EOF''\nfeat: add games API endpoints\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
       "Bash(git -C /Users/olegvoytenko/Development/p331-telegram-platform log -1 --format='%H')",
       "Bash(npm run dev:all:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(git push:*)",
+      "Bash(vercel:*)"
     ],
     "deny": [],
     "ask": []
