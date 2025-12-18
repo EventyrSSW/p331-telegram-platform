@@ -1,0 +1,41 @@
+.container {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 24px;
+  background: var(--color-bg-card);
+  border-radius: 16px;
+}
+
+.iconWrapper {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--color-accent-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon {
+  width: 28px;
+  height: 28px;
+  color: #FFFFFF;
+}
+
+.label {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.balance {
+  color: #FFFFFF;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.symbol {
+  font-size: 16px;
+  color: var(--color-text-secondary);
+}
