@@ -27,7 +27,8 @@
       "Bash(npm run dev:all:*)",
       "Bash(curl:*)",
       "Bash(git push:*)",
-      "Bash(vercel:*)"
+      "Bash(vercel:*)",
+      "Bash(chmod:*)"
     ],
     "deny": [],
     "ask": []

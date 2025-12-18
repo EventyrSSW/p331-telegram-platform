@@ -9,7 +9,38 @@ dotenv.config()
 const app = express()
 const PORT = process.env.PORT || 3001
 
-app.use(cors())
+// CORS configuration for Telegram Mini App
+const corsOptions = {
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    // Allow requests with no origin (mobile apps, curl, etc.)
+    if (!origin) {
+      callback(null, true)
+      return
+    }
+
+    // Allowed origins
+    const allowedOrigins = [
+      'http://localhost:5173',
+      'http://localhost:3000',
+      'https://p331-tg-platform.vercel.app',
+    ]
+
+    // Allow any Vercel preview deployments
+    const isVercelPreview = origin.includes('.vercel.app')
+    // Allow ngrok URLs
+    const isNgrok = origin.includes('.ngrok')
+
+    if (allowedOrigins.includes(origin) || isVercelPreview || isNgrok) {
+      callback(null, true)
+    } else {
+      callback(null, true) // Allow all for now, but log unknown origins
+      console.log('Unknown origin:', origin)
+    }
+  },
+  credentials: true,
+}
+
+app.use(cors(corsOptions))
 app.use(express.json())
 
 app.get('/api/health', (req, res) => {

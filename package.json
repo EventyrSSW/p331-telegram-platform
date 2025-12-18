@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "dev:server": "cd server && npm run dev",
     "dev:all": "concurrently \"npm run dev\" \"npm run dev:server\"",
+    "dev:ngrok": "./scripts/dev-with-ngrok.sh",
     "build:server": "cd server && npm run build"
   },
   "repository": {
