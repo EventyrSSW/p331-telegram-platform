@@ -1,0 +1,25 @@
+.card {
+  background-color: var(--color-bg-card);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 16px;
+  min-width: 120px;
+  min-height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.card:hover {
+  background-color: var(--color-bg-elevated);
+  border-color: var(--color-border-medium);
+}
+
+.icon {
+  color: var(--color-text-muted);
+  font-size: 32px;
+  opacity: 0.6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
