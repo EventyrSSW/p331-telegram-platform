@@ -14,6 +14,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  text-decoration: none;
 }
 
 .logoIcon {
@@ -104,4 +105,34 @@
 .walletButton:active {
   background: var(--color-accent-dark);
   transform: translateY(0);
+}
+
+.navLink {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  color: var(--color-text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0.9;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.navLink:hover {
+  background: rgba(255, 255, 255, 0.1);
+  opacity: 1;
+}
+
+.navLink:active {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.navLinkActive {
+  color: var(--color-accent-primary);
 }
