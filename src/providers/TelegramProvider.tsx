@@ -1,20 +1,21 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
-import { init, backButton, miniApp, themeParams } from '@tma.js/sdk'
+import { useEffect, useState, createContext, useContext, ReactNode } from 'react'
 
 interface TelegramContextValue {
   isReady: boolean
   isTelegram: boolean
-  colorScheme: 'light' | 'dark'
+  colorScheme: 'dark' | 'light'
+  webApp: typeof window.Telegram?.WebApp | null
 }
 
-const TelegramContext = createContext<TelegramContextValue | undefined>(undefined)
+const TelegramContext = createContext<TelegramContextValue>({
+  isReady: false,
+  isTelegram: false,
+  colorScheme: 'dark',
+  webApp: null,
+})
 
 export function useTelegram() {
-  const context = useContext(TelegramContext)
-  if (!context) {
-    throw new Error('useTelegram must be used within TelegramProvider')
-  }
-  return context
+  return useContext(TelegramContext)
 }
 
 interface TelegramProviderProps {
@@ -24,49 +25,77 @@ interface TelegramProviderProps {
 export function TelegramProvider({ children }: TelegramProviderProps) {
   const [isReady, setIsReady] = useState(false)
   const [isTelegram, setIsTelegram] = useState(false)
-  const [colorScheme, setColorScheme] = useState<'light' | 'dark'>('light')
+  const [colorScheme, setColorScheme] = useState<'dark' | 'light'>('dark')
+  const [webApp, setWebApp] = useState<typeof window.Telegram?.WebApp | null>(null)
 
   useEffect(() => {
-    try {
-      // Try to initialize the Telegram SDK
-      init()
+    const initTelegram = () => {
+      const tg = window.Telegram?.WebApp
 
-      // If we get here, we're in Telegram environment
-      // Mount the miniApp component
-      miniApp.mount()
+      if (tg) {
+        tg.ready()
+        tg.expand()
 
-      // Signal that the Mini App is ready
-      miniApp.ready()
+        setWebApp(tg)
+        setIsTelegram(true)
+        setColorScheme(tg.colorScheme || 'dark')
 
-      // Mount the back button
-      backButton.mount()
+        tg.onEvent('themeChanged', () => {
+          setColorScheme(tg.colorScheme || 'dark')
+        })
+      } else {
+        setIsTelegram(false)
+      }
 
-      // Mount theme params and get color scheme
-      themeParams.mount()
-      setColorScheme(themeParams.isDark() ? 'dark' : 'light')
-
-      // Successfully initialized in Telegram
-      setIsTelegram(true)
-    } catch (error) {
-      // Not in Telegram environment (e.g., regular browser)
-      // This is expected and okay for development/testing
-      console.log('Not running in Telegram environment, continuing in browser mode')
-      setIsTelegram(false)
-    } finally {
-      // Always set ready to true, regardless of environment
       setIsReady(true)
+    }
+
+    if (document.readyState === 'complete') {
+      initTelegram()
+    } else {
+      window.addEventListener('load', initTelegram)
+      return () => window.removeEventListener('load', initTelegram)
     }
   }, [])
 
-  const value: TelegramContextValue = {
-    isReady,
-    isTelegram,
-    colorScheme,
-  }
-
   return (
-    <TelegramContext.Provider value={value}>
+    <TelegramContext.Provider value={{ isReady, isTelegram, colorScheme, webApp }}>
       {children}
     </TelegramContext.Provider>
   )
+}
+
+declare global {
+  interface Window {
+    Telegram?: {
+      WebApp: {
+        ready: () => void
+        expand: () => void
+        close: () => void
+        colorScheme: 'dark' | 'light'
+        themeParams: Record<string, string>
+        initDataUnsafe: {
+          user?: {
+            id: number
+            first_name: string
+            last_name?: string
+            username?: string
+          }
+        }
+        onEvent: (event: string, callback: () => void) => void
+        offEvent: (event: string, callback: () => void) => void
+        MainButton: {
+          text: string
+          show: () => void
+          hide: () => void
+          onClick: (callback: () => void) => void
+        }
+        BackButton: {
+          show: () => void
+          hide: () => void
+          onClick: (callback: () => void) => void
+        }
+      }
+    }
+  }
 }
