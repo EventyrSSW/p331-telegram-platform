@@ -1,7 +1,12 @@
+import { useState } from 'react';
 import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
 import { Header, Section, CoinBalance, BuyCoinsCard, CoinPackage } from '../../components';
 import { useUserBalance } from '../../hooks/useUserBalance';
 import styles from './SettingsPage.module.css';
+
+// Your business wallet address to receive TON payments
+// Replace with your actual wallet address!
+const PAYMENT_RECEIVER_ADDRESS = 'UQBExample_Replace_With_Your_Wallet_Address';
 
 const coinPackages: CoinPackage[] = [
   { id: 'small', amount: 100, price: 1 },
@@ -14,6 +19,7 @@ export const SettingsPage = () => {
   const [tonConnectUI] = useTonConnectUI();
   const wallet = useTonWallet();
   const { balance, isLoading, addCoins } = useUserBalance();
+  const [isPurchasing, setIsPurchasing] = useState(false);
 
   const handleConnectWallet = () => {
     tonConnectUI.openModal();
@@ -29,21 +35,50 @@ export const SettingsPage = () => {
       return;
     }
 
+    if (isPurchasing) return;
+
+    setIsPurchasing(true);
+
     try {
       // Calculate total coins including bonus
       const totalCoins = pkg.amount + (pkg.bonus || 0);
 
-      // Add coins to user balance
+      // Convert TON price to nanoTON (1 TON = 10^9 nanoTON)
+      const amountInNanoTon = (pkg.price * 1_000_000_000).toString();
+
+      // Create transaction request
+      const transaction = {
+        validUntil: Math.floor(Date.now() / 1000) + 600, // 10 minutes from now
+        messages: [
+          {
+            address: PAYMENT_RECEIVER_ADDRESS,
+            amount: amountInNanoTon,
+            payload: '', // Optional: can add a comment/payload
+          },
+        ],
+      };
+
+      // Send transaction - this will open wallet for user confirmation
+      const result = await tonConnectUI.sendTransaction(transaction);
+
+      console.log('Transaction sent:', result);
+
+      // Transaction successful - add coins to user balance
       await addCoins(totalCoins);
 
       // Show success message
       alert(`Successfully purchased ${totalCoins} coins!`);
-
-      // TODO: Implement TON transaction
-      console.log('Purchase initiated:', pkg);
     } catch (error) {
       console.error('Failed to purchase coins:', error);
-      alert('Failed to purchase coins. Please try again.');
+
+      // Check if user cancelled the transaction
+      if (error instanceof Error && error.message.includes('cancelled')) {
+        alert('Transaction cancelled.');
+      } else {
+        alert('Failed to purchase coins. Please try again.');
+      }
+    } finally {
+      setIsPurchasing(false);
     }
   };
 
