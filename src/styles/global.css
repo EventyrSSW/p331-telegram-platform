@@ -1,0 +1,14 @@
+@import './reset.css';
+@import './variables.css';
+
+html,
+body {
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-primary);
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
