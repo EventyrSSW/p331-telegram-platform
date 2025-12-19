@@ -87,6 +87,11 @@ build_server() {
     cd "$APP_DIR/server"
     npm install
 
+    # Load env vars for Prisma
+    if [ -f .env ]; then
+        export $(grep -v '^#' .env | xargs)
+    fi
+
     log_info "Generating Prisma client..."
     npx prisma generate
 
@@ -215,8 +220,8 @@ main() {
 
     check_dependencies
     update_repo
+    setup_env      # Run BEFORE build so Prisma has DATABASE_URL
     build_server
-    setup_env
     start_pm2
     show_status
 }
