@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { logger } from '../utils/logger';
 import { ZodError } from 'zod';
-import { Prisma } from '@prisma/client';
 
 export class AppError extends Error {
   constructor(
@@ -14,11 +13,22 @@ export class AppError extends Error {
   }
 }
 
+// Type guard for Prisma errors (avoids import issues)
+function isPrismaError(err: unknown): err is { code: string; name: string } {
+  return (
+    typeof err === 'object' &&
+    err !== null &&
+    'code' in err &&
+    'name' in err &&
+    (err as { name: string }).name === 'PrismaClientKnownRequestError'
+  );
+}
+
 export function errorHandler(
   err: Error,
   req: Request,
   res: Response,
-  next: NextFunction
+  _next: NextFunction
 ) {
   logger.error('Unhandled error', {
     error: err.message,
@@ -39,7 +49,7 @@ export function errorHandler(
   }
 
   // Prisma errors
-  if (err instanceof Prisma.PrismaClientKnownRequestError) {
+  if (isPrismaError(err)) {
     if (err.code === 'P2002') {
       return res.status(409).json({ error: 'Resource already exists' });
     }
