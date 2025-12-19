@@ -76,12 +76,15 @@ export const SettingsPage = () => {
       // Convert TON price to nanoTON (1 TON = 10^9 nanoTON)
       const amountInNanoTon = (pkg.price * 1_000_000_000).toString();
 
+      // Convert receiver address to raw format for TonConnect
+      const receiverRawAddress = Address.parse(config.ton.receiverAddress).toRawString();
+
       // Create transaction request
       const transaction = {
         validUntil: Math.floor(Date.now() / 1000) + 600, // 10 minutes from now
         messages: [
           {
-            address: config.ton.receiverAddress,
+            address: receiverRawAddress,
             amount: amountInNanoTon,
           },
         ],
