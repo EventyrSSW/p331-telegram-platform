@@ -18,6 +18,26 @@ export interface UserBalance {
   balance: number;
 }
 
+export interface TonConfig {
+  network: 'mainnet' | 'testnet';
+  receiverAddress: string;
+}
+
+export interface CoinPackage {
+  id: string;
+  name: string;
+  coins: number;
+  price: number;
+  bonus: number;
+  sortOrder: number;
+  active: boolean;
+}
+
+export interface AppConfig {
+  ton: TonConfig;
+  coinPackages: CoinPackage[];
+}
+
 class ApiService {
   private async fetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`;
@@ -90,6 +110,10 @@ class ApiService {
       method: 'POST',
       body: JSON.stringify({ amount }),
     });
+  }
+
+  async getConfig(): Promise<AppConfig> {
+    return this.fetch<AppConfig>('/config');
   }
 }
 
