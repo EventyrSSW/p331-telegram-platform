@@ -111,17 +111,52 @@ DATABASE_URL=postgresql://postgres:iO6nR0rJ0cW7zS5b@db.hgeuwhnvwpkslzazabcd.supa
 TELEGRAM_BOT_TOKEN=your-telegram-bot-token-here
 JWT_SECRET=$(openssl rand -base64 32)
 EOF
-        log_warn "IMPORTANT: Update TELEGRAM_BOT_TOKEN in $ENV_FILE"
-        log_info ".env file created."
+        log_warn "============================================"
+        log_warn "IMPORTANT: Update TELEGRAM_BOT_TOKEN in:"
+        log_warn "$ENV_FILE"
+        log_warn "============================================"
+        log_info ".env file created with default values."
     else
-        # Update PORT in existing .env
-        if grep -q "^PORT=" "$ENV_FILE"; then
-            sed -i "s/^PORT=.*/PORT=$PORT/" "$ENV_FILE"
-        else
+        log_info ".env file exists, checking for missing variables..."
+
+        # Add missing variables
+        if ! grep -q "^PORT=" "$ENV_FILE"; then
             echo "PORT=$PORT" >> "$ENV_FILE"
+            log_info "Added PORT to .env"
         fi
-        log_info ".env file updated with PORT=$PORT"
+
+        if ! grep -q "^NODE_ENV=" "$ENV_FILE"; then
+            echo "NODE_ENV=production" >> "$ENV_FILE"
+            log_info "Added NODE_ENV to .env"
+        fi
+
+        if ! grep -q "^DATABASE_URL=" "$ENV_FILE"; then
+            echo "DATABASE_URL=postgresql://postgres:iO6nR0rJ0cW7zS5b@db.hgeuwhnvwpkslzazabcd.supabase.co:5432/postgres" >> "$ENV_FILE"
+            log_info "Added DATABASE_URL to .env"
+        fi
+
+        if ! grep -q "^JWT_SECRET=" "$ENV_FILE"; then
+            echo "JWT_SECRET=$(openssl rand -base64 32)" >> "$ENV_FILE"
+            log_info "Added JWT_SECRET to .env"
+        fi
+
+        if ! grep -q "^TELEGRAM_BOT_TOKEN=" "$ENV_FILE"; then
+            echo "TELEGRAM_BOT_TOKEN=your-telegram-bot-token-here" >> "$ENV_FILE"
+            log_warn "Added TELEGRAM_BOT_TOKEN placeholder - UPDATE IT!"
+        fi
     fi
+
+    # Verify all required vars are present and not placeholder
+    log_info "Verifying environment variables..."
+
+    if grep -q "your-telegram-bot-token-here" "$ENV_FILE"; then
+        log_warn "============================================"
+        log_warn "TELEGRAM_BOT_TOKEN is still a placeholder!"
+        log_warn "Edit $ENV_FILE and set a real token."
+        log_warn "============================================"
+    fi
+
+    log_info "Environment setup complete."
 }
 
 # Start/restart with PM2
@@ -131,11 +166,7 @@ start_pm2() {
     cd "$APP_DIR/server"
 
     # Stop existing instance if running
-    if pm2 list | grep -q "$APP_NAME"; then
-        log_info "Stopping existing instance..."
-        pm2 stop "$APP_NAME" || true
-        pm2 delete "$APP_NAME" || true
-    fi
+    pm2 delete "$APP_NAME" 2>/dev/null || true
 
     # Start with PM2 using ecosystem file
     pm2 start ecosystem.config.js --env production
@@ -143,7 +174,14 @@ start_pm2() {
     # Save PM2 process list (for auto-restart on reboot)
     pm2 save
 
-    log_info "Application started successfully!"
+    # Wait a moment and check if it's running
+    sleep 2
+    if pm2 list | grep -q "$APP_NAME"; then
+        log_info "Application started successfully!"
+    else
+        log_error "Application may have failed to start. Check logs:"
+        log_error "pm2 logs $APP_NAME"
+    fi
 }
 
 # Show status
