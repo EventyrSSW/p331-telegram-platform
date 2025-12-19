@@ -33,6 +33,8 @@ export $(grep -v '^#' .env | grep -v '^\s*$' | xargs)
 # Install ALL dependencies including devDependencies for build
 npm install --include=dev
 npx prisma generate
+npx prisma migrate deploy
+npm run prisma:seed
 npm run build
 
 # Make start script executable
