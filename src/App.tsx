@@ -2,6 +2,7 @@ import { RouterProvider } from 'react-router-dom'
 import { TelegramProvider, useTelegram } from './providers/TelegramProvider'
 import { TonConnectProvider } from './providers/TonConnectProvider'
 import { ConfigProvider } from './contexts/ConfigContext'
+import { AuthProvider } from './contexts/AuthContext'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { router } from './router'
 
@@ -21,7 +22,9 @@ function App() {
       <TonConnectProvider>
         <ConfigProvider>
           <TelegramProvider>
-            <AppContent />
+            <AuthProvider>
+              <AppContent />
+            </AuthProvider>
           </TelegramProvider>
         </ConfigProvider>
       </TonConnectProvider>
