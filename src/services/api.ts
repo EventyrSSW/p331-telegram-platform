@@ -18,14 +18,22 @@ class ApiService {
   private async fetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`;
 
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'ngrok-skip-browser-warning': 'true',
+      ...options?.headers as Record<string, string>,
+    };
+
+    // Add Telegram init data for authentication
+    const initData = window.Telegram?.WebApp?.initData;
+    if (initData) {
+      headers['X-Telegram-Init-Data'] = initData;
+    }
+
     try {
       const response = await fetch(url, {
         ...options,
-        headers: {
-          'Content-Type': 'application/json',
-          'ngrok-skip-browser-warning': 'true',
-          ...options?.headers,
-        },
+        headers,
       });
 
       if (!response.ok) {

@@ -3,8 +3,15 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 import gamesRouter from './routes/games'
 import usersRouter from './routes/users'
+import { telegramAuthMiddleware } from './middleware/telegramAuth'
 
 dotenv.config()
+
+// Validate required environment variables
+if (!process.env.TELEGRAM_BOT_TOKEN) {
+  console.error('FATAL: TELEGRAM_BOT_TOKEN environment variable is required')
+  process.exit(1)
+}
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -49,8 +56,11 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() })
 })
 
+// Games routes remain public
 app.use('/api/games', gamesRouter)
-app.use('/api/users', usersRouter)
+
+// User routes are protected with Telegram authentication
+app.use('/api/users', telegramAuthMiddleware, usersRouter)
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
