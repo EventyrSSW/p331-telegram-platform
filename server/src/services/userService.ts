@@ -1,5 +1,23 @@
 import { prisma } from '../db/client';
-import { TransactionType, TransactionStatus } from '@prisma/client';
+import type { PrismaClient } from '@prisma/client';
+
+// Use string literals for enum values to avoid import issues during build
+const TransactionType = {
+  PURCHASE: 'PURCHASE',
+  GAME_SPEND: 'GAME_SPEND',
+  GAME_WIN: 'GAME_WIN',
+  ADMIN_GRANT: 'ADMIN_GRANT',
+} as const;
+
+const TransactionStatus = {
+  PENDING: 'PENDING',
+  COMPLETED: 'COMPLETED',
+  FAILED: 'FAILED',
+  REFUNDED: 'REFUNDED',
+} as const;
+
+// Transaction client type for Prisma interactive transactions
+type TransactionClient = Omit<PrismaClient, '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'>;
 
 export class UserService {
   /**
@@ -53,7 +71,7 @@ export class UserService {
    * Uses Prisma transaction for consistency
    */
   async addCoins(telegramId: number, amount: number, tonTxHash?: string) {
-    return prisma.$transaction(async (tx) => {
+    return prisma.$transaction(async (tx: TransactionClient) => {
       // Update user balance
       const user = await tx.user.update({
         where: { telegramId: BigInt(telegramId) },
@@ -80,7 +98,7 @@ export class UserService {
    * Checks balance before deducting, uses Prisma transaction for consistency
    */
   async deductCoins(telegramId: number, amount: number) {
-    return prisma.$transaction(async (tx) => {
+    return prisma.$transaction(async (tx: TransactionClient) => {
       // Check user balance first
       const user = await tx.user.findUnique({
         where: { telegramId: BigInt(telegramId) },
