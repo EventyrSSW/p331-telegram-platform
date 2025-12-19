@@ -1,0 +1,184 @@
+#!/bin/bash
+
+# Deployment script for p331-telegram-platform backend
+# Run this on your Hetzner server to deploy/update the backend
+
+set -e  # Exit on any error
+
+# Configuration
+REPO_URL="https://github.com/EventyrSSW/p331-telegram-platform.git"
+APP_NAME="p331-backend"
+APP_DIR="/opt/p331-telegram-platform"
+PORT=5331  # Static port (relates to project name p331)
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+log_info() {
+    echo -e "${GREEN}[INFO]${NC} $1"
+}
+
+log_warn() {
+    echo -e "${YELLOW}[WARN]${NC} $1"
+}
+
+log_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
+# Check if running as root or with sudo
+if [ "$EUID" -ne 0 ]; then
+    log_warn "Consider running with sudo for directory permissions"
+fi
+
+# Check dependencies
+check_dependencies() {
+    log_info "Checking dependencies..."
+
+    if ! command -v node &> /dev/null; then
+        log_error "Node.js is not installed. Please install Node.js 18+ first."
+        exit 1
+    fi
+
+    if ! command -v npm &> /dev/null; then
+        log_error "npm is not installed. Please install npm first."
+        exit 1
+    fi
+
+    if ! command -v pm2 &> /dev/null; then
+        log_warn "pm2 is not installed. Installing globally..."
+        npm install -g pm2
+    fi
+
+    if ! command -v git &> /dev/null; then
+        log_error "git is not installed. Please install git first."
+        exit 1
+    fi
+
+    log_info "All dependencies are available."
+}
+
+# Clone or update repository
+update_repo() {
+    log_info "Updating repository..."
+
+    if [ -d "$APP_DIR" ]; then
+        log_info "Repository exists. Pulling latest changes..."
+        cd "$APP_DIR"
+        git fetch origin
+        git reset --hard origin/main
+        git pull origin main
+    else
+        log_info "Cloning repository..."
+        mkdir -p "$(dirname "$APP_DIR")"
+        git clone "$REPO_URL" "$APP_DIR"
+        cd "$APP_DIR"
+    fi
+
+    log_info "Repository updated successfully."
+}
+
+# Install dependencies and build
+build_server() {
+    log_info "Installing dependencies..."
+    cd "$APP_DIR/server"
+    npm install
+
+    log_info "Building server..."
+    npm run build
+
+    log_info "Server built successfully."
+}
+
+# Create/update environment file
+setup_env() {
+    log_info "Setting up environment..."
+
+    ENV_FILE="$APP_DIR/server/.env"
+
+    if [ ! -f "$ENV_FILE" ]; then
+        log_info "Creating .env file..."
+        cat > "$ENV_FILE" << EOF
+PORT=$PORT
+NODE_ENV=production
+EOF
+        log_info ".env file created."
+    else
+        # Update PORT in existing .env
+        if grep -q "^PORT=" "$ENV_FILE"; then
+            sed -i "s/^PORT=.*/PORT=$PORT/" "$ENV_FILE"
+        else
+            echo "PORT=$PORT" >> "$ENV_FILE"
+        fi
+        log_info ".env file updated with PORT=$PORT"
+    fi
+}
+
+# Start/restart with PM2
+start_pm2() {
+    log_info "Starting application with PM2..."
+
+    cd "$APP_DIR/server"
+
+    # Stop existing instance if running
+    if pm2 list | grep -q "$APP_NAME"; then
+        log_info "Stopping existing instance..."
+        pm2 stop "$APP_NAME" || true
+        pm2 delete "$APP_NAME" || true
+    fi
+
+    # Start with PM2
+    pm2 start dist/index.js \
+        --name "$APP_NAME" \
+        --env production \
+        --log-date-format "YYYY-MM-DD HH:mm:ss" \
+        --merge-logs
+
+    # Save PM2 process list (for auto-restart on reboot)
+    pm2 save
+
+    log_info "Application started successfully!"
+}
+
+# Show status
+show_status() {
+    echo ""
+    log_info "=========================================="
+    log_info "Deployment completed!"
+    log_info "=========================================="
+    echo ""
+    log_info "Application: $APP_NAME"
+    log_info "Directory:   $APP_DIR"
+    log_info "Port:        $PORT"
+    echo ""
+    log_info "API endpoint: http://localhost:$PORT/api/health"
+    echo ""
+    log_info "PM2 Commands:"
+    echo "  pm2 status          - View running processes"
+    echo "  pm2 logs $APP_NAME  - View application logs"
+    echo "  pm2 restart $APP_NAME - Restart application"
+    echo "  pm2 stop $APP_NAME  - Stop application"
+    echo ""
+
+    # Show PM2 status
+    pm2 status
+}
+
+# Main execution
+main() {
+    log_info "Starting deployment of p331-telegram-platform backend..."
+    echo ""
+
+    check_dependencies
+    update_repo
+    build_server
+    setup_env
+    start_pm2
+    show_status
+}
+
+# Run main function
+main
