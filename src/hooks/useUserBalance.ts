@@ -5,7 +5,7 @@ export interface UseUserBalanceResult {
   balance: number;
   isLoading: boolean;
   error: string | null;
-  addCoins: (amount: number, transactionHash?: string) => Promise<void>;
+  addCoins: (amount: number, options?: { transactionHash?: string; tonAmount?: string }) => Promise<void>;
   deductCoins: (amount: number) => Promise<void>;
   refetch: () => void;
 }
@@ -34,11 +34,11 @@ export function useUserBalance(): UseUserBalanceResult {
     fetchBalance();
   }, [fetchBalance]);
 
-  const addCoins = useCallback(async (amount: number, transactionHash?: string) => {
+  const addCoins = useCallback(async (amount: number, options?: { transactionHash?: string; tonAmount?: string }) => {
     setError(null);
 
     try {
-      const response = await api.addCoins(amount, transactionHash);
+      const response = await api.addCoins(amount, options);
       setBalance(response.balance);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to add coins');
