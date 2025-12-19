@@ -34,8 +34,9 @@ const corsOptions = {
     if (allowedOrigins.includes(origin) || isVercelPreview || isNgrok) {
       callback(null, true)
     } else {
-      callback(null, true) // Allow all for now, but log unknown origins
-      console.log('Unknown origin:', origin)
+      // REJECT unknown origins - this was the bug!
+      console.warn('CORS blocked origin:', origin)
+      callback(new Error('Not allowed by CORS'), false)
     }
   },
   credentials: true,
