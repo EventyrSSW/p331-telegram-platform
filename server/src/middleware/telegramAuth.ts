@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyTelegramWebAppData, TelegramInitData } from '../utils/telegram';
+import { logger } from '../utils/logger';
 
 declare global {
   namespace Express {
@@ -18,7 +19,7 @@ export function telegramAuthMiddleware(req: Request, res: Response, next: NextFu
 
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
   if (!botToken) {
-    console.error('TELEGRAM_BOT_TOKEN not configured');
+    logger.error('TELEGRAM_BOT_TOKEN not configured');
     return res.status(500).json({ error: 'Server configuration error' });
   }
 

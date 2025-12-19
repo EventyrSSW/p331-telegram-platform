@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { coinOperationLimiter } from '../middleware/rateLimit';
 import { addCoinsSchema, coinAmountSchema } from '../schemas/users';
 import { userService } from '../services/userService';
+import { logger } from '../utils/logger';
 
 const router = Router();
 
@@ -29,7 +30,7 @@ router.get('/me/balance', async (req, res) => {
       balance: user.coinBalance,
     });
   } catch (error) {
-    console.error('Error getting balance:', error);
+    logger.error('Error getting balance', { error });
     res.status(500).json({ error: 'Failed to get balance' });
   }
 });
@@ -60,7 +61,7 @@ router.post('/me/add-coins', coinOperationLimiter, async (req, res) => {
       balance: user.coinBalance,
     });
   } catch (error) {
-    console.error('Error adding coins:', error);
+    logger.error('Error adding coins', { error });
     res.status(500).json({ error: 'Failed to add coins' });
   }
 });
@@ -94,7 +95,7 @@ router.post('/me/deduct-coins', coinOperationLimiter, async (req, res) => {
     if (error.message === 'Insufficient balance') {
       return res.status(400).json({ error: 'Insufficient balance' });
     }
-    console.error('Error deducting coins:', error);
+    logger.error('Error deducting coins', { error });
     res.status(500).json({ error: 'Failed to deduct coins' });
   }
 });

@@ -19,6 +19,7 @@
     "express": "^5.2.1",
     "express-rate-limit": "^8.2.1",
     "prisma": "^6.19.1",
+    "winston": "^3.19.0",
     "zod": "^4.2.1"
   },
   "devDependencies": {

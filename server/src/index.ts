@@ -5,12 +5,14 @@ import gamesRouter from './routes/games'
 import usersRouter from './routes/users'
 import { telegramAuthMiddleware } from './middleware/telegramAuth'
 import { generalLimiter } from './middleware/rateLimit'
+import { logger } from './utils/logger'
+import { requestLogger } from './middleware/requestLogger'
 
 dotenv.config()
 
 // Validate required environment variables
 if (!process.env.TELEGRAM_BOT_TOKEN) {
-  console.error('FATAL: TELEGRAM_BOT_TOKEN environment variable is required')
+  logger.error('FATAL: TELEGRAM_BOT_TOKEN environment variable is required')
   process.exit(1)
 }
 
@@ -43,7 +45,7 @@ const corsOptions = {
       callback(null, true)
     } else {
       // REJECT unknown origins - this was the bug!
-      console.warn('CORS blocked origin:', origin)
+      logger.warn('CORS blocked origin', { origin })
       callback(new Error('Not allowed by CORS'), false)
     }
   },
@@ -52,6 +54,7 @@ const corsOptions = {
 
 app.use(cors(corsOptions))
 app.use(express.json())
+app.use(requestLogger)
 app.use(generalLimiter)
 
 app.get('/api/health', (req, res) => {
@@ -65,5 +68,5 @@ app.use('/api/games', gamesRouter)
 app.use('/api/users', telegramAuthMiddleware, usersRouter)
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`)
+  logger.info('Server started', { port: PORT })
 })

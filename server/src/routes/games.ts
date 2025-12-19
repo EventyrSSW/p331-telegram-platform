@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { gameService } from '../services/gameService';
+import { logger } from '../utils/logger';
 
 const router = Router();
 
@@ -9,7 +10,7 @@ router.get('/', async (req, res) => {
     const games = await gameService.getAllGames();
     res.json({ games });
   } catch (error) {
-    console.error('Error fetching games:', error);
+    logger.error('Error fetching games', { error });
     res.status(500).json({ error: 'Failed to fetch games' });
   }
 });
@@ -23,7 +24,7 @@ router.get('/featured', async (req, res) => {
     }
     res.json({ game });
   } catch (error) {
-    console.error('Error fetching featured game:', error);
+    logger.error('Error fetching featured game', { error });
     res.status(500).json({ error: 'Failed to fetch featured game' });
   }
 });
@@ -37,7 +38,7 @@ router.get('/:slug', async (req, res) => {
     }
     res.json({ game });
   } catch (error) {
-    console.error('Error fetching game:', error);
+    logger.error('Error fetching game', { error });
     res.status(500).json({ error: 'Failed to fetch game' });
   }
 });
