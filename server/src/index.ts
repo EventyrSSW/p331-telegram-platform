@@ -7,6 +7,7 @@ import { telegramAuthMiddleware } from './middleware/telegramAuth'
 import { generalLimiter } from './middleware/rateLimit'
 import { logger } from './utils/logger'
 import { requestLogger } from './middleware/requestLogger'
+import { errorHandler } from './middleware/errorHandler'
 
 dotenv.config()
 
@@ -66,6 +67,9 @@ app.use('/api/games', gamesRouter)
 
 // User routes are protected with Telegram authentication
 app.use('/api/users', telegramAuthMiddleware, usersRouter)
+
+// Error handler must be last
+app.use(errorHandler)
 
 app.listen(PORT, () => {
   logger.info('Server started', { port: PORT })
