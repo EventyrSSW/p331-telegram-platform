@@ -1,76 +1,43 @@
-import express from 'express'
-import cors from 'cors'
-import dotenv from 'dotenv'
-import gamesRouter from './routes/games'
-import usersRouter from './routes/users'
-import { telegramAuthMiddleware } from './middleware/telegramAuth'
-import { generalLimiter } from './middleware/rateLimit'
-import { logger } from './utils/logger'
-import { requestLogger } from './middleware/requestLogger'
-import { errorHandler } from './middleware/errorHandler'
+import express from 'express';
+import cors from 'cors';
+import { config } from './config';
+import { logger } from './utils/logger';
+import routes from './routes';
+import { requestLogger } from './middleware/requestLogger';
+import { errorHandler } from './middleware/errorHandler';
+import { generalLimiter } from './middleware/rateLimit';
 
-dotenv.config()
+const app = express();
 
-// Validate required environment variables
-if (!process.env.TELEGRAM_BOT_TOKEN) {
-  logger.error('FATAL: TELEGRAM_BOT_TOKEN environment variable is required')
-  process.exit(1)
-}
+// CORS
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (config.cors.allowedOrigins.includes(origin)) return callback(null, true);
+    if (origin.endsWith('.vercel.app')) return callback(null, true);
+    if (origin.includes('.ngrok')) return callback(null, true);
 
-const app = express()
-const PORT = process.env.PORT || 3001
-
-// CORS configuration for Telegram Mini App
-const corsOptions = {
-  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-    // Allow requests with no origin (mobile apps, curl, etc.)
-    if (!origin) {
-      callback(null, true)
-      return
-    }
-
-    // Allowed origins
-    const allowedOrigins = [
-      'http://localhost:5173',
-      'http://localhost:3000',
-      'https://p331-tg-platform.vercel.app',
-      'https://telegram-platform.eventyr.cloud',
-    ]
-
-    // Allow any Vercel preview deployments
-    const isVercelPreview = origin.includes('.vercel.app')
-    // Allow ngrok URLs
-    const isNgrok = origin.includes('.ngrok')
-
-    if (allowedOrigins.includes(origin) || isVercelPreview || isNgrok) {
-      callback(null, true)
-    } else {
-      // REJECT unknown origins - this was the bug!
-      logger.warn('CORS blocked origin', { origin })
-      callback(new Error('Not allowed by CORS'), false)
-    }
+    logger.warn('CORS blocked origin', { origin });
+    return callback(new Error('Not allowed by CORS'), false);
   },
   credentials: true,
-}
+}));
 
-app.use(cors(corsOptions))
-app.use(express.json())
-app.use(requestLogger)
-app.use(generalLimiter)
+// Middleware
+app.use(express.json());
+app.use(requestLogger);
+app.use(generalLimiter);
 
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() })
-})
+// Routes
+app.use('/api', routes);
 
-// Games routes remain public
-app.use('/api/games', gamesRouter)
+// Error handler (must be last)
+app.use(errorHandler);
 
-// User routes are protected with Telegram authentication
-app.use('/api/users', telegramAuthMiddleware, usersRouter)
-
-// Error handler must be last
-app.use(errorHandler)
-
-app.listen(PORT, () => {
-  logger.info('Server started', { port: PORT })
-})
+// Start server
+app.listen(config.port, () => {
+  logger.info('Server started', {
+    port: config.port,
+    env: config.nodeEnv,
+  });
+});
