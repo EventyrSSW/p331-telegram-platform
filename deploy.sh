@@ -87,6 +87,9 @@ build_server() {
     cd "$APP_DIR/server"
     npm install
 
+    log_info "Generating Prisma client..."
+    npx prisma generate
+
     log_info "Building server..."
     npm run build
 
@@ -104,7 +107,10 @@ setup_env() {
         cat > "$ENV_FILE" << EOF
 PORT=$PORT
 NODE_ENV=production
+DATABASE_URL=postgresql://postgres:iO6nR0rJ0cW7zS5b@db.hgeuwhnvwpkslzazabcd.supabase.co:5432/postgres
+TELEGRAM_BOT_TOKEN=your-telegram-bot-token-here
 EOF
+        log_warn "IMPORTANT: Update TELEGRAM_BOT_TOKEN in $ENV_FILE"
         log_info ".env file created."
     else
         # Update PORT in existing .env
