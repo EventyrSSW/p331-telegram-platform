@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { api, AppConfig, CoinPackage } from '../services/api';
+import { api, AppConfig } from '../services/api';
 
 interface ConfigContextType {
   config: AppConfig | null;

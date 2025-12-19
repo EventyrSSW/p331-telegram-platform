@@ -2,20 +2,14 @@ import { useState } from 'react';
 import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
 import { Header, Section, CoinBalance, BuyCoinsCard, CoinPackage } from '../../components';
 import { useUserBalance } from '../../hooks/useUserBalance';
-import { env } from '../../config/env';
+import { useConfig } from '../../contexts/ConfigContext';
 import styles from './SettingsPage.module.css';
-
-const coinPackages: CoinPackage[] = [
-  { id: 'small', amount: 100, price: 1 },
-  { id: 'medium', amount: 500, price: 4, bonus: 25 },
-  { id: 'large', amount: 1000, price: 7, bonus: 40 },
-  { id: 'xlarge', amount: 5000, price: 30, bonus: 65 },
-];
 
 export const SettingsPage = () => {
   const [tonConnectUI] = useTonConnectUI();
   const wallet = useTonWallet();
   const { balance, isLoading, addCoins } = useUserBalance();
+  const { config, loading: configLoading } = useConfig();
   const [isPurchasing, setIsPurchasing] = useState(false);
 
   const handleConnectWallet = () => {
@@ -27,7 +21,11 @@ export const SettingsPage = () => {
   };
 
   const handleBuyCoins = async (pkg: CoinPackage) => {
-    if (!wallet) {
+    if (!wallet || !config?.ton.receiverAddress) {
+      if (!config?.ton.receiverAddress) {
+        alert('Payment not configured. Please try again later.');
+        return;
+      }
       tonConnectUI.openModal();
       return;
     }
@@ -48,7 +46,7 @@ export const SettingsPage = () => {
         validUntil: Math.floor(Date.now() / 1000) + 600, // 10 minutes from now
         messages: [
           {
-            address: env.paymentReceiverAddress,
+            address: config.ton.receiverAddress,
             amount: amountInNanoTon,
           },
         ],
@@ -124,11 +122,26 @@ export const SettingsPage = () => {
         </Section>
 
         <Section title="Buy Coins">
-          <div className={styles.packagesGrid}>
-            {coinPackages.map((pkg) => (
-              <BuyCoinsCard key={pkg.id} package={pkg} onBuy={handleBuyCoins} />
-            ))}
-          </div>
+          {configLoading ? (
+            <div className={styles.balanceLoading}>Loading packages...</div>
+          ) : !config?.coinPackages || config.coinPackages.length === 0 ? (
+            <div className={styles.balanceLoading}>No packages available</div>
+          ) : (
+            <div className={styles.packagesGrid}>
+              {config.coinPackages.map((pkg) => (
+                <BuyCoinsCard
+                  key={pkg.id}
+                  package={{
+                    id: pkg.id,
+                    amount: pkg.coins,
+                    price: pkg.price,
+                    bonus: pkg.bonus,
+                  }}
+                  onBuy={handleBuyCoins}
+                />
+              ))}
+            </div>
+          )}
         </Section>
       </main>
     </div>
