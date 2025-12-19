@@ -97,6 +97,39 @@ async function main() {
   }
 
   console.log(`Seeded ${games.length} games`);
+
+  // Seed system configuration
+  const systemConfigs = [
+    { key: 'ton_network', value: 'testnet' },
+    { key: 'ton_receiver_address', value: '' },
+  ];
+
+  for (const config of systemConfigs) {
+    await prisma.systemConfig.upsert({
+      where: { key: config.key },
+      update: {},
+      create: config,
+    });
+  }
+  console.log('System config seeded');
+
+  // Seed coin packages
+  const coinPackages = [
+    { name: 'Starter', coins: 100, price: 0.01, bonus: 0, sortOrder: 1 },
+    { name: 'Popular', coins: 500, price: 0.04, bonus: 25, sortOrder: 2 },
+    { name: 'Value', coins: 1000, price: 0.07, bonus: 40, sortOrder: 3 },
+    { name: 'Best Deal', coins: 5000, price: 0.3, bonus: 65, sortOrder: 4 },
+  ];
+
+  for (const pkg of coinPackages) {
+    const existing = await prisma.coinPackage.findFirst({
+      where: { name: pkg.name },
+    });
+    if (!existing) {
+      await prisma.coinPackage.create({ data: pkg });
+    }
+  }
+  console.log('Coin packages seeded');
 }
 
 main()
