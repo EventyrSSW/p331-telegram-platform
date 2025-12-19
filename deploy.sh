@@ -109,6 +109,7 @@ PORT=$PORT
 NODE_ENV=production
 DATABASE_URL=postgresql://postgres:iO6nR0rJ0cW7zS5b@db.hgeuwhnvwpkslzazabcd.supabase.co:5432/postgres
 TELEGRAM_BOT_TOKEN=your-telegram-bot-token-here
+JWT_SECRET=$(openssl rand -base64 32)
 EOF
         log_warn "IMPORTANT: Update TELEGRAM_BOT_TOKEN in $ENV_FILE"
         log_info ".env file created."
@@ -136,9 +137,10 @@ start_pm2() {
         pm2 delete "$APP_NAME" || true
     fi
 
-    # Start with PM2
+    # Start with PM2 (cwd ensures dotenv finds .env file)
     pm2 start dist/index.js \
         --name "$APP_NAME" \
+        --cwd "$APP_DIR/server" \
         --env production \
         --log-date-format "YYYY-MM-DD HH:mm:ss" \
         --merge-logs
