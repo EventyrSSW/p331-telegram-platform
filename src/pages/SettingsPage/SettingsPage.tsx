@@ -1,14 +1,15 @@
 import { useState } from 'react';
 import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
 import { Header, Section, CoinBalance, BuyCoinsCard, CoinPackage } from '../../components';
-import { useUserBalance } from '../../hooks/useUserBalance';
+import { useAuth } from '../../contexts/AuthContext';
 import { useConfig } from '../../contexts/ConfigContext';
+import { api } from '../../services/api';
 import styles from './SettingsPage.module.css';
 
 export const SettingsPage = () => {
   const [tonConnectUI] = useTonConnectUI();
   const wallet = useTonWallet();
-  const { balance, isLoading, addCoins } = useUserBalance();
+  const { user, isLoading, refreshUser } = useAuth();
   const { config, loading: configLoading } = useConfig();
   const [isPurchasing, setIsPurchasing] = useState(false);
 
@@ -58,7 +59,10 @@ export const SettingsPage = () => {
       console.log('Transaction sent:', result);
 
       // Transaction successful - add coins to user balance
-      await addCoins(totalCoins);
+      await api.addCoins(totalCoins);
+
+      // Refresh user data to get updated balance
+      await refreshUser();
 
       // Show success message
       alert(`Successfully purchased ${totalCoins} coins!`);
@@ -117,7 +121,7 @@ export const SettingsPage = () => {
           {isLoading ? (
             <div className={styles.balanceLoading}>Loading balance...</div>
           ) : (
-            <CoinBalance balance={balance} symbol="COINS" />
+            <CoinBalance balance={user?.coinBalance ?? 0} symbol="COINS" />
           )}
         </Section>
 
