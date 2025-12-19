@@ -137,13 +137,8 @@ start_pm2() {
         pm2 delete "$APP_NAME" || true
     fi
 
-    # Start with PM2 (cwd ensures dotenv finds .env file)
-    pm2 start dist/index.js \
-        --name "$APP_NAME" \
-        --cwd "$APP_DIR/server" \
-        --env production \
-        --log-date-format "YYYY-MM-DD HH:mm:ss" \
-        --merge-logs
+    # Start with PM2 using ecosystem file
+    pm2 start ecosystem.config.js --env production
 
     # Save PM2 process list (for auto-restart on reboot)
     pm2 save
