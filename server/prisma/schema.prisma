@@ -1,0 +1,91 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String    @id @default(cuid())
+  telegramId      BigInt    @unique
+  username        String?
+  firstName       String?
+  lastName        String?
+  walletAddress   String?   @unique
+  coinBalance     Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  transactions    Transaction[]
+  gameSessions    GameSession[]
+
+  @@index([telegramId])
+  @@index([walletAddress])
+}
+
+model Transaction {
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id])
+  type            TransactionType
+  amount          Int
+  tonAmount       BigInt?   // In nanoTON
+  tonTxHash       String?   // Blockchain transaction hash
+  status          TransactionStatus @default(PENDING)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([tonTxHash])
+}
+
+enum TransactionType {
+  PURCHASE      // Buy coins with TON
+  GAME_SPEND    // Spend coins in game
+  GAME_WIN      // Win coins in game
+  ADMIN_GRANT   // Admin adds coins
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+model Game {
+  id              String    @id @default(cuid())
+  slug            String    @unique
+  title           String
+  description     String
+  thumbnail       String
+  category        String
+  featured        Boolean   @default(false)
+  active          Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  sessions        GameSession[]
+
+  @@index([slug])
+}
+
+model GameSession {
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id])
+  gameId          String
+  game            Game      @relation(fields: [gameId], references: [id])
+  coinsSpent      Int       @default(0)
+  coinsWon        Int       @default(0)
+  startedAt       DateTime  @default(now())
+  endedAt         DateTime?
+
+  @@index([userId])
+  @@index([gameId])
+}
