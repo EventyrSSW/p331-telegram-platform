@@ -26,8 +26,12 @@ fi
 
 # Build
 cd "$APP_DIR/server"
+
+# Load env vars but override NODE_ENV for build (need devDependencies for TypeScript)
 export $(grep -v '^#' .env | grep -v '^\s*$' | xargs)
-npm install
+
+# Install ALL dependencies including devDependencies for build
+npm install --include=dev
 npx prisma generate
 npm run build
 
