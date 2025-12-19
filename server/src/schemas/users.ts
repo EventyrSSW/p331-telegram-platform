@@ -13,5 +13,7 @@ export const coinAmountSchema = z.object({
 });
 
 export const addCoinsSchema = coinAmountSchema.extend({
-  transactionHash: z.string().optional(), // For future blockchain verification
+  transactionHash: z.string()
+    .min(1, 'Transaction hash cannot be empty')
+    .optional(), // For future blockchain verification
 });

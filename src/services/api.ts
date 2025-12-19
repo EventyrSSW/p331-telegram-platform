@@ -10,7 +10,8 @@ export interface Game {
 }
 
 export interface UserBalance {
-  walletAddress: string;
+  telegramId?: number;
+  walletAddress: string | null;
   balance: number;
 }
 
@@ -59,25 +60,24 @@ class ApiService {
     return this.fetch<{ game: Game }>(`/games/${id}`);
   }
 
-  async getUserBalance(walletAddress: string): Promise<UserBalance> {
-    return this.fetch<UserBalance>(`/users/${walletAddress}/balance`);
+  async getUserBalance(): Promise<UserBalance> {
+    return this.fetch<UserBalance>('/users/me/balance');
   }
 
   async addCoins(
-    walletAddress: string,
-    amount: number
+    amount: number,
+    transactionHash?: string
   ): Promise<UserBalance> {
-    return this.fetch<UserBalance>(`/users/${walletAddress}/add-coins`, {
+    return this.fetch<UserBalance>('/users/me/add-coins', {
       method: 'POST',
-      body: JSON.stringify({ amount }),
+      body: JSON.stringify({ amount, transactionHash }),
     });
   }
 
   async deductCoins(
-    walletAddress: string,
     amount: number
   ): Promise<UserBalance> {
-    return this.fetch<UserBalance>(`/users/${walletAddress}/deduct-coins`, {
+    return this.fetch<UserBalance>('/users/me/deduct-coins', {
       method: 'POST',
       body: JSON.stringify({ amount }),
     });

@@ -1,70 +1,102 @@
 import { Router } from 'express';
 import { coinOperationLimiter } from '../middleware/rateLimit';
-import { walletAddressSchema, coinAmountSchema } from '../schemas/users';
+import { addCoinsSchema, coinAmountSchema } from '../schemas/users';
+import { userService } from '../services/userService';
 
 const router = Router();
 
-// In-memory storage for user balances
-const userBalances: Record<string, number> = {};
+// GET /me/balance - get authenticated user's balance
+router.get('/me/balance', async (req, res) => {
+  try {
+    const telegramUser = req.telegramUser!;
 
-// GET /:walletAddress/balance - return user balance (default 0)
-router.get('/:walletAddress/balance', (req, res) => {
-  const parseResult = walletAddressSchema.safeParse(req.params.walletAddress);
+    // Ensure user exists in database
+    await userService.findOrCreateByTelegramId(telegramUser.id, {
+      username: telegramUser.username,
+      firstName: telegramUser.first_name,
+      lastName: telegramUser.last_name,
+    });
 
-  if (!parseResult.success) {
-    return res.status(400).json({ error: parseResult.error.errors[0].message });
+    const user = await userService.getBalance(telegramUser.id);
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json({
+      telegramId: telegramUser.id,
+      walletAddress: user.walletAddress,
+      balance: user.coinBalance,
+    });
+  } catch (error) {
+    console.error('Error getting balance:', error);
+    res.status(500).json({ error: 'Failed to get balance' });
   }
-
-  const walletAddress = parseResult.data;
-  const balance = userBalances[walletAddress] || 0;
-  res.json({ walletAddress, balance });
 });
 
-// POST /:walletAddress/add-coins - add coins to balance
-router.post('/:walletAddress/add-coins', coinOperationLimiter, (req, res) => {
-  const walletParse = walletAddressSchema.safeParse(req.params.walletAddress);
-  const bodyParse = coinAmountSchema.safeParse(req.body);
+// POST /me/add-coins - add coins after purchase
+router.post('/me/add-coins', coinOperationLimiter, async (req, res) => {
+  try {
+    const telegramUser = req.telegramUser!;
+    const bodyParse = addCoinsSchema.safeParse(req.body);
 
-  if (!walletParse.success) {
-    return res.status(400).json({ error: walletParse.error.errors[0].message });
+    if (!bodyParse.success) {
+      return res.status(400).json({ error: bodyParse.error.issues[0].message });
+    }
+
+    const { amount, transactionHash: tonTxHash } = bodyParse.data;
+
+    // Ensure user exists in database
+    await userService.findOrCreateByTelegramId(telegramUser.id, {
+      username: telegramUser.username,
+      firstName: telegramUser.first_name,
+      lastName: telegramUser.last_name,
+    });
+
+    const user = await userService.addCoins(telegramUser.id, amount, tonTxHash);
+
+    res.json({
+      telegramId: telegramUser.id,
+      balance: user.coinBalance,
+    });
+  } catch (error) {
+    console.error('Error adding coins:', error);
+    res.status(500).json({ error: 'Failed to add coins' });
   }
-  if (!bodyParse.success) {
-    return res.status(400).json({ error: bodyParse.error.errors[0].message });
-  }
-
-  const walletAddress = walletParse.data;
-  const { amount } = bodyParse.data;
-
-  const currentBalance = userBalances[walletAddress] || 0;
-  userBalances[walletAddress] = currentBalance + amount;
-
-  res.json({ walletAddress, balance: userBalances[walletAddress] });
 });
 
-// POST /:walletAddress/deduct-coins - deduct coins from balance
-router.post('/:walletAddress/deduct-coins', coinOperationLimiter, (req, res) => {
-  const walletParse = walletAddressSchema.safeParse(req.params.walletAddress);
-  const bodyParse = coinAmountSchema.safeParse(req.body);
+// POST /me/deduct-coins - deduct coins for game play
+router.post('/me/deduct-coins', coinOperationLimiter, async (req, res) => {
+  try {
+    const telegramUser = req.telegramUser!;
+    const bodyParse = coinAmountSchema.safeParse(req.body);
 
-  if (!walletParse.success) {
-    return res.status(400).json({ error: walletParse.error.errors[0].message });
+    if (!bodyParse.success) {
+      return res.status(400).json({ error: bodyParse.error.issues[0].message });
+    }
+
+    const { amount } = bodyParse.data;
+
+    // Ensure user exists in database
+    await userService.findOrCreateByTelegramId(telegramUser.id, {
+      username: telegramUser.username,
+      firstName: telegramUser.first_name,
+      lastName: telegramUser.last_name,
+    });
+
+    const user = await userService.deductCoins(telegramUser.id, amount);
+
+    res.json({
+      telegramId: telegramUser.id,
+      balance: user.coinBalance,
+    });
+  } catch (error: any) {
+    if (error.message === 'Insufficient balance') {
+      return res.status(400).json({ error: 'Insufficient balance' });
+    }
+    console.error('Error deducting coins:', error);
+    res.status(500).json({ error: 'Failed to deduct coins' });
   }
-  if (!bodyParse.success) {
-    return res.status(400).json({ error: bodyParse.error.errors[0].message });
-  }
-
-  const walletAddress = walletParse.data;
-  const { amount } = bodyParse.data;
-
-  const currentBalance = userBalances[walletAddress] || 0;
-
-  if (currentBalance < amount) {
-    return res.status(400).json({ error: 'Insufficient balance' });
-  }
-
-  userBalances[walletAddress] = currentBalance - amount;
-
-  res.json({ walletAddress, balance: userBalances[walletAddress] });
 });
 
 export default router;

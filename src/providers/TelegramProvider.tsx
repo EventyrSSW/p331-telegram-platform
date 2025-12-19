@@ -6,6 +6,7 @@ interface WebApp {
   close: () => void
   colorScheme: 'dark' | 'light'
   themeParams: Record<string, string>
+  initData: string
   initDataUnsafe: {
     user?: {
       id: number
@@ -103,6 +104,7 @@ declare global {
         close: () => void
         colorScheme: 'dark' | 'light'
         themeParams: Record<string, string>
+        initData: string
         initDataUnsafe: {
           user?: {
             id: number

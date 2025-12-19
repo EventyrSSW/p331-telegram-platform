@@ -1,12 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useTonWallet } from '@tonconnect/ui-react';
 import { api } from '../services/api';
 
 export interface UseUserBalanceResult {
   balance: number;
   isLoading: boolean;
   error: string | null;
-  addCoins: (amount: number) => Promise<void>;
+  addCoins: (amount: number, transactionHash?: string) => Promise<void>;
   deductCoins: (amount: number) => Promise<void>;
   refetch: () => void;
 }
@@ -16,22 +15,12 @@ export function useUserBalance(): UseUserBalanceResult {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  const wallet = useTonWallet();
-  const walletAddress = wallet?.account?.address;
-
   const fetchBalance = useCallback(async () => {
-    if (!walletAddress) {
-      setBalance(0);
-      setIsLoading(false);
-      setError(null);
-      return;
-    }
-
     setIsLoading(true);
     setError(null);
 
     try {
-      const response = await api.getUserBalance(walletAddress);
+      const response = await api.getUserBalance();
       setBalance(response.balance);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch balance');
@@ -39,45 +28,35 @@ export function useUserBalance(): UseUserBalanceResult {
     } finally {
       setIsLoading(false);
     }
-  }, [walletAddress]);
+  }, []);
 
   useEffect(() => {
     fetchBalance();
   }, [fetchBalance]);
 
-  const addCoins = useCallback(async (amount: number) => {
-    if (!walletAddress) {
-      setError('No wallet connected');
-      return;
-    }
-
+  const addCoins = useCallback(async (amount: number, transactionHash?: string) => {
     setError(null);
 
     try {
-      const response = await api.addCoins(walletAddress, amount);
+      const response = await api.addCoins(amount, transactionHash);
       setBalance(response.balance);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to add coins');
       throw err;
     }
-  }, [walletAddress]);
+  }, []);
 
   const deductCoins = useCallback(async (amount: number) => {
-    if (!walletAddress) {
-      setError('No wallet connected');
-      return;
-    }
-
     setError(null);
 
     try {
-      const response = await api.deductCoins(walletAddress, amount);
+      const response = await api.deductCoins(amount);
       setBalance(response.balance);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to deduct coins');
       throw err;
     }
-  }, [walletAddress]);
+  }, []);
 
   return {
     balance,
