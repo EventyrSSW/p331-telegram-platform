@@ -8,9 +8,12 @@ import { api } from '../../services/api';
 import styles from './SettingsPage.module.css';
 
 // Convert raw TON address to user-friendly format
-const toUserFriendlyAddress = (rawAddress: string): string => {
+const toUserFriendlyAddress = (rawAddress: string, isTestnet: boolean): string => {
   try {
-    return Address.parse(rawAddress).toString({ bounceable: false });
+    return Address.parse(rawAddress).toString({
+      bounceable: false,
+      testOnly: isTestnet,
+    });
   } catch {
     return rawAddress;
   }
@@ -24,10 +27,11 @@ export const SettingsPage = () => {
   const [isPurchasing, setIsPurchasing] = useState(false);
 
   // Convert wallet address to user-friendly format
+  const isTestnet = config?.ton.network === 'testnet';
   const userFriendlyAddress = useMemo(() => {
     if (!wallet?.account.address) return null;
-    return toUserFriendlyAddress(wallet.account.address);
-  }, [wallet?.account.address]);
+    return toUserFriendlyAddress(wallet.account.address, isTestnet);
+  }, [wallet?.account.address, isTestnet]);
 
   // Sync wallet address to backend when connected
   useEffect(() => {
