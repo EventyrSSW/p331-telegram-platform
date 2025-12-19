@@ -87,3 +87,21 @@ model GameSession {
   @@index([userId])
   @@index([gameId])
 }
+
+model SystemConfig {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+model CoinPackage {
+  id          String   @id @default(cuid())
+  name        String
+  coins       Int      // Number of coins user receives
+  price       Float    // Price in TON
+  bonus       Int      @default(0) // Bonus percentage
+  sortOrder   Int      @default(0) // Display order
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
