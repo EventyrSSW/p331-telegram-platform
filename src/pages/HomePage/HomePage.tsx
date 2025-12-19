@@ -16,13 +16,13 @@ export const HomePage = () => {
   const navigate = useNavigate();
 
   const handleGameClick = (game: Game) => {
-    navigate(`/game/${game.id}`);
+    navigate(`/game/${game.slug}`);
   };
 
   const handleSurpriseMe = () => {
     if (games.length > 0) {
       const randomGame = games[Math.floor(Math.random() * games.length)];
-      navigate(`/game/${randomGame.id}`);
+      navigate(`/game/${randomGame.slug}`);
     }
   };
 

@@ -36,7 +36,8 @@
       "Bash(npx tsc:*)",
       "Bash(npx prisma init)",
       "Bash(npx prisma:*)",
-      "Bash(test:*)"
+      "Bash(test:*)",
+      "Bash(npm run prisma:seed:*)"
     ],
     "deny": [],
     "ask": []

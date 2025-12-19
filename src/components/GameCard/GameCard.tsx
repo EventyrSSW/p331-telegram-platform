@@ -3,6 +3,7 @@ import styles from './GameCard.module.css';
 
 export interface Game {
   id: string;
+  slug: string;  // human-readable identifier for URLs
   title: string;
   thumbnail: string;
   category: string;

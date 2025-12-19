@@ -1,30 +1,44 @@
 import { Router } from 'express';
-import { games } from '../data/games';
+import { gameService } from '../services/gameService';
 
 const router = Router();
 
 // GET / - return all games
-router.get('/', (req, res) => {
-  res.json({ games });
-});
-
-// GET /featured - return the featured game
-router.get('/featured', (req, res) => {
-  const featuredGame = games.find(game => game.featured);
-  if (featuredGame) {
-    res.json({ game: featuredGame });
-  } else {
-    res.status(404).json({ error: 'Featured game not found' });
+router.get('/', async (req, res) => {
+  try {
+    const games = await gameService.getAllGames();
+    res.json({ games });
+  } catch (error) {
+    console.error('Error fetching games:', error);
+    res.status(500).json({ error: 'Failed to fetch games' });
   }
 });
 
-// GET /:id - return single game by id (404 if not found)
-router.get('/:id', (req, res) => {
-  const game = games.find(g => g.id === req.params.id);
-  if (game) {
+// GET /featured - return the featured game
+router.get('/featured', async (req, res) => {
+  try {
+    const game = await gameService.getFeaturedGame();
+    if (!game) {
+      return res.status(404).json({ error: 'No featured game found' });
+    }
     res.json({ game });
-  } else {
-    res.status(404).json({ error: 'Game not found' });
+  } catch (error) {
+    console.error('Error fetching featured game:', error);
+    res.status(500).json({ error: 'Failed to fetch featured game' });
+  }
+});
+
+// GET /:slug - return single game by slug (404 if not found)
+router.get('/:slug', async (req, res) => {
+  try {
+    const game = await gameService.getGameBySlug(req.params.slug);
+    if (!game) {
+      return res.status(404).json({ error: 'Game not found' });
+    }
+    res.json({ game });
+  } catch (error) {
+    console.error('Error fetching game:', error);
+    res.status(500).json({ error: 'Failed to fetch game' });
   }
 });
 

@@ -2,6 +2,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 export interface Game {
   id: string;
+  slug: string;  // human-readable identifier for URLs
   title: string;
   thumbnail: string;
   category: string;
