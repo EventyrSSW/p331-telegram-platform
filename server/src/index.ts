@@ -4,6 +4,7 @@ import dotenv from 'dotenv'
 import gamesRouter from './routes/games'
 import usersRouter from './routes/users'
 import { telegramAuthMiddleware } from './middleware/telegramAuth'
+import { generalLimiter } from './middleware/rateLimit'
 
 dotenv.config()
 
@@ -51,6 +52,7 @@ const corsOptions = {
 
 app.use(cors(corsOptions))
 app.use(express.json())
+app.use(generalLimiter)
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() })

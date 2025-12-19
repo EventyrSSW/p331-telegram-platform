@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { coinOperationLimiter } from '../middleware/rateLimit';
 
 const router = Router();
 
@@ -13,7 +14,7 @@ router.get('/:walletAddress/balance', (req, res) => {
 });
 
 // POST /:walletAddress/add-coins - add coins to balance
-router.post('/:walletAddress/add-coins', (req, res) => {
+router.post('/:walletAddress/add-coins', coinOperationLimiter, (req, res) => {
   const { walletAddress } = req.params;
   const { amount } = req.body;
 
@@ -28,7 +29,7 @@ router.post('/:walletAddress/add-coins', (req, res) => {
 });
 
 // POST /:walletAddress/deduct-coins - deduct coins from balance
-router.post('/:walletAddress/deduct-coins', (req, res) => {
+router.post('/:walletAddress/deduct-coins', coinOperationLimiter, (req, res) => {
   const { walletAddress } = req.params;
   const { amount } = req.body;
 
