@@ -45,7 +45,16 @@
       "Bash(xargs kill:*)",
       "Bash(DATABASE_URL=\"postgresql://postgres.hgeuwhnvwpkslzazabcd:iO6nR0rJ0cW7zS5b@aws-0-us-east-1.pooler.supabase.com:6543/postgres?pgbouncer=true\" npx prisma migrate:*)",
       "Bash(DATABASE_URL=\"postgresql://postgres:iO6nR0rJ0cW7zS5b@db.hgeuwhnvwpkslzazabcd.supabase.co:5432/postgres\" npx prisma migrate:*)",
-      "Bash(DATABASE_URL=\"postgresql://postgres:iO6nR0rJ0cW7zS5b@db.hgeuwhnvwpkslzazabcd.supabase.co:5432/postgres\" npm run prisma:seed:*)"
+      "Bash(DATABASE_URL=\"postgresql://postgres:iO6nR0rJ0cW7zS5b@db.hgeuwhnvwpkslzazabcd.supabase.co:5432/postgres\" npm run prisma:seed:*)",
+      "Bash(unset:*)",
+      "Bash(node -e:*)",
+      "Bash(DATABASE_URL=\"postgresql://postgres:iO6nR0rJ0cW7zS5b@db.hgeuwhnvwpkslzazabcd.supabase.co:5432/postgres\" npx prisma migrate dev:*)",
+      "Bash(python3:*)",
+      "Bash(kill:*)",
+      "Bash(timeout 5 node:*)",
+      "Bash(node test-routes.js:*)",
+      "Bash(pkill:*)",
+      "Bash(/Users/olegvoytenko/Development/p331-telegram-platform/server/test-endpoints.sh)"
     ],
     "deny": [],
     "ask": []

@@ -46,6 +46,7 @@ export function verifyTelegramWebAppData(initData: string, botToken: string): Te
       .digest('hex');
 
     if (hash !== expectedHash) {
+      console.warn('Telegram auth: hash mismatch - check TELEGRAM_BOT_TOKEN');
       return null;
     }
 
@@ -53,6 +54,7 @@ export function verifyTelegramWebAppData(initData: string, botToken: string): Te
     const authDate = parseInt(urlParams.get('auth_date') || '0', 10);
     const now = Math.floor(Date.now() / 1000);
     if (now - authDate > 3600) {
+      console.warn(`Telegram auth: expired - auth_date ${authDate}, now ${now}, diff ${now - authDate}s`);
       return null;
     }
 
