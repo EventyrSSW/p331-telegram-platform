@@ -79,9 +79,10 @@ export const SettingsPage = () => {
       // Parse and normalize receiver address for TonConnect
       let receiverAddress: string;
       try {
-        // TonConnect accepts user-friendly format
+        // TonConnect requires raw format (e.g., 0:abc123...)
         const parsed = Address.parse(config.ton.receiverAddress);
-        receiverAddress = parsed.toString();
+        receiverAddress = parsed.toRawString();
+        console.log('Receiver address:', config.ton.receiverAddress, '-> raw:', receiverAddress);
       } catch (e) {
         console.error('Failed to parse receiver address:', config.ton.receiverAddress, e);
         alert('Invalid payment address configuration. Please contact support.');
