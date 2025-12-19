@@ -1,10 +1,20 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
+import { Address } from '@ton/core';
 import { Header, Section, CoinBalance, BuyCoinsCard, CoinPackage } from '../../components';
 import { useAuth } from '../../contexts/AuthContext';
 import { useConfig } from '../../contexts/ConfigContext';
 import { api } from '../../services/api';
 import styles from './SettingsPage.module.css';
+
+// Convert raw TON address to user-friendly format
+const toUserFriendlyAddress = (rawAddress: string): string => {
+  try {
+    return Address.parse(rawAddress).toString({ bounceable: false });
+  } catch {
+    return rawAddress;
+  }
+};
 
 export const SettingsPage = () => {
   const [tonConnectUI] = useTonConnectUI();
@@ -13,19 +23,25 @@ export const SettingsPage = () => {
   const { config, loading: configLoading } = useConfig();
   const [isPurchasing, setIsPurchasing] = useState(false);
 
+  // Convert wallet address to user-friendly format
+  const userFriendlyAddress = useMemo(() => {
+    if (!wallet?.account.address) return null;
+    return toUserFriendlyAddress(wallet.account.address);
+  }, [wallet?.account.address]);
+
   // Sync wallet address to backend when connected
   useEffect(() => {
     const syncWallet = async () => {
-      if (wallet && user && wallet.account.address !== user.walletAddress) {
+      if (userFriendlyAddress && user && userFriendlyAddress !== user.walletAddress) {
         try {
-          await updateWallet(wallet.account.address);
+          await updateWallet(userFriendlyAddress);
         } catch (err) {
           console.error('Failed to sync wallet:', err);
         }
       }
     };
     syncWallet();
-  }, [wallet, user, updateWallet]);
+  }, [userFriendlyAddress, user, updateWallet]);
 
   const handleConnectWallet = () => {
     tonConnectUI.openModal();
@@ -110,7 +126,7 @@ export const SettingsPage = () => {
                 <div>
                   <div className={styles.walletLabel}>Connected Wallet</div>
                   <div className={styles.walletAddress}>
-                    {truncateAddress(wallet.account.address)}
+                    {truncateAddress(userFriendlyAddress || wallet.account.address)}
                   </div>
                 </div>
                 <button

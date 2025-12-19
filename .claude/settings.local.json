@@ -54,7 +54,8 @@
       "Bash(timeout 5 node:*)",
       "Bash(node test-routes.js:*)",
       "Bash(pkill:*)",
-      "Bash(/Users/olegvoytenko/Development/p331-telegram-platform/server/test-endpoints.sh)"
+      "Bash(/Users/olegvoytenko/Development/p331-telegram-platform/server/test-endpoints.sh)",
+      "Bash(npx vite build)"
     ],
     "deny": [],
     "ask": []
