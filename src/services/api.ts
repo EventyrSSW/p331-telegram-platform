@@ -168,6 +168,13 @@ class ApiService {
     });
   }
 
+  async linkWallet(walletAddress: string): Promise<{ telegramId: number; walletAddress: string }> {
+    return this.fetch<{ telegramId: number; walletAddress: string }>('/users/me/link-wallet', {
+      method: 'POST',
+      body: JSON.stringify({ walletAddress }),
+    });
+  }
+
   async getConfig(): Promise<AppConfig> {
     return this.fetch<AppConfig>('/config');
   }
