@@ -79,10 +79,10 @@ export const SettingsPage = () => {
       // Parse and normalize receiver address for TonConnect
       let receiverAddress: string;
       try {
-        // TonConnect requires raw format (e.g., 0:abc123...)
+        // TonConnect expects user-friendly bounceable format
         const parsed = Address.parse(config.ton.receiverAddress);
-        receiverAddress = parsed.toRawString();
-        console.log('Receiver address:', config.ton.receiverAddress, '-> raw:', receiverAddress);
+        receiverAddress = parsed.toString({ bounceable: true, testOnly: isTestnet });
+        console.log('Receiver address:', config.ton.receiverAddress, '-> formatted:', receiverAddress);
       } catch (e) {
         console.error('Failed to parse receiver address:', config.ton.receiverAddress, e);
         alert('Invalid payment address configuration. Please contact support.');
