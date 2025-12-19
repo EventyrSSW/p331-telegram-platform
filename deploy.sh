@@ -37,8 +37,9 @@ npm run build
 # Make start script executable
 chmod +x start.sh
 
-# Restart PM2
-pm2 delete "$APP_NAME" 2>/dev/null || true
+# Restart PM2 (kill completely to clear any cached env)
+pm2 kill 2>/dev/null || true
+rm -f ~/.pm2/dump.pm2* 2>/dev/null || true
 pm2 start ecosystem.config.js
 pm2 save
 
