@@ -23,6 +23,7 @@ const corsOptions = {
       'http://localhost:5173',
       'http://localhost:3000',
       'https://p331-tg-platform.vercel.app',
+      'https://telegram-platform.eventyr.cloud',
     ]
 
     // Allow any Vercel preview deployments
