@@ -76,15 +76,24 @@ export const SettingsPage = () => {
       // Convert TON price to nanoTON (1 TON = 10^9 nanoTON)
       const amountInNanoTon = (pkg.price * 1_000_000_000).toString();
 
-      // Convert receiver address to raw format for TonConnect
-      const receiverRawAddress = Address.parse(config.ton.receiverAddress).toRawString();
+      // Parse and normalize receiver address for TonConnect
+      let receiverAddress: string;
+      try {
+        // TonConnect accepts user-friendly format
+        const parsed = Address.parse(config.ton.receiverAddress);
+        receiverAddress = parsed.toString();
+      } catch (e) {
+        console.error('Failed to parse receiver address:', config.ton.receiverAddress, e);
+        alert('Invalid payment address configuration. Please contact support.');
+        return;
+      }
 
       // Create transaction request
       const transaction = {
         validUntil: Math.floor(Date.now() / 1000) + 600, // 10 minutes from now
         messages: [
           {
-            address: receiverRawAddress,
+            address: receiverAddress,
             amount: amountInNanoTon,
           },
         ],
