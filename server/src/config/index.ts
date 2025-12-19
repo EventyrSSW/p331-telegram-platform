@@ -29,6 +29,7 @@ export const config = {
         'http://localhost:5173',
         'http://localhost:3000',
         'https://p331-tg-platform.vercel.app',
+        'https://p331-telegram-platform.vercel.app',
         'https://telegram-platform.eventyr.cloud',
       ]),
   },
