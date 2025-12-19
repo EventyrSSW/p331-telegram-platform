@@ -9,6 +9,7 @@ interface TelegramUser {
   username?: string;
   language_code?: string;
   photo_url?: string;
+  is_premium?: boolean;
 }
 
 interface AuthPayload {
@@ -28,12 +29,18 @@ export class AuthService {
         username: telegramUser.username,
         firstName: telegramUser.first_name,
         lastName: telegramUser.last_name,
+        languageCode: telegramUser.language_code,
+        photoUrl: telegramUser.photo_url,
+        isPremium: telegramUser.is_premium ?? false,
       },
       create: {
         telegramId: BigInt(telegramUser.id),
         username: telegramUser.username,
         firstName: telegramUser.first_name,
         lastName: telegramUser.last_name,
+        languageCode: telegramUser.language_code,
+        photoUrl: telegramUser.photo_url,
+        isPremium: telegramUser.is_premium ?? false,
       },
     });
 
@@ -51,6 +58,9 @@ export class AuthService {
         username: user.username,
         firstName: user.firstName,
         lastName: user.lastName,
+        languageCode: user.languageCode,
+        photoUrl: user.photoUrl,
+        isPremium: user.isPremium,
         coinBalance: user.coinBalance,
         walletAddress: user.walletAddress,
       },
@@ -114,6 +124,9 @@ export class AuthService {
       username: user.username,
       firstName: user.firstName,
       lastName: user.lastName,
+      languageCode: user.languageCode,
+      photoUrl: user.photoUrl,
+      isPremium: user.isPremium,
       coinBalance: user.coinBalance,
       walletAddress: user.walletAddress,
     };
