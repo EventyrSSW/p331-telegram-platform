@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import {
   Header,
   ActionCard,
@@ -12,15 +13,16 @@ import styles from './HomePage.module.css';
 
 export const HomePage = () => {
   const { games, featuredGame, isLoading, error, refetch } = useGames();
+  const navigate = useNavigate();
 
   const handleGameClick = (game: Game) => {
-    console.log(game.id);
+    navigate(`/game/${game.id}`);
   };
 
   const handleSurpriseMe = () => {
     if (games.length > 0) {
       const randomGame = games[Math.floor(Math.random() * games.length)];
-      console.log(randomGame.id);
+      navigate(`/game/${randomGame.id}`);
     }
   };
 

@@ -9,11 +9,11 @@ export interface Game {
 
 export const games: Game[] = [
   {
-    id: 'featured-1',
-    title: 'Epic Quest',
-    thumbnail: 'https://picsum.photos/seed/epic/800/500',
-    category: 'Adventure',
-    description: 'Embark on an epic journey through mystical lands, battling fierce creatures and solving ancient puzzles to save the kingdom.',
+    id: 'mahjong-dash',
+    title: 'Mahjong Dash',
+    thumbnail: 'https://picsum.photos/seed/mahjong/800/500',
+    category: 'Puzzle',
+    description: 'Classic Mahjong tile-matching puzzle game. Match pairs of tiles to clear the board!',
     featured: true,
   },
   {
