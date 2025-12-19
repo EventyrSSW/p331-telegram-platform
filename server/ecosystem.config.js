@@ -1,3 +1,20 @@
+const path = require('path');
+const fs = require('fs');
+
+// Load .env file manually
+const envPath = path.join(__dirname, '.env');
+const envVars = {};
+
+if (fs.existsSync(envPath)) {
+  const envContent = fs.readFileSync(envPath, 'utf8');
+  envContent.split('\n').forEach(line => {
+    const match = line.match(/^([^=]+)=(.*)$/);
+    if (match) {
+      envVars[match[1].trim()] = match[2].trim();
+    }
+  });
+}
+
 module.exports = {
   apps: [{
     name: 'p331-backend',
@@ -10,9 +27,8 @@ module.exports = {
     env_production: {
       NODE_ENV: 'production',
       PORT: 5331,
+      ...envVars,
     },
-    // Load .env file from the server directory
-    node_args: '-r dotenv/config',
     log_date_format: 'YYYY-MM-DD HH:mm:ss',
     merge_logs: true,
   }],
