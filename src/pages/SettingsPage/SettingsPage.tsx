@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
 import { Header, Section, CoinBalance, BuyCoinsCard, CoinPackage } from '../../components';
 import { useAuth } from '../../contexts/AuthContext';
@@ -9,9 +9,23 @@ import styles from './SettingsPage.module.css';
 export const SettingsPage = () => {
   const [tonConnectUI] = useTonConnectUI();
   const wallet = useTonWallet();
-  const { user, isLoading, refreshUser } = useAuth();
+  const { user, isLoading, refreshUser, updateWallet } = useAuth();
   const { config, loading: configLoading } = useConfig();
   const [isPurchasing, setIsPurchasing] = useState(false);
+
+  // Sync wallet address to backend when connected
+  useEffect(() => {
+    const syncWallet = async () => {
+      if (wallet && user && wallet.account.address !== user.walletAddress) {
+        try {
+          await updateWallet(wallet.account.address);
+        } catch (err) {
+          console.error('Failed to sync wallet:', err);
+        }
+      }
+    };
+    syncWallet();
+  }, [wallet, user, updateWallet]);
 
   const handleConnectWallet = () => {
     tonConnectUI.openModal();
@@ -104,6 +118,23 @@ export const SettingsPage = () => {
                   onClick={handleDisconnectWallet}
                 >
                   Disconnect
+                </button>
+              </div>
+            </div>
+          ) : user?.walletAddress ? (
+            <div className={styles.walletConnected}>
+              <div className={styles.walletInfo}>
+                <div>
+                  <div className={styles.walletLabel}>Saved Wallet</div>
+                  <div className={styles.walletAddress}>
+                    {truncateAddress(user.walletAddress)}
+                  </div>
+                </div>
+                <button
+                  className={styles.connectButton}
+                  onClick={handleConnectWallet}
+                >
+                  Reconnect
                 </button>
               </div>
             </div>
