@@ -16,6 +16,9 @@ model User {
   username        String?
   firstName       String?
   lastName        String?
+  languageCode    String?   // Telegram language code
+  photoUrl        String?   // Profile photo URL
+  isPremium       Boolean   @default(false) // Premium status
   walletAddress   String?   @unique
   coinBalance     Int       @default(0)
   createdAt       DateTime  @default(now())
