@@ -1,6 +1,22 @@
 import { ApiError } from '../utils/errors';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+const TOKEN_KEY = 'p331_auth_token';
+
+export interface User {
+  id: string;
+  telegramId: number;
+  username: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  coinBalance: number;
+  walletAddress: string | null;
+}
+
+export interface AuthResponse {
+  token: string;
+  user: User;
+}
 
 export interface Game {
   id: string;
@@ -39,6 +55,25 @@ export interface AppConfig {
 }
 
 class ApiService {
+  private token: string | null = null;
+
+  constructor() {
+    this.token = localStorage.getItem(TOKEN_KEY);
+  }
+
+  setToken(token: string | null) {
+    this.token = token;
+    if (token) {
+      localStorage.setItem(TOKEN_KEY, token);
+    } else {
+      localStorage.removeItem(TOKEN_KEY);
+    }
+  }
+
+  getToken(): string | null {
+    return this.token;
+  }
+
   private async fetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`;
 
@@ -47,6 +82,11 @@ class ApiService {
       'ngrok-skip-browser-warning': 'true',
       ...options?.headers as Record<string, string>,
     };
+
+    // Add JWT token if available
+    if (this.token) {
+      headers['Authorization'] = `Bearer ${this.token}`;
+    }
 
     // Add Telegram init data for authentication
     const initData = window.Telegram?.WebApp?.initData;
@@ -75,6 +115,19 @@ class ApiService {
     }
 
     return await response.json();
+  }
+
+  async authenticateWithTelegram(initData: string): Promise<AuthResponse> {
+    const result = await this.fetch<AuthResponse>('/auth/telegram', {
+      method: 'POST',
+      body: JSON.stringify({ initData }),
+    });
+    this.setToken(result.token);
+    return result;
+  }
+
+  async getMe(): Promise<{ user: User }> {
+    return this.fetch<{ user: User }>('/auth/me');
   }
 
   async getGames(): Promise<{ games: Game[] }> {
