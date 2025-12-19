@@ -1,6 +1,7 @@
 import { RouterProvider } from 'react-router-dom'
 import { TelegramProvider, useTelegram } from './providers/TelegramProvider'
 import { TonConnectProvider } from './providers/TonConnectProvider'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import { router } from './router'
 
 function AppContent() {
@@ -15,11 +16,13 @@ function AppContent() {
 
 function App() {
   return (
-    <TonConnectProvider>
-      <TelegramProvider>
-        <AppContent />
-      </TelegramProvider>
-    </TonConnectProvider>
+    <ErrorBoundary>
+      <TonConnectProvider>
+        <TelegramProvider>
+          <AppContent />
+        </TelegramProvider>
+      </TonConnectProvider>
+    </ErrorBoundary>
   )
 }
 

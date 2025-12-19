@@ -1,0 +1,28 @@
+.errorContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  padding: 24px;
+  text-align: center;
+}
+
+.errorContainer h2 {
+  margin-bottom: 12px;
+  color: var(--color-error, #ff4444);
+}
+
+.errorContainer p {
+  margin-bottom: 16px;
+  color: var(--color-text-secondary);
+}
+
+.retryButton {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  background: var(--color-primary, #0088cc);
+  color: white;
+  cursor: pointer;
+}
