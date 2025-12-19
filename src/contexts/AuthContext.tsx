@@ -16,6 +16,7 @@ interface AuthContextValue {
   login: () => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
+  updateWallet: (walletAddress: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -79,6 +80,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, [logout]);
 
+  const updateWallet = useCallback(async (walletAddress: string) => {
+    if (!user) return;
+
+    try {
+      await api.linkWallet(walletAddress);
+      // Update local user state with new wallet address
+      setUser(prev => prev ? { ...prev, walletAddress } : null);
+    } catch (err) {
+      console.error('Failed to link wallet:', err);
+      throw err;
+    }
+  }, [user]);
+
   // Auto-login on mount
   useEffect(() => {
     const token = api.getToken();
@@ -103,6 +117,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     login,
     logout,
     refreshUser,
+    updateWallet,
   };
 
   return (
