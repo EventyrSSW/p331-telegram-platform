@@ -15,7 +15,10 @@ export const coinAmountSchema = z.object({
 export const addCoinsSchema = coinAmountSchema.extend({
   transactionHash: z.string()
     .min(1, 'Transaction hash cannot be empty')
-    .optional(), // For future blockchain verification
+    .optional(),
+  tonAmount: z.string()
+    .regex(/^\d+$/, 'Invalid TON amount')
+    .optional(), // Amount in nanoTON as string (BigInt serialization)
 });
 
 export const linkWalletSchema = z.object({

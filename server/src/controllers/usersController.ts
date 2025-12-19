@@ -39,7 +39,7 @@ export const usersController = {
         return res.status(400).json({ error: bodyParse.error.issues[0].message });
       }
 
-      const { amount, transactionHash: tonTxHash } = bodyParse.data;
+      const { amount, transactionHash, tonAmount } = bodyParse.data;
 
       // Ensure user exists in database
       await userService.findOrCreateByTelegramId(telegramUser.id, {
@@ -48,7 +48,10 @@ export const usersController = {
         lastName: telegramUser.last_name,
       });
 
-      const user = await userService.addCoins(telegramUser.id, amount, tonTxHash);
+      const user = await userService.addCoins(telegramUser.id, amount, {
+        tonTxHash: transactionHash,
+        tonAmount: tonAmount ? BigInt(tonAmount) : undefined,
+      });
 
       res.json({
         telegramId: telegramUser.id,

@@ -106,7 +106,11 @@ export const SettingsPage = () => {
       console.log('Transaction sent:', result);
 
       // Transaction successful - add coins to user balance
-      await api.addCoins(totalCoins);
+      // Pass the BOC (signed transaction) as hash and the TON amount
+      await api.addCoins(totalCoins, {
+        transactionHash: result.boc,
+        tonAmount: amountInNanoTon,
+      });
 
       // Refresh user data to get updated balance
       await refreshUser();

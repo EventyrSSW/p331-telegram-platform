@@ -151,11 +151,18 @@ class ApiService {
 
   async addCoins(
     amount: number,
-    transactionHash?: string
+    options?: {
+      transactionHash?: string;
+      tonAmount?: string; // nanoTON as string
+    }
   ): Promise<UserBalance> {
     return this.fetch<UserBalance>('/users/me/add-coins', {
       method: 'POST',
-      body: JSON.stringify({ amount, transactionHash }),
+      body: JSON.stringify({
+        amount,
+        transactionHash: options?.transactionHash,
+        tonAmount: options?.tonAmount,
+      }),
     });
   }
 
