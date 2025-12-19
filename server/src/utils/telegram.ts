@@ -17,10 +17,14 @@ export interface TelegramInitData {
 
 export function verifyTelegramWebAppData(initData: string, botToken: string): TelegramInitData | null {
   try {
+    console.log('Telegram auth: initData length:', initData.length);
+    console.log('Telegram auth: botToken length:', botToken?.length, 'starts with:', botToken?.slice(0, 10));
+
     const urlParams = new URLSearchParams(initData);
     const hash = urlParams.get('hash');
 
     if (!hash) {
+      console.warn('Telegram auth: no hash in initData');
       return null;
     }
 
@@ -33,6 +37,8 @@ export function verifyTelegramWebAppData(initData: string, botToken: string): Te
       .map(([key, value]) => `${key}=${value}`)
       .join('\n');
 
+    console.log('Telegram auth: dataCheckString:', dataCheckString.substring(0, 100) + '...');
+
     // Create secret key from bot token
     const secretKey = crypto
       .createHmac('sha256', 'WebAppData')
@@ -44,6 +50,9 @@ export function verifyTelegramWebAppData(initData: string, botToken: string): Te
       .createHmac('sha256', secretKey)
       .update(dataCheckString)
       .digest('hex');
+
+    console.log('Telegram auth: received hash:', hash);
+    console.log('Telegram auth: expected hash:', expectedHash);
 
     if (hash !== expectedHash) {
       console.warn('Telegram auth: hash mismatch - check TELEGRAM_BOT_TOKEN');
