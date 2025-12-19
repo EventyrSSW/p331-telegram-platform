@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import gamesRoutes from './games';
 import usersRoutes from './users';
+import configRoutes from './config';
 import { telegramAuthMiddleware } from '../middleware/telegramAuth';
 
 const router = Router();
@@ -12,6 +13,7 @@ router.get('/health', (req, res) => {
 
 // Public routes
 router.use('/games', gamesRoutes);
+router.use('/config', configRoutes);
 
 // Protected routes
 router.use('/users', telegramAuthMiddleware, usersRoutes);
