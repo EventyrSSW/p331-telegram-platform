@@ -1,3 +1,5 @@
+import { ApiError } from '../utils/errors';
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 export interface Game {
@@ -32,21 +34,27 @@ class ApiService {
       headers['X-Telegram-Init-Data'] = initData;
     }
 
-    try {
-      const response = await fetch(url, {
-        ...options,
-        headers,
-      });
+    const response = await fetch(url, {
+      ...options,
+      headers,
+    });
 
-      if (!response.ok) {
-        throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+    if (!response.ok) {
+      let errorMessage = `HTTP ${response.status}`;
+      let errorDetails: unknown;
+
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.error || errorMessage;
+        errorDetails = errorData.details;
+      } catch {
+        // Response wasn't JSON
       }
 
-      return await response.json();
-    } catch (error) {
-      console.error('API request error:', error);
-      throw error;
+      throw new ApiError(response.status, errorMessage, errorDetails);
     }
+
+    return await response.json();
   }
 
   async getGames(): Promise<{ games: Game[] }> {
