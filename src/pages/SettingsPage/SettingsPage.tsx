@@ -53,7 +53,6 @@ export const SettingsPage = () => {
           {
             address: PAYMENT_RECEIVER_ADDRESS,
             amount: amountInNanoTon,
-            payload: '', // Optional: can add a comment/payload
           },
         ],
       };
