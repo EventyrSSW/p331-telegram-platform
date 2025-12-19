@@ -71,8 +71,29 @@ export class AuthService {
    */
   verifyToken(token: string): AuthPayload | null {
     try {
-      return jwt.verify(token, config.jwt.secret) as AuthPayload;
-    } catch {
+      const decoded = jwt.verify(token, config.jwt.secret);
+
+      if (
+        typeof decoded === 'object' &&
+        decoded !== null &&
+        'userId' in decoded &&
+        'telegramId' in decoded &&
+        typeof (decoded as AuthPayload).userId === 'string' &&
+        typeof (decoded as AuthPayload).telegramId === 'number'
+      ) {
+        return decoded as AuthPayload;
+      }
+
+      console.warn('Token payload has invalid shape');
+      return null;
+    } catch (error) {
+      if (error instanceof jwt.TokenExpiredError) {
+        // Token expired - this is normal, don't log as error
+      } else if (error instanceof jwt.JsonWebTokenError) {
+        console.warn('Invalid token signature or format');
+      } else {
+        console.error('Unexpected JWT verification error:', error);
+      }
       return null;
     }
   }
