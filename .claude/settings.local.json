@@ -29,7 +29,10 @@
       "Bash(git push:*)",
       "Bash(vercel:*)",
       "Bash(chmod:*)",
-      "Bash(VITE_API_URL=https://bernardina-nonadaptable-zoie.ngrok-free.dev npm run build:*)"
+      "Bash(VITE_API_URL=https://bernardina-nonadaptable-zoie.ngrok-free.dev npm run build:*)",
+      "Bash(xargs -I {} sh -c 'echo \"\"\"\"=== {} ===\"\"\"\" && wc -l {}')",
+      "Bash(find:*)",
+      "Bash(git -C /Users/olegvoytenko/Development/p331-telegram-platform rev-parse HEAD)"
     ],
     "deny": [],
     "ask": []

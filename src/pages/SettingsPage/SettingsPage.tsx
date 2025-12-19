@@ -2,11 +2,8 @@ import { useState } from 'react';
 import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
 import { Header, Section, CoinBalance, BuyCoinsCard, CoinPackage } from '../../components';
 import { useUserBalance } from '../../hooks/useUserBalance';
+import { env } from '../../config/env';
 import styles from './SettingsPage.module.css';
-
-// Your business wallet address to receive TON payments
-// Replace with your actual wallet address!
-const PAYMENT_RECEIVER_ADDRESS = 'UQCNMVjrNzzj3aKxytmiqxHI9FEsmwjZh5BhDndglxyB-Dba';
 
 const coinPackages: CoinPackage[] = [
   { id: 'small', amount: 100, price: 1 },
@@ -51,7 +48,7 @@ export const SettingsPage = () => {
         validUntil: Math.floor(Date.now() / 1000) + 600, // 10 minutes from now
         messages: [
           {
-            address: PAYMENT_RECEIVER_ADDRESS,
+            address: env.paymentReceiverAddress,
             amount: amountInNanoTon,
           },
         ],
