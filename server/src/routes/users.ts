@@ -7,5 +7,6 @@ const router = Router();
 router.get('/me/balance', usersController.getBalance);
 router.post('/me/add-coins', coinOperationLimiter, usersController.addCoins);
 router.post('/me/deduct-coins', coinOperationLimiter, usersController.deductCoins);
+router.post('/me/link-wallet', usersController.linkWallet);
 
 export default router;
