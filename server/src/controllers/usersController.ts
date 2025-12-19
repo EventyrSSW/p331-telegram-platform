@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { userService } from '../services/userService';
-import { coinAmountSchema, addCoinsSchema } from '../schemas/users';
+import { coinAmountSchema, addCoinsSchema, linkWalletSchema } from '../schemas/users';
 
 export const usersController = {
   async getBalance(req: Request, res: Response, next: NextFunction) {
@@ -87,6 +87,28 @@ export const usersController = {
       if (error.message === 'Insufficient balance') {
         return res.status(400).json({ error: 'Insufficient balance' });
       }
+      next(error);
+    }
+  },
+
+  async linkWallet(req: Request, res: Response, next: NextFunction) {
+    try {
+      const telegramUser = req.telegramUser!;
+      const bodyParse = linkWalletSchema.safeParse(req.body);
+
+      if (!bodyParse.success) {
+        return res.status(400).json({ error: bodyParse.error.issues[0].message });
+      }
+
+      const { walletAddress } = bodyParse.data;
+
+      const user = await userService.linkWallet(telegramUser.id, walletAddress);
+
+      res.json({
+        telegramId: telegramUser.id,
+        walletAddress: user.walletAddress,
+      });
+    } catch (error) {
       next(error);
     }
   },

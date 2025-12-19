@@ -17,3 +17,7 @@ export const addCoinsSchema = coinAmountSchema.extend({
     .min(1, 'Transaction hash cannot be empty')
     .optional(), // For future blockchain verification
 });
+
+export const linkWalletSchema = z.object({
+  walletAddress: z.string().min(1, 'Wallet address is required'),
+});
