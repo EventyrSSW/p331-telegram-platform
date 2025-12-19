@@ -44,21 +44,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     try {
       const initData = window.Telegram?.WebApp?.initData;
+      console.log('[Auth] Starting login, initData exists:', !!initData);
 
       if (!initData) {
         // Not in Telegram context - development mode
-        console.warn('Not in Telegram context, skipping auth');
+        console.warn('[Auth] Not in Telegram context, skipping auth');
         setIsLoading(false);
         return;
       }
 
+      console.log('[Auth] Calling authenticateWithTelegram...');
       const result = await api.authenticateWithTelegram(initData);
+      console.log('[Auth] Login successful, user:', result.user?.telegramId);
       setUser(result.user);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Authentication failed';
       setError(message);
-      console.error('Auth error:', err);
+      console.error('[Auth] Login error:', err);
     } finally {
+      console.log('[Auth] Login complete, setting isLoading=false');
       setIsLoading(false);
     }
   }, []);
@@ -69,12 +73,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   const refreshUser = useCallback(async () => {
-    if (!api.getToken()) return;
+    const token = api.getToken();
+    console.log('[Auth] refreshUser called, token exists:', !!token);
+    if (!token) return;
 
     try {
+      console.log('[Auth] Calling getMe...');
       const result = await api.getMe();
+      console.log('[Auth] getMe success, user:', result.user?.telegramId);
       setUser(result.user);
     } catch (err) {
+      console.error('[Auth] getMe failed, logging out:', err);
       // Token might be expired
       logout();
     }
@@ -96,15 +105,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Auto-login on mount
   useEffect(() => {
     const token = api.getToken();
+    console.log('[Auth] useEffect mount, token exists:', !!token);
 
     if (token) {
       // Try to use existing token first
-      refreshUser().catch(() => {
-        // Token invalid, try fresh login
-        login();
-      });
+      console.log('[Auth] Trying existing token...');
+      refreshUser()
+        .then(() => {
+          console.log('[Auth] Token refresh succeeded');
+          setIsLoading(false);
+        })
+        .catch(() => {
+          // Token invalid, try fresh login
+          console.log('[Auth] Token refresh failed, trying fresh login');
+          login();
+        });
     } else {
       // No token, try to login with Telegram
+      console.log('[Auth] No token, starting fresh login');
       login();
     }
   }, [login, refreshUser]);
