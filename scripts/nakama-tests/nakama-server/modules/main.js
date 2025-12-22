@@ -720,8 +720,9 @@ function checkAllResultsSubmitted(state) {
   return true;
 }
 
-function generateHouseScore(playerScore) {
-  var houseWins = Math.random() < 0.51;
+function generateHouseScore(playerScore, houseEdge) {
+  var edge = houseEdge || DEFAULT_HOUSE_EDGE;
+  var houseWins = Math.random() < edge;
   if (houseWins) {
     return Math.floor(playerScore * (1 + 0.01 + Math.random() * 0.14));
   } else {
@@ -745,7 +746,7 @@ function resolveMatch(nk, logger, dispatcher, state) {
       if (!player.isHouse) {
         var playerResult = state.results[userId];
         if (playerResult) {
-          var houseScore = generateHouseScore(playerResult.score);
+          var houseScore = generateHouseScore(playerResult.score, state.config.houseEdge);
           state.results["house"] = { score: houseScore, timeMs: 0 };
           logger.info("House score: " + houseScore + ", Player score: " + playerResult.score);
         }
