@@ -427,11 +427,23 @@ function resolveMatch(nk, logger, dispatcher, state) {
     }
   }
 
-  for (var userId in state.players) {
-    var player = state.players[userId];
-    if (!player.isHouse && userId !== winnerId) {
+  for (var odredacted in state.players) {
+    var player = state.players[odredacted];
+    if (!player.isHouse && odredacted !== winnerId) {
+      // Record loss transaction (0 coins, but tracked in ledger)
+      nk.walletUpdate(odredacted, { coins: 0 }, {
+        type: "match_lost",
+        gameId: state.gameId,
+        matchType: state.housePlayer ? "PVH" : "PVP",
+        betAmount: state.betAmount,
+        lostAmount: state.betAmount,
+        opponentType: state.housePlayer ? "house" : "player",
+        winnerId: winnerId,
+        timestamp: Date.now()
+      }, true);
+
       nk.notificationSend(
-        userId,
+        odredacted,
         "You lost",
         { matchType: state.housePlayer ? "PVH" : "PVP" },
         101,
