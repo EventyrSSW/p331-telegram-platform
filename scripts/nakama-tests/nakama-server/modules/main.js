@@ -293,7 +293,13 @@ function matchLeave(ctx, logger, nk, dispatcher, tick, state, presences) {
     logger.info("Player " + presence.username + " left match");
 
     if (state.status === "waiting") {
-      nk.walletUpdate(presence.userId, { coins: state.betAmount }, {}, true);
+      nk.walletUpdate(presence.userId, { coins: state.betAmount }, {
+        type: "bet_refund",
+        gameId: state.gameId,
+        betAmount: state.betAmount,
+        reason: "player_left_waiting",
+        timestamp: Date.now()
+      }, true);
       logger.info("Refunded " + state.betAmount + " coins to " + presence.userId);
       delete state.players[presence.userId];
     }
