@@ -40,6 +40,74 @@ function InitModule(ctx, logger, nk, initializer) {
     }
   }
 
+  // Initialize game config if not exists
+  var configReads = nk.storageRead([
+    { collection: "config", key: "game_settings", userId: null }
+  ]);
+
+  if (configReads.length === 0) {
+    var defaultConfig = {
+      commissionRate: 0.10,
+      waitTimeoutSec: 30,
+      playTimeoutSec: 86400,
+      houseEdge: 0.51,
+      minBet: 10,
+      maxBet: 10000,
+      // Skill tiers define level ranges based on player average score
+      skillTiers: [
+        { name: "beginner", minScore: 0, maxScore: 1000, levelRange: [1, 20] },
+        { name: "novice", minScore: 1001, maxScore: 2000, levelRange: [15, 40] },
+        { name: "intermediate", minScore: 2001, maxScore: 4000, levelRange: [30, 60] },
+        { name: "advanced", minScore: 4001, maxScore: 7000, levelRange: [50, 85] },
+        { name: "expert", minScore: 7001, maxScore: 10000, levelRange: [70, 100] },
+        { name: "master", minScore: 10001, maxScore: 999999, levelRange: [85, 120] }
+      ],
+      games: {
+        mahjong: {
+          name: "Mahjong Solitaire",
+          description: "Match tiles to clear the board",
+          enabled: true,
+          defaultTimeLimit: 300,
+          levelCount: 120
+        }
+      }
+    };
+
+    nk.storageWrite([
+      {
+        collection: "config",
+        key: "game_settings",
+        userId: null,
+        value: defaultConfig,
+        permissionRead: 2,
+        permissionWrite: 0
+      }
+    ]);
+    logger.info("Created default game config");
+  }
+
+  // Initialize mahjong levels if not exists
+  var levelsReads = nk.storageRead([
+    { collection: "levels", key: "mahjong", userId: null }
+  ]);
+
+  if (levelsReads.length === 0) {
+    // Create sample levels structure (in production, load from file or admin API)
+    var sampleLevels = generateSampleMahjongLevels();
+
+    nk.storageWrite([
+      {
+        collection: "levels",
+        key: "mahjong",
+        userId: null,
+        value: { levels: sampleLevels },
+        permissionRead: 2,
+        permissionWrite: 0
+      }
+    ]);
+    logger.info("Created " + sampleLevels.length + " mahjong levels");
+  }
+
   logger.info("Game match module initialized!");
 }
 
