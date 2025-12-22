@@ -105,7 +105,12 @@ betAmount = parseInt(betAmount);
   }
 
 logger.info("About to deduct " + betAmount + " coins from wallet");
-  nk.walletUpdate(userId, { coins: -betAmount }, {}, false);
+  nk.walletUpdate(userId, { coins: -betAmount }, {
+    type: "bet_placed",
+    gameId: gameId,
+    betAmount: betAmount,
+    timestamp: Date.now()
+  }, true);
 logger.info("Wallet update completed successfully");
   logger.info("Deducted " + betAmount + " coins from " + userId);
 
