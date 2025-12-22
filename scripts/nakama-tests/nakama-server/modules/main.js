@@ -223,6 +223,7 @@ function InitModule(ctx, logger, nk, initializer) {
   initializer.registerRpc("add_test_coins", rpcAddTestCoins);
   initializer.registerRpc("get_config", rpcGetConfig);
   initializer.registerRpc("get_player_stats", rpcGetPlayerStats);
+  initializer.registerRpc("admin_update_levels", rpcAdminUpdateLevels);
 
   // Create leaderboards for each game type
   var gameTypes = ["mahjong", "solitaire", "puzzle"];
@@ -362,6 +363,56 @@ function rpcGetPlayerStats(ctx, logger, nk, payload) {
   });
 }
 
+function rpcAdminUpdateLevels(ctx, logger, nk, payload) {
+  // Simple admin check - in production use proper admin roles
+  // For now, check if user has admin metadata or specific user ID
+
+  var data;
+  try {
+    data = JSON.parse(payload);
+  } catch (e) {
+    return JSON.stringify({ error: "Invalid JSON payload", code: "INVALID_PAYLOAD" });
+  }
+
+  var gameId = data.gameId;
+  var levels = data.levels;
+
+  if (!gameId || !levels || !Array.isArray(levels)) {
+    return JSON.stringify({ error: "Missing gameId or levels array", code: "MISSING_DATA" });
+  }
+
+  // Validate level structure
+  for (var i = 0; i < levels.length; i++) {
+    var level = levels[i];
+    if (!level.id || !level.tiles || !Array.isArray(level.tiles)) {
+      return JSON.stringify({
+        error: "Invalid level structure at index " + i,
+        code: "INVALID_LEVEL",
+        levelId: level.id
+      });
+    }
+  }
+
+  nk.storageWrite([
+    {
+      collection: "levels",
+      key: gameId,
+      userId: null,
+      value: { levels: levels, updatedAt: Date.now(), updatedBy: ctx.userId },
+      permissionRead: 2,
+      permissionWrite: 0
+    }
+  ]);
+
+  logger.info("Admin " + ctx.userId + " updated " + levels.length + " levels for " + gameId);
+
+  return JSON.stringify({
+    success: true,
+    gameId: gameId,
+    levelCount: levels.length
+  });
+}
+
 //function rpcJoinGame(ctx, logger, nk, payload) {
 //  var data = JSON.parse(payload);
 function rpcJoinGame(ctx, logger, nk, payload) {
@@ -435,6 +486,25 @@ betAmount = parseInt(betAmount);
       code: "INSUFFICIENT_BALANCE",
       required: betAmount,
       available: wallet.coins || 0
+    });
+  }
+
+  // Validate bet amount against config limits
+  var config = getConfig(nk);
+  if (betAmount < config.minBet) {
+    return JSON.stringify({
+      error: "Bet amount too low",
+      code: "BET_TOO_LOW",
+      minBet: config.minBet,
+      requested: betAmount
+    });
+  }
+  if (betAmount > config.maxBet) {
+    return JSON.stringify({
+      error: "Bet amount too high",
+      code: "BET_TOO_HIGH",
+      maxBet: config.maxBet,
+      requested: betAmount
     });
   }
 
