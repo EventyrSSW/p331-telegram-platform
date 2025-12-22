@@ -382,6 +382,44 @@ function resolveMatch(nk, logger, dispatcher, state) {
 
   logger.info("Winner: " + (winner ? winner.username : "none") + ", Payout: " + payout);
 
+  // Handle house winning - player loses bet (already deducted, just record it)
+  if (winner && winner.isHouse) {
+    // Find the real player who lost to house
+    for (var odredacted in state.players) {
+      var player = state.players[odredacted];
+      if (!player.isHouse) {
+        // Record loss to house (bet was already deducted at join time)
+        nk.walletUpdate(odredacted, { coins: 0 }, {
+          type: "match_lost_to_house",
+          gameId: state.gameId,
+          matchType: "PVH",
+          betAmount: state.betAmount,
+          lostAmount: state.betAmount,
+          playerScore: state.results[odredacted] ? state.results[odredacted].score : 0,
+          houseScore: state.results["house"] ? state.results["house"].score : 0,
+          timestamp: Date.now()
+        }, true);
+
+        nk.notificationSend(
+          odredacted,
+          "You lost to House",
+          {
+            matchType: "PVH",
+            lostAmount: state.betAmount,
+            playerScore: state.results[odredacted] ? state.results[odredacted].score : 0,
+            houseScore: state.results["house"] ? state.results["house"].score : 0
+          },
+          102,  // Different code for house loss
+          "",
+          true
+        );
+
+        logger.info("Player " + odredacted + " lost " + state.betAmount + " coins to house");
+        break;
+      }
+    }
+  }
+
   if (winner && !winner.isHouse) {
     nk.walletUpdate(winner.userId, { coins: payout }, {
       type: "match_won",
