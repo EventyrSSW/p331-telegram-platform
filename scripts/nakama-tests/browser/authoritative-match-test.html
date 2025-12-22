@@ -268,12 +268,37 @@
 
   <div class="card">
     <h2>1. Connect & Wallet</h2>
+    <div class="login-options" style="margin-bottom: 15px;">
+      <div style="margin-bottom: 10px;">
+        <label style="margin-right: 15px;">
+          <input type="radio" name="loginMode" value="new" checked> Generate New User
+        </label>
+        <label>
+          <input type="radio" name="loginMode" value="existing"> Use Existing Device ID
+        </label>
+      </div>
+      <div id="existingUserSection" style="display: none; margin-bottom: 10px;">
+        <input type="text" id="deviceIdInput" placeholder="Enter device ID" style="width: 300px;">
+        <button id="pasteDeviceIdBtn" class="secondary" style="padding: 10px;">📋 Paste</button>
+      </div>
+      <div id="savedUsersSection" style="display: none; margin-bottom: 10px;">
+        <label style="color: #888; font-size: 12px;">Recent users:</label>
+        <select id="savedUsersSelect" style="width: 320px;">
+          <option value="">-- Select saved user --</option>
+        </select>
+      </div>
+    </div>
     <button id="connectBtn">Connect to Nakama</button>
     <span id="userInfo"></span>
     <span id="walletDisplay" class="wallet-display" style="display:none;">Coins: <span id="coinBalance">0</span></span>
+    <div id="currentDeviceId" style="display: none; margin-top: 10px; font-size: 12px; color: #888;">
+      Device ID: <code id="deviceIdDisplay" style="cursor: pointer; user-select: all;"></code>
+      <button id="copyDeviceIdBtn" class="secondary" style="padding: 5px 10px; font-size: 11px;">Copy</button>
+    </div>
     <div style="margin-top: 10px;">
       <button id="addCoinsBtn" class="secondary" disabled>Add 1000 Coins (Test)</button>
       <button id="refreshWalletBtn" class="secondary" disabled>Refresh Wallet</button>
+      <button id="disconnectBtn" class="secondary" style="display: none;">Disconnect</button>
     </div>
   </div>
 
@@ -430,6 +455,80 @@
     let selectedGame = 'mahjong';
     let matchStatus = 'idle';
     let gameConfig = null;
+    let currentDeviceId = null;
+
+    // Local storage helpers for saved users
+    const SAVED_USERS_KEY = 'nakama_saved_users';
+
+    function getSavedUsers() {
+      try {
+        return JSON.parse(localStorage.getItem(SAVED_USERS_KEY) || '[]');
+      } catch {
+        return [];
+      }
+    }
+
+    function saveUser(deviceId, username, userId) {
+      const users = getSavedUsers();
+      // Remove if already exists
+      const existingIndex = users.findIndex(u => u.deviceId === deviceId);
+      if (existingIndex >= 0) {
+        users.splice(existingIndex, 1);
+      }
+      // Add to beginning
+      users.unshift({ deviceId, username, userId, lastUsed: Date.now() });
+      // Keep only last 10
+      localStorage.setItem(SAVED_USERS_KEY, JSON.stringify(users.slice(0, 10)));
+      updateSavedUsersDropdown();
+    }
+
+    function updateSavedUsersDropdown() {
+      const users = getSavedUsers();
+      const select = document.getElementById('savedUsersSelect');
+      select.innerHTML = '<option value="">-- Select saved user --</option>';
+      users.forEach(user => {
+        const option = document.createElement('option');
+        option.value = user.deviceId;
+        option.textContent = `${user.username} (${user.deviceId.substring(0, 20)}...)`;
+        select.appendChild(option);
+      });
+      document.getElementById('savedUsersSection').style.display = users.length > 0 ? 'block' : 'none';
+    }
+
+    function setupLoginModeToggle() {
+      const radios = document.querySelectorAll('input[name="loginMode"]');
+      radios.forEach(radio => {
+        radio.addEventListener('change', () => {
+          const isExisting = radio.value === 'existing' && radio.checked;
+          document.getElementById('existingUserSection').style.display = isExisting ? 'block' : 'none';
+          if (isExisting) {
+            updateSavedUsersDropdown();
+          }
+        });
+      });
+
+      document.getElementById('savedUsersSelect').addEventListener('change', (e) => {
+        if (e.target.value) {
+          document.getElementById('deviceIdInput').value = e.target.value;
+        }
+      });
+
+      document.getElementById('pasteDeviceIdBtn').addEventListener('click', async () => {
+        try {
+          const text = await navigator.clipboard.readText();
+          document.getElementById('deviceIdInput').value = text;
+        } catch {
+          log('Failed to paste from clipboard', 'error');
+        }
+      });
+
+      document.getElementById('copyDeviceIdBtn').addEventListener('click', () => {
+        if (currentDeviceId) {
+          navigator.clipboard.writeText(currentDeviceId);
+          log('Device ID copied to clipboard!', 'success');
+        }
+      });
+    }
 
     function log(message, type = 'info') {
       const logEl = document.getElementById('log');
@@ -467,10 +566,33 @@
         log('Connecting to Nakama server...');
         client = new Client(SERVER_KEY, HOST, PORT, false);
 
-        const deviceId = 'auth-match-test-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5);
-        session = await client.authenticateDevice(deviceId, true, 'player_' + Date.now());
+        // Determine device ID based on login mode
+        const loginMode = document.querySelector('input[name="loginMode"]:checked').value;
+        let deviceId;
+        let createUser = true;
+
+        if (loginMode === 'existing') {
+          deviceId = document.getElementById('deviceIdInput').value.trim();
+          if (!deviceId) {
+            log('Please enter a device ID', 'error');
+            return;
+          }
+          createUser = false; // Don't create new user, just authenticate
+          log(`Using existing device ID: ${deviceId}`, 'info');
+        } else {
+          deviceId = 'auth-match-test-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5);
+          log(`Generated new device ID: ${deviceId}`, 'info');
+        }
+
+        currentDeviceId = deviceId;
+        session = await client.authenticateDevice(deviceId, createUser, createUser ? 'player_' + Date.now() : undefined);
         log('Authenticated as: ' + session.user_id, 'success');
         document.getElementById('userInfo').textContent = ' User: ' + session.username;
+
+        // Show and save device ID
+        document.getElementById('deviceIdDisplay').textContent = deviceId;
+        document.getElementById('currentDeviceId').style.display = 'block';
+        saveUser(deviceId, session.username, session.user_id);
 
         socket = client.createSocket();
 
@@ -528,6 +650,8 @@
         document.getElementById('refreshWalletBtn').disabled = false;
         document.getElementById('getConfigBtn').disabled = false;
         document.getElementById('getStatsBtn').disabled = false;
+        document.getElementById('disconnectBtn').style.display = 'inline-block';
+        document.querySelector('.login-options').style.display = 'none';
 
         await refreshWallet();
         await getConfig();
@@ -904,6 +1028,25 @@
       }
     }
 
+    async function disconnect() {
+      try {
+        if (currentMatch) {
+          await socket.leaveMatch(currentMatch.match_id);
+          currentMatch = null;
+        }
+        if (socket) {
+          socket.disconnect(false);
+          socket = null;
+        }
+        session = null;
+        log('Disconnected from server', 'success');
+        resetUI();
+        updateStatus('disconnected');
+      } catch (e) {
+        log('Disconnect failed: ' + e.message, 'error');
+      }
+    }
+
     function playAgain() {
       resetMatchUI();
       getPlayerStats();
@@ -932,12 +1075,16 @@
       document.getElementById('refreshWalletBtn').disabled = true;
       document.getElementById('getConfigBtn').disabled = true;
       document.getElementById('getStatsBtn').disabled = true;
+      document.getElementById('disconnectBtn').style.display = 'none';
       document.getElementById('userInfo').textContent = '';
       document.getElementById('walletDisplay').style.display = 'none';
+      document.getElementById('currentDeviceId').style.display = 'none';
       document.getElementById('configDisplay').innerHTML = '';
       document.getElementById('statsDisplay').innerHTML = '';
+      document.querySelector('.login-options').style.display = 'block';
       resetMatchUI();
       currentMatch = null;
+      currentDeviceId = null;
     }
 
     // Tab switching
@@ -968,6 +1115,7 @@
     document.getElementById('getConfigBtn').onclick = getConfig;
     document.getElementById('getStatsBtn').onclick = getPlayerStats;
     document.getElementById('leaveMatchBtn').onclick = leaveMatch;
+    document.getElementById('disconnectBtn').onclick = disconnect;
     document.getElementById('submitScoreBtn').onclick = submitScore;
     document.getElementById('randomScoreBtn').onclick = randomScore;
     document.getElementById('playAgainBtn').onclick = playAgain;
@@ -979,6 +1127,10 @@
       navigator.clipboard.writeText(document.getElementById('levelJson').textContent);
       log('Level JSON copied to clipboard!', 'success');
     };
+
+    // Initialize login mode toggle and load saved users
+    setupLoginModeToggle();
+    updateSavedUsersDropdown();
   </script>
 </body>
 </html>
