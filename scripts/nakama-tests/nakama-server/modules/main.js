@@ -383,7 +383,15 @@ function resolveMatch(nk, logger, dispatcher, state) {
   logger.info("Winner: " + (winner ? winner.username : "none") + ", Payout: " + payout);
 
   if (winner && !winner.isHouse) {
-    nk.walletUpdate(winner.userId, { coins: payout }, {}, true);
+    nk.walletUpdate(winner.userId, { coins: payout }, {
+      type: "match_won",
+      gameId: state.gameId,
+      matchType: state.housePlayer ? "PVH" : "PVP",
+      betAmount: state.betAmount,
+      payout: payout,
+      opponentType: state.housePlayer ? "house" : "player",
+      timestamp: Date.now()
+    }, true);
 
     nk.notificationSend(
       winner.userId,
