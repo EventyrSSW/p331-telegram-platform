@@ -3,6 +3,79 @@
 var WAIT_TIMEOUT_SEC = 30;
 var PLAY_TIMEOUT_SEC = 86400;
 
+// Generate sample mahjong levels for initial setup
+// In production, these would be loaded from a file or admin API
+function generateSampleMahjongLevels() {
+  var levels = [];
+  var tileTypes = [
+    "bamboo_1", "bamboo_2", "bamboo_3", "bamboo_4", "bamboo_5",
+    "bamboo_6", "bamboo_7", "bamboo_8", "bamboo_9",
+    "character_1", "character_2", "character_3", "character_4", "character_5",
+    "character_6", "character_7", "character_8", "character_9",
+    "circle_1", "circle_2", "circle_3", "circle_4", "circle_5",
+    "circle_6", "circle_7", "circle_8", "circle_9",
+    "wind_east", "wind_south", "wind_west", "wind_north",
+    "dragon_red", "dragon_green", "dragon_white",
+    "flower_1", "flower_2", "flower_3", "flower_4",
+    "season_1", "season_2", "season_3", "season_4"
+  ];
+
+  for (var i = 1; i <= 120; i++) {
+    // Determine tier based on level number
+    var tier = "beginner";
+    if (i > 85) tier = "master";
+    else if (i > 70) tier = "expert";
+    else if (i > 50) tier = "advanced";
+    else if (i > 30) tier = "intermediate";
+    else if (i > 15) tier = "novice";
+
+    // Generate tile layout (simplified - real layouts would be designed)
+    var tiles = [];
+    var pairCount = 36 + Math.floor(i / 10) * 4; // More pairs for higher levels
+    var tileId = 1;
+
+    for (var p = 0; p < pairCount; p++) {
+      var tileType = tileTypes[p % tileTypes.length];
+      var layer = Math.floor(p / 24);
+      var posInLayer = p % 24;
+      var row = Math.floor(posInLayer / 6);
+      var col = posInLayer % 6;
+
+      // Add pair of matching tiles
+      tiles.push({
+        id: tileId++,
+        type: tileType,
+        layer: layer,
+        x: col * 2 + (layer * 0.5),
+        y: row * 2 + (layer * 0.5)
+      });
+      tiles.push({
+        id: tileId++,
+        type: tileType,
+        layer: layer,
+        x: col * 2 + 1 + (layer * 0.5),
+        y: row * 2 + (layer * 0.5)
+      });
+    }
+
+    levels.push({
+      id: i,
+      name: "Level " + i,
+      tier: tier,
+      tiles: tiles,
+      totalPairs: pairCount,
+      timeBonus: 300 - Math.floor(i / 2), // Less time bonus for harder levels
+      metadata: {
+        difficulty: Math.ceil(i / 20),
+        theme: i % 5 === 0 ? "special" : "classic",
+        createdAt: Date.now()
+      }
+    });
+  }
+
+  return levels;
+}
+
 function InitModule(ctx, logger, nk, initializer) {
   logger.info("Initializing game match module...");
 
