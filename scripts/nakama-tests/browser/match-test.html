@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nakama Match Test</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #1a1a2e;
+      color: #eee;
+    }
+    h1 { color: #00d9ff; }
+    .card {
+      background: #16213e;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 15px 0;
+      border: 1px solid #0f3460;
+    }
+    .card h2 { margin-top: 0; color: #00d9ff; }
+    button {
+      background: #e94560;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 5px 5px 5px 0;
+      font-size: 14px;
+    }
+    button:hover { background: #ff6b6b; }
+    button:disabled { background: #666; cursor: not-allowed; }
+    input {
+      padding: 10px;
+      border: 1px solid #0f3460;
+      border-radius: 5px;
+      background: #0f3460;
+      color: #eee;
+      margin: 5px 5px 5px 0;
+      font-size: 14px;
+      width: 300px;
+    }
+    .log {
+      background: #0a0a15;
+      border: 1px solid #0f3460;
+      border-radius: 5px;
+      padding: 15px;
+      height: 300px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 13px;
+      white-space: pre-wrap;
+    }
+    .log .info { color: #00d9ff; }
+    .log .success { color: #95d5b2; }
+    .log .error { color: #fca5a5; }
+    .log .state { color: #ffd93d; }
+    .log .presence { color: #c084fc; }
+    .status {
+      display: inline-block;
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      margin-left: 10px;
+    }
+    .status.connected { background: #1b4332; color: #95d5b2; }
+    .status.disconnected { background: #7f1d1d; color: #fca5a5; }
+    .match-info {
+      background: #0f3460;
+      padding: 10px;
+      border-radius: 5px;
+      margin-top: 10px;
+      font-family: monospace;
+    }
+    a { color: #00d9ff; }
+    .controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  </style>
+  <script type="importmap">
+  {
+    "imports": {
+      "@heroiclabs/nakama-js": "https://esm.sh/@heroiclabs/nakama-js@2.8.0"
+    }
+  }
+  </script>
+</head>
+<body>
+  <p><a href="index.html">&larr; Back to Index</a></p>
+  <h1>Match Test <span id="status" class="status disconnected">Disconnected</span></h1>
+
+  <div class="card">
+    <h2>1. Connect</h2>
+    <button id="connectBtn">Connect to Nakama</button>
+    <span id="userInfo"></span>
+  </div>
+
+  <div class="card">
+    <h2>2. Create or Join Match</h2>
+    <div class="controls">
+      <button id="createBtn" disabled>Create Match</button>
+      <span>or</span>
+      <input type="text" id="matchIdInput" placeholder="Enter Match ID to join">
+      <button id="joinBtn" disabled>Join Match</button>
+    </div>
+    <button id="leaveBtn" disabled>Leave Match</button>
+    <div id="matchInfo" class="match-info" style="display:none;"></div>
+  </div>
+
+  <div class="card">
+    <h2>3. Send Match State</h2>
+    <div class="controls">
+      <select id="opCode">
+        <option value="1">OpCode 1 (Position)</option>
+        <option value="2">OpCode 2 (Action)</option>
+        <option value="3">OpCode 3 (Custom)</option>
+      </select>
+      <input type="text" id="stateInput" placeholder='{"x": 10, "y": 20}' value='{"x": 10, "y": 20}'>
+      <button id="sendStateBtn" disabled>Send State</button>
+    </div>
+    <p style="color:#888; margin-top:10px;">
+      Quick actions:
+      <button id="posBtn" disabled>Send Random Position</button>
+      <button id="actBtn" disabled>Send Jump</button>
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>Log</h2>
+    <button id="clearBtn">Clear Log</button>
+    <div id="log" class="log"></div>
+  </div>
+
+  <script type="module">
+    import { Client } from '@heroiclabs/nakama-js';
+
+    const SERVER_KEY = 'defaultkey';
+    const HOST = '136.243.136.206';
+    const PORT = 7350;
+
+    let client, session, socket, currentMatch;
+
+    function log(message, type = 'info') {
+      const logEl = document.getElementById('log');
+      const time = new Date().toLocaleTimeString();
+      logEl.innerHTML += `<span class="${type}">[${time}] ${message}</span>\n`;
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    function clearLog() {
+      document.getElementById('log').innerHTML = '';
+    }
+
+    function updateStatus(connected) {
+      const statusEl = document.getElementById('status');
+      statusEl.className = 'status ' + (connected ? 'connected' : 'disconnected');
+      statusEl.textContent = connected ? 'Connected' : 'Disconnected';
+    }
+
+    async function connect() {
+      try {
+        log('Connecting to Nakama server...');
+        client = new Client(SERVER_KEY, HOST, PORT, false);
+
+        const deviceId = 'match-test-' + Date.now();
+        session = await client.authenticateDevice(deviceId, true, 'match_user_' + Date.now());
+        log('Authenticated as: ' + session.user_id, 'success');
+        document.getElementById('userInfo').textContent = ' User: ' + session.username;
+
+        socket = client.createSocket();
+
+        socket.ondisconnect = () => {
+          log('Socket disconnected', 'error');
+          updateStatus(false);
+          resetUI();
+        };
+
+        socket.onmatchdata = (matchData) => {
+          const decoder = new TextDecoder();
+          let data;
+          try {
+            data = JSON.parse(decoder.decode(matchData.data));
+          } catch {
+            data = decoder.decode(matchData.data);
+          }
+          log(`[Match State] OpCode: ${matchData.op_code}, From: ${matchData.presence.username}`, 'state');
+          log(`  Data: ${JSON.stringify(data)}`, 'state');
+        };
+
+        socket.onmatchpresence = (presence) => {
+          presence.joins?.forEach(p => log(`Player joined: ${p.username} (${p.user_id})`, 'presence'));
+          presence.leaves?.forEach(p => log(`Player left: ${p.username}`, 'presence'));
+          updateMatchInfo();
+        };
+
+        await socket.connect(session, true);
+        log('Socket connected!', 'success');
+        updateStatus(true);
+
+        document.getElementById('connectBtn').disabled = true;
+        document.getElementById('createBtn').disabled = false;
+        document.getElementById('joinBtn').disabled = false;
+      } catch (e) {
+        log('Connection failed: ' + e.message, 'error');
+      }
+    }
+
+    async function createMatch() {
+      try {
+        log('Creating new match...');
+        currentMatch = await socket.createMatch();
+        log('Match created: ' + currentMatch.match_id, 'success');
+        log('Share this Match ID with others to join!', 'info');
+
+        updateMatchInfo();
+        enableMatchControls();
+      } catch (e) {
+        log('Create match failed: ' + e.message, 'error');
+      }
+    }
+
+    async function joinMatch() {
+      try {
+        const matchId = document.getElementById('matchIdInput').value.trim();
+        if (!matchId) {
+          log('Please enter a Match ID', 'error');
+          return;
+        }
+
+        log('Joining match: ' + matchId);
+        currentMatch = await socket.joinMatch(matchId);
+        log('Joined match: ' + currentMatch.match_id, 'success');
+        log('Players in match: ' + (currentMatch.presences?.length || 0), 'info');
+
+        updateMatchInfo();
+        enableMatchControls();
+      } catch (e) {
+        log('Join match failed: ' + e.message, 'error');
+      }
+    }
+
+    async function leaveMatch() {
+      try {
+        if (currentMatch) {
+          await socket.leaveMatch(currentMatch.match_id);
+          log('Left match: ' + currentMatch.match_id, 'success');
+          currentMatch = null;
+        }
+        disableMatchControls();
+        document.getElementById('matchInfo').style.display = 'none';
+      } catch (e) {
+        log('Leave match failed: ' + e.message, 'error');
+      }
+    }
+
+    async function sendState() {
+      try {
+        if (!currentMatch) return;
+
+        const opCode = parseInt(document.getElementById('opCode').value);
+        const stateText = document.getElementById('stateInput').value;
+
+        await socket.sendMatchState(currentMatch.match_id, opCode, stateText);
+        log(`Sent state (OpCode ${opCode}): ${stateText}`, 'success');
+      } catch (e) {
+        log('Send state failed: ' + e.message, 'error');
+      }
+    }
+
+    async function sendPosition() {
+      if (!currentMatch) return;
+      const state = {
+        x: Math.floor(Math.random() * 100),
+        y: Math.floor(Math.random() * 100),
+        z: 0
+      };
+      await socket.sendMatchState(currentMatch.match_id, 1, JSON.stringify(state));
+      log(`Sent position: ${JSON.stringify(state)}`, 'success');
+    }
+
+    async function sendAction(action) {
+      if (!currentMatch) return;
+      const state = { action: action, timestamp: Date.now() };
+      await socket.sendMatchState(currentMatch.match_id, 2, JSON.stringify(state));
+      log(`Sent action: ${action}`, 'success');
+    }
+
+    function updateMatchInfo() {
+      if (!currentMatch) return;
+      const infoEl = document.getElementById('matchInfo');
+      infoEl.style.display = 'block';
+      infoEl.innerHTML = `
+        <strong>Match ID:</strong> ${currentMatch.match_id}<br>
+        <strong>Players:</strong> ${currentMatch.presences?.length || 0}<br>
+        <strong>Self:</strong> ${currentMatch.self?.username || session.username}
+      `;
+    }
+
+    function enableMatchControls() {
+      document.getElementById('createBtn').disabled = true;
+      document.getElementById('joinBtn').disabled = true;
+      document.getElementById('leaveBtn').disabled = false;
+      document.getElementById('sendStateBtn').disabled = false;
+      document.getElementById('posBtn').disabled = false;
+      document.getElementById('actBtn').disabled = false;
+    }
+
+    function disableMatchControls() {
+      document.getElementById('createBtn').disabled = false;
+      document.getElementById('joinBtn').disabled = false;
+      document.getElementById('leaveBtn').disabled = true;
+      document.getElementById('sendStateBtn').disabled = true;
+      document.getElementById('posBtn').disabled = true;
+      document.getElementById('actBtn').disabled = true;
+    }
+
+    function resetUI() {
+      document.getElementById('connectBtn').disabled = false;
+      document.getElementById('createBtn').disabled = true;
+      document.getElementById('joinBtn').disabled = true;
+      disableMatchControls();
+      document.getElementById('matchInfo').style.display = 'none';
+      document.getElementById('userInfo').textContent = '';
+      currentMatch = null;
+    }
+
+    // Event listeners
+    document.getElementById('connectBtn').onclick = connect;
+    document.getElementById('createBtn').onclick = createMatch;
+    document.getElementById('joinBtn').onclick = joinMatch;
+    document.getElementById('leaveBtn').onclick = leaveMatch;
+    document.getElementById('sendStateBtn').onclick = sendState;
+    document.getElementById('posBtn').onclick = sendPosition;
+    document.getElementById('actBtn').onclick = () => sendAction('jump');
+    document.getElementById('clearBtn').onclick = clearLog;
+  </script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+{
+  "name": "nakama-tests",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "Nakama server test scripts",
+  "scripts": {
+    "test:all": "node run-all.js",
+    "test:auth": "node 01-authentication.js",
+    "test:user": "node 02-user-account.js",
+    "test:storage": "node 03-storage.js",
+    "test:friends": "node 04-friends.js",
+    "test:groups": "node 05-groups.js",
+    "test:chat": "node 06-chat.js",
+    "test:matches": "node 07-matches.js",
+    "test:matchmaker": "node 08-matchmaker.js",
+    "test:leaderboards": "node 09-leaderboards.js",
+    "test:notifications": "node 10-notifications.js"
+  },
+  "dependencies": {
+    "@heroiclabs/nakama-js": "^2.8.0",
+    "isomorphic-ws": "^5.0.0",
+    "ws": "^8.18.3"
+  }
+}

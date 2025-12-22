@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nakama Test Suite</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #1a1a2e;
+      color: #eee;
+    }
+    h1 { color: #00d9ff; }
+    .card {
+      background: #16213e;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 15px 0;
+      border: 1px solid #0f3460;
+    }
+    .card h2 { margin-top: 0; color: #00d9ff; }
+    a {
+      display: inline-block;
+      background: #e94560;
+      color: white;
+      padding: 10px 20px;
+      text-decoration: none;
+      border-radius: 5px;
+      margin: 5px 5px 5px 0;
+    }
+    a:hover { background: #ff6b6b; }
+    .status {
+      padding: 10px;
+      border-radius: 5px;
+      margin-top: 10px;
+    }
+    .status.connected { background: #1b4332; color: #95d5b2; }
+    .status.disconnected { background: #7f1d1d; color: #fca5a5; }
+    .status.loading { background: #1e3a5f; color: #93c5fd; }
+    code {
+      background: #0f3460;
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+  </style>
+  <script type="importmap">
+  {
+    "imports": {
+      "@heroiclabs/nakama-js": "https://esm.sh/@heroiclabs/nakama-js@2.8.0"
+    }
+  }
+  </script>
+</head>
+<body>
+  <h1>Nakama WebSocket Test Suite</h1>
+
+  <div class="card">
+    <h2>Server Info</h2>
+    <p><strong>Server:</strong> <code>http://136.243.136.206:7350</code></p>
+    <p><strong>Server Key:</strong> <code>defaultkey</code></p>
+    <div id="serverStatus" class="status loading">Loading SDK...</div>
+  </div>
+
+  <div class="card">
+    <h2>Test Pages</h2>
+    <a href="chat-test.html">Chat Test</a>
+    <a href="match-test.html">Match Test</a>
+    <a href="matchmaker-test.html">Matchmaker Test</a>
+    <a href="all-in-one.html">All-in-One Test</a>
+    <a href="authoritative-match-test.html" style="background:#7c3aed;">Server Authoritative</a>
+  </div>
+
+  <div class="card">
+    <h2>Instructions</h2>
+    <ol>
+      <li><strong>Chat Test:</strong> Test joining chat rooms and sending messages</li>
+      <li><strong>Match Test:</strong> Create matches, send/receive state</li>
+      <li><strong>Matchmaker Test:</strong> Open in 2 tabs to test player matching</li>
+      <li><strong>All-in-One:</strong> Complete test suite in one page</li>
+      <li><strong>Server Authoritative:</strong> Test RPC-based matches with betting, wallet, and house player</li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <h2>How to Run</h2>
+    <p>Serve these files with any HTTP server:</p>
+    <pre style="background:#0f3460;padding:10px;border-radius:5px;overflow-x:auto;">
+# Using Python
+cd scripts/nakama-tests/browser
+python3 -m http.server 8080
+
+# Then open http://localhost:8080</pre>
+  </div>
+
+  <script type="module">
+    import { Client } from '@heroiclabs/nakama-js';
+
+    const statusEl = document.getElementById('serverStatus');
+    statusEl.textContent = 'SDK loaded, checking server...';
+
+    try {
+      const client = new Client('defaultkey', '136.243.136.206', 7350, false);
+      const session = await client.authenticateDevice('health-check-' + Date.now(), true);
+      statusEl.className = 'status connected';
+      statusEl.textContent = 'Server is online! Connected as: ' + session.user_id;
+    } catch (e) {
+      statusEl.className = 'status disconnected';
+      statusEl.textContent = 'Server offline or unreachable: ' + e.message;
+    }
+  </script>
+</body>
+</html>

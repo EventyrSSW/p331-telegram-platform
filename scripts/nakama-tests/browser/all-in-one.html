@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nakama All-in-One Test</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #1a1a2e;
+      color: #eee;
+    }
+    h1 { color: #00d9ff; }
+    h3 { color: #00d9ff; margin-top: 0; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 15px;
+    }
+    .card {
+      background: #16213e;
+      border-radius: 8px;
+      padding: 15px;
+      border: 1px solid #0f3460;
+    }
+    button {
+      background: #e94560;
+      color: white;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 3px 3px 3px 0;
+      font-size: 13px;
+    }
+    button:hover { background: #ff6b6b; }
+    button:disabled { background: #666; cursor: not-allowed; }
+    button.small { padding: 5px 10px; font-size: 11px; }
+    button.secondary { background: #0f3460; }
+    input {
+      padding: 8px;
+      border: 1px solid #0f3460;
+      border-radius: 5px;
+      background: #0f3460;
+      color: #eee;
+      margin: 3px 3px 3px 0;
+      font-size: 13px;
+      width: 150px;
+    }
+    .log {
+      background: #0a0a15;
+      border: 1px solid #0f3460;
+      border-radius: 5px;
+      padding: 10px;
+      height: 150px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 11px;
+      white-space: pre-wrap;
+    }
+    .log .info { color: #00d9ff; }
+    .log .success { color: #95d5b2; }
+    .log .error { color: #fca5a5; }
+    .log .data { color: #ffd93d; }
+    .status {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+    }
+    .status.on { background: #1b4332; color: #95d5b2; }
+    .status.off { background: #7f1d1d; color: #fca5a5; }
+    .status.wait { background: #7c3aed; color: #e9d5ff; }
+    a { color: #00d9ff; }
+    .section-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    hr { border: none; border-top: 1px solid #0f3460; margin: 15px 0; }
+  </style>
+  <script type="importmap">
+  {
+    "imports": {
+      "@heroiclabs/nakama-js": "https://esm.sh/@heroiclabs/nakama-js@2.8.0"
+    }
+  }
+  </script>
+</head>
+<body>
+  <p><a href="index.html">&larr; Back to Index</a></p>
+  <h1>Nakama All-in-One Test</h1>
+
+  <!-- Connection -->
+  <div class="card" style="margin-bottom:15px;">
+    <div class="section-title">
+      <h3>Connection</h3>
+      <span id="connStatus" class="status off">Disconnected</span>
+    </div>
+    <button id="connectBtn">Connect</button>
+    <button id="disconnectBtn" class="secondary">Disconnect</button>
+    <span id="userInfo" style="margin-left:10px;color:#888;"></span>
+  </div>
+
+  <div class="grid">
+    <!-- Chat -->
+    <div class="card">
+      <div class="section-title">
+        <h3>Chat</h3>
+        <span id="chatStatus" class="status off">-</span>
+      </div>
+      <input type="text" id="roomName" placeholder="Room name" value="test-room" style="width:100px;">
+      <button id="joinChatBtn">Join</button>
+      <button id="leaveChatBtn" class="secondary small">Leave</button>
+      <div style="margin-top:8px;">
+        <input type="text" id="chatMsg" placeholder="Message" style="width:180px;">
+        <button id="sendChatBtn">Send</button>
+      </div>
+      <div id="chatLog" class="log" style="margin-top:8px;"></div>
+    </div>
+
+    <!-- Match -->
+    <div class="card">
+      <div class="section-title">
+        <h3>Match</h3>
+        <span id="matchStatus" class="status off">-</span>
+      </div>
+      <button id="createMatchBtn">Create</button>
+      <input type="text" id="matchId" placeholder="Match ID" style="width:120px;">
+      <button id="joinMatchBtn">Join</button>
+      <button id="leaveMatchBtn" class="secondary small">Leave</button>
+      <div style="margin-top:8px;">
+        <button id="sendMatchStateBtn" class="small">Send State</button>
+        <button id="sendRandomPosBtn" class="small secondary">Random Pos</button>
+      </div>
+      <div id="matchLog" class="log" style="margin-top:8px;"></div>
+    </div>
+
+    <!-- Matchmaker -->
+    <div class="card">
+      <div class="section-title">
+        <h3>Matchmaker</h3>
+        <span id="mmStatus" class="status off">-</span>
+      </div>
+      <p style="font-size:11px;color:#888;margin:5px 0;">Open in 2+ tabs to test</p>
+      <button id="findMatchBtn">Find Match</button>
+      <button id="cancelMMBtn" class="secondary small">Cancel</button>
+      <div id="mmLog" class="log" style="margin-top:8px;"></div>
+    </div>
+
+    <!-- Storage -->
+    <div class="card">
+      <div class="section-title">
+        <h3>Storage</h3>
+        <span id="storageStatus" class="status off">-</span>
+      </div>
+      <button id="writeStorageBtn">Write</button>
+      <button id="readStorageBtn">Read</button>
+      <button id="listStorageBtn">List</button>
+      <button id="deleteStorageBtn" class="secondary small">Delete</button>
+      <div id="storageLog" class="log" style="margin-top:8px;"></div>
+    </div>
+
+    <!-- Friends -->
+    <div class="card">
+      <div class="section-title">
+        <h3>Friends</h3>
+        <span id="friendsStatus" class="status off">-</span>
+      </div>
+      <button id="listFriendsBtn">List Friends</button>
+      <button id="listRequestsBtn">Requests</button>
+      <div id="friendsLog" class="log" style="margin-top:8px;"></div>
+    </div>
+
+    <!-- Groups -->
+    <div class="card">
+      <div class="section-title">
+        <h3>Groups</h3>
+        <span id="groupsStatus" class="status off">-</span>
+      </div>
+      <button id="createGroupBtn">Create</button>
+      <button id="listGroupsBtn">List</button>
+      <button id="listMyGroupsBtn">My Groups</button>
+      <div id="groupsLog" class="log" style="margin-top:8px;"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { Client } from '@heroiclabs/nakama-js';
+
+    const SERVER_KEY = 'defaultkey';
+    const HOST = '136.243.136.206';
+    const PORT = 7350;
+
+    let client, session, socket;
+    let currentChannel, currentMatch, mmTicket;
+
+    // Logging helpers
+    function logTo(id, msg, type = 'info') {
+      const el = document.getElementById(id);
+      const time = new Date().toLocaleTimeString();
+      el.innerHTML += `<span class="${type}">[${time}] ${msg}</span>\n`;
+      el.scrollTop = el.scrollHeight;
+    }
+
+    function setStatus(id, status) {
+      const el = document.getElementById(id);
+      el.className = 'status ' + status;
+      const labels = { on: 'Active', off: '-', wait: 'Waiting...' };
+      el.textContent = labels[status] || status;
+    }
+
+    // Connection
+    async function connect() {
+      try {
+        client = new Client(SERVER_KEY, HOST, PORT, false);
+        const deviceId = 'all-test-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5);
+        session = await client.authenticateDevice(deviceId, true, 'user_' + Date.now());
+
+        document.getElementById('userInfo').textContent = session.username;
+
+        socket = client.createSocket();
+
+        // Chat events
+        socket.onchannelmessage = (m) => {
+          const content = JSON.parse(m.content);
+          logTo('chatLog', `[${m.username}]: ${content.text || JSON.stringify(content)}`, 'data');
+        };
+
+        // Match events
+        socket.onmatchdata = (d) => {
+          const decoder = new TextDecoder();
+          logTo('matchLog', `State from ${d.presence.username}: ${decoder.decode(d.data)}`, 'data');
+        };
+        socket.onmatchpresence = (p) => {
+          p.joins?.forEach(u => logTo('matchLog', `${u.username} joined`, 'info'));
+          p.leaves?.forEach(u => logTo('matchLog', `${u.username} left`, 'info'));
+        };
+
+        // Matchmaker events
+        socket.onmatchmakermatched = async (m) => {
+          logTo('mmLog', 'MATCHED! Players: ' + m.users?.length, 'success');
+          setStatus('mmStatus', 'on');
+          mmTicket = null;
+
+          try {
+            currentMatch = await socket.joinMatch(null, m.token);
+            logTo('mmLog', 'Joined match: ' + currentMatch.match_id, 'success');
+            setStatus('matchStatus', 'on');
+            document.getElementById('matchId').value = currentMatch.match_id;
+          } catch (e) {
+            logTo('mmLog', 'Join failed: ' + e.message, 'error');
+          }
+        };
+
+        await socket.connect(session, true);
+
+        setStatus('connStatus', 'on');
+        document.getElementById('connStatus').textContent = 'Connected';
+        document.getElementById('connectBtn').disabled = true;
+
+        logTo('chatLog', 'Ready', 'success');
+        logTo('matchLog', 'Ready', 'success');
+        logTo('mmLog', 'Ready', 'success');
+        logTo('storageLog', 'Ready', 'success');
+        logTo('friendsLog', 'Ready', 'success');
+        logTo('groupsLog', 'Ready', 'success');
+      } catch (e) {
+        alert('Connection failed: ' + e.message);
+      }
+    }
+
+    function disconnect() {
+      socket?.disconnect(false);
+      setStatus('connStatus', 'off');
+      document.getElementById('connStatus').textContent = 'Disconnected';
+      document.getElementById('connectBtn').disabled = false;
+      document.getElementById('userInfo').textContent = '';
+    }
+
+    // Chat
+    async function joinChat() {
+      try {
+        const room = document.getElementById('roomName').value || 'test-room';
+        currentChannel = await socket.joinChat(room, 1, true, false);
+        logTo('chatLog', 'Joined: ' + currentChannel.id, 'success');
+        setStatus('chatStatus', 'on');
+      } catch (e) {
+        logTo('chatLog', 'Error: ' + e.message, 'error');
+      }
+    }
+
+    async function leaveChat() {
+      if (currentChannel) {
+        await socket.leaveChat(currentChannel.id);
+        logTo('chatLog', 'Left channel', 'info');
+        setStatus('chatStatus', 'off');
+        currentChannel = null;
+      }
+    }
+
+    async function sendChat() {
+      if (!currentChannel) return logTo('chatLog', 'Join a room first', 'error');
+      const msg = document.getElementById('chatMsg').value;
+      if (!msg) return;
+      await socket.writeChatMessage(currentChannel.id, { text: msg });
+      document.getElementById('chatMsg').value = '';
+    }
+
+    // Match
+    async function createMatch() {
+      try {
+        currentMatch = await socket.createMatch();
+        logTo('matchLog', 'Created: ' + currentMatch.match_id, 'success');
+        document.getElementById('matchId').value = currentMatch.match_id;
+        setStatus('matchStatus', 'on');
+      } catch (e) {
+        logTo('matchLog', 'Error: ' + e.message, 'error');
+      }
+    }
+
+    async function joinMatchById() {
+      try {
+        const id = document.getElementById('matchId').value;
+        if (!id) return logTo('matchLog', 'Enter match ID', 'error');
+        currentMatch = await socket.joinMatch(id);
+        logTo('matchLog', 'Joined: ' + currentMatch.match_id, 'success');
+        setStatus('matchStatus', 'on');
+      } catch (e) {
+        logTo('matchLog', 'Error: ' + e.message, 'error');
+      }
+    }
+
+    async function leaveCurrentMatch() {
+      if (currentMatch) {
+        await socket.leaveMatch(currentMatch.match_id);
+        logTo('matchLog', 'Left match', 'info');
+        setStatus('matchStatus', 'off');
+        currentMatch = null;
+      }
+    }
+
+    async function sendMatchState() {
+      if (!currentMatch) return logTo('matchLog', 'Join a match first', 'error');
+      const data = { msg: 'hello', time: Date.now() };
+      await socket.sendMatchState(currentMatch.match_id, 1, JSON.stringify(data));
+      logTo('matchLog', 'Sent: ' + JSON.stringify(data), 'success');
+    }
+
+    async function sendRandomPos() {
+      if (!currentMatch) return logTo('matchLog', 'Join a match first', 'error');
+      const pos = { x: Math.floor(Math.random() * 100), y: Math.floor(Math.random() * 100) };
+      await socket.sendMatchState(currentMatch.match_id, 1, JSON.stringify(pos));
+      logTo('matchLog', 'Pos: ' + JSON.stringify(pos), 'success');
+    }
+
+    // Matchmaker
+    async function findMatch() {
+      try {
+        const ticket = await socket.addMatchmaker('*', 2, 4);
+        mmTicket = ticket.ticket;
+        logTo('mmLog', 'Searching... ticket: ' + mmTicket.substring(0, 20) + '...', 'info');
+        setStatus('mmStatus', 'wait');
+      } catch (e) {
+        logTo('mmLog', 'Error: ' + e.message, 'error');
+      }
+    }
+
+    async function cancelMM() {
+      if (mmTicket) {
+        await socket.removeMatchmaker(mmTicket);
+        logTo('mmLog', 'Cancelled', 'info');
+        setStatus('mmStatus', 'off');
+        mmTicket = null;
+      }
+    }
+
+    // Storage
+    async function writeStorage() {
+      try {
+        await client.writeStorageObjects(session, [{
+          collection: 'test',
+          key: 'data',
+          value: { score: Math.floor(Math.random() * 1000), time: Date.now() },
+          permission_read: 1,
+          permission_write: 1
+        }]);
+        logTo('storageLog', 'Written!', 'success');
+        setStatus('storageStatus', 'on');
+      } catch (e) {
+        logTo('storageLog', 'Error: ' + e.message, 'error');
+      }
+    }
+
+    async function readStorage() {
+      try {
+        const res = await client.readStorageObjects(session, {
+          object_ids: [{ collection: 'test', key: 'data', user_id: session.user_id }]
+        });
+        if (res.objects?.length) {
+          logTo('storageLog', 'Data: ' + JSON.stringify(res.objects[0].value), 'data');
+        } else {
+          logTo('storageLog', 'No data found', 'info');
+        }
+      } catch (e) {
+        logTo('storageLog', 'Error: ' + e.message, 'error');
+      }
+    }
+
+    async function listStorage() {
+      try {
+        const res = await client.listStorageObjects(session, 'test', session.user_id, 10);
+        logTo('storageLog', 'Found ' + (res.objects?.length || 0) + ' objects', 'info');
+      } catch (e) {
+        logTo('storageLog', 'Error: ' + e.message, 'error');
+      }
+    }
+
+    async function deleteStorage() {
+      try {
+        await client.deleteStorageObjects(session, {
+          object_ids: [{ collection: 'test', key: 'data' }]
+        });
+        logTo('storageLog', 'Deleted', 'success');
+        setStatus('storageStatus', 'off');
+      } catch (e) {
+        logTo('storageLog', 'Error: ' + e.message, 'error');
+      }
+    }
+
+    // Friends
+    async function listFriends() {
+      try {
+        const res = await client.listFriends(session, 0, 20);
+        logTo('friendsLog', 'Friends: ' + (res.friends?.length || 0), 'info');
+        res.friends?.forEach(f => logTo('friendsLog', '  - ' + f.user.username, 'data'));
+      } catch (e) {
+        logTo('friendsLog', 'Error: ' + e.message, 'error');
+      }
+    }
+
+    async function listRequests() {
+      try {
+        const res = await client.listFriends(session, 2, 20);
+        logTo('friendsLog', 'Requests: ' + (res.friends?.length || 0), 'info');
+      } catch (e) {
+        logTo('friendsLog', 'Error: ' + e.message, 'error');
+      }
+    }
+
+    // Groups
+    async function createGroup() {
+      try {
+        const group = await client.createGroup(session, {
+          name: 'TestGroup_' + Date.now(),
+          description: 'Test group',
+          open: true
+        });
+        logTo('groupsLog', 'Created: ' + group.id, 'success');
+        setStatus('groupsStatus', 'on');
+      } catch (e) {
+        logTo('groupsLog', 'Error: ' + e.message, 'error');
+      }
+    }
+
+    async function listGroups() {
+      try {
+        const res = await client.listGroups(session, 'Test', null, 10);
+        logTo('groupsLog', 'Found: ' + (res.groups?.length || 0), 'info');
+      } catch (e) {
+        logTo('groupsLog', 'Error: ' + e.message, 'error');
+      }
+    }
+
+    async function listMyGroups() {
+      try {
+        const res = await client.listUserGroups(session, session.user_id, null, 10);
+        logTo('groupsLog', 'My groups: ' + (res.user_groups?.length || 0), 'info');
+      } catch (e) {
+        logTo('groupsLog', 'Error: ' + e.message, 'error');
+      }
+    }
+
+    // Event listeners
+    document.getElementById('connectBtn').onclick = connect;
+    document.getElementById('disconnectBtn').onclick = disconnect;
+
+    // Chat
+    document.getElementById('joinChatBtn').onclick = joinChat;
+    document.getElementById('leaveChatBtn').onclick = leaveChat;
+    document.getElementById('sendChatBtn').onclick = sendChat;
+
+    // Match
+    document.getElementById('createMatchBtn').onclick = createMatch;
+    document.getElementById('joinMatchBtn').onclick = joinMatchById;
+    document.getElementById('leaveMatchBtn').onclick = leaveCurrentMatch;
+    document.getElementById('sendMatchStateBtn').onclick = sendMatchState;
+    document.getElementById('sendRandomPosBtn').onclick = sendRandomPos;
+
+    // Matchmaker
+    document.getElementById('findMatchBtn').onclick = findMatch;
+    document.getElementById('cancelMMBtn').onclick = cancelMM;
+
+    // Storage
+    document.getElementById('writeStorageBtn').onclick = writeStorage;
+    document.getElementById('readStorageBtn').onclick = readStorage;
+    document.getElementById('listStorageBtn').onclick = listStorage;
+    document.getElementById('deleteStorageBtn').onclick = deleteStorage;
+
+    // Friends
+    document.getElementById('listFriendsBtn').onclick = listFriends;
+    document.getElementById('listRequestsBtn').onclick = listRequests;
+
+    // Groups
+    document.getElementById('createGroupBtn').onclick = createGroup;
+    document.getElementById('listGroupsBtn').onclick = listGroups;
+    document.getElementById('listMyGroupsBtn').onclick = listMyGroups;
+  </script>
+</body>
+</html>

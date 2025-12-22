@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nakama Server Authoritative Match Test</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #1a1a2e;
+      color: #eee;
+    }
+    h1 { color: #00d9ff; }
+    .card {
+      background: #16213e;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 15px 0;
+      border: 1px solid #0f3460;
+    }
+    .card h2 { margin-top: 0; color: #00d9ff; }
+    .card.highlight { border-color: #e94560; background: #1f1f3a; }
+    .card.success { border-color: #10b981; }
+    .card.waiting { border-color: #f59e0b; }
+    button {
+      background: #e94560;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 5px 5px 5px 0;
+      font-size: 14px;
+    }
+    button:hover { background: #ff6b6b; }
+    button:disabled { background: #666; cursor: not-allowed; }
+    button.secondary { background: #0f3460; }
+    button.secondary:hover { background: #1a4a7a; }
+    button.success { background: #10b981; }
+    button.success:hover { background: #34d399; }
+    input, select {
+      padding: 10px;
+      border: 1px solid #0f3460;
+      border-radius: 5px;
+      background: #0f3460;
+      color: #eee;
+      margin: 5px 5px 5px 0;
+      font-size: 14px;
+    }
+    .log {
+      background: #0a0a15;
+      border: 1px solid #0f3460;
+      border-radius: 5px;
+      padding: 15px;
+      height: 250px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 13px;
+      white-space: pre-wrap;
+    }
+    .log .info { color: #00d9ff; }
+    .log .success { color: #95d5b2; }
+    .log .error { color: #fca5a5; }
+    .log .match { color: #ffd93d; }
+    .log .waiting { color: #c084fc; }
+    .log .server { color: #f472b6; }
+    .status {
+      display: inline-block;
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      margin-left: 10px;
+    }
+    .status.connected { background: #1b4332; color: #95d5b2; }
+    .status.disconnected { background: #7f1d1d; color: #fca5a5; }
+    .status.waiting { background: #7c3aed; color: #e9d5ff; animation: pulse 1s infinite; }
+    .status.playing { background: #0d9488; color: #ccfbf1; }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    a { color: #00d9ff; }
+    .info-box {
+      background: #0f3460;
+      padding: 15px;
+      border-radius: 5px;
+      margin: 10px 0;
+      font-size: 13px;
+    }
+    .info-box code {
+      background: #1a1a2e;
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+    .game-select {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin: 10px 0;
+    }
+    .game-btn {
+      padding: 15px 25px;
+      background: #0f3460;
+      border: 2px solid #1a4a7a;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .game-btn:hover { border-color: #00d9ff; }
+    .game-btn.selected { border-color: #e94560; background: #1f2937; }
+    .game-btn .name { font-weight: bold; color: #00d9ff; }
+    .game-btn .desc { font-size: 11px; color: #888; margin-top: 5px; }
+    .wallet-display {
+      font-size: 18px;
+      font-weight: bold;
+      color: #ffd93d;
+      margin-left: 20px;
+    }
+    .match-status-panel {
+      background: #0f3460;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 10px 0;
+    }
+    .match-status-panel .label { color: #888; font-size: 12px; }
+    .match-status-panel .value { font-weight: bold; margin-bottom: 10px; }
+    .opponent-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      background: #1a1a2e;
+      border-radius: 5px;
+      margin-top: 10px;
+    }
+    .opponent-info .avatar {
+      width: 40px;
+      height: 40px;
+      background: #e94560;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+  </style>
+  <script type="importmap">
+  {
+    "imports": {
+      "@heroiclabs/nakama-js": "https://esm.sh/@heroiclabs/nakama-js@2.8.0"
+    }
+  }
+  </script>
+</head>
+<body>
+  <p><a href="index.html">&larr; Back to Index</a></p>
+  <h1>Server Authoritative Match Test <span id="status" class="status disconnected">Disconnected</span></h1>
+
+  <div class="card highlight">
+    <h2>About This Test</h2>
+    <div class="info-box">
+      <p><strong>This page tests Server Authoritative Matches</strong> - where the server controls match logic.</p>
+      <p>Before testing, you need to deploy the match handler to Nakama:</p>
+      <ol style="margin: 10px 0; padding-left: 20px;">
+        <li>Add <code>main.ts</code> to your Nakama server's <code>data/modules/</code> folder</li>
+        <li>Restart Nakama server</li>
+        <li>The RPCs <code>join_game</code> and <code>submit_result</code> will be available</li>
+      </ol>
+      <p><strong>Flow:</strong> Call RPC &rarr; Get matchId &rarr; Join match via WebSocket &rarr; Wait for opponent/house &rarr; Play &rarr; Submit score</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>1. Connect & Wallet</h2>
+    <button id="connectBtn">Connect to Nakama</button>
+    <span id="userInfo"></span>
+    <span id="walletDisplay" class="wallet-display" style="display:none;">Coins: <span id="coinBalance">0</span></span>
+    <div style="margin-top: 10px;">
+      <button id="addCoinsBtn" class="secondary" disabled>Add 1000 Coins (Test)</button>
+      <button id="refreshWalletBtn" class="secondary" disabled>Refresh Wallet</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>2. Select Game & Bet</h2>
+    <div class="game-select">
+      <div class="game-btn selected" data-game="mahjong">
+        <div class="name">Mahjong</div>
+        <div class="desc">Tile matching puzzle</div>
+      </div>
+      <div class="game-btn" data-game="solitaire">
+        <div class="name">Solitaire</div>
+        <div class="desc">Classic card game</div>
+      </div>
+      <div class="game-btn" data-game="puzzle">
+        <div class="name">Puzzle</div>
+        <div class="desc">Logic puzzle</div>
+      </div>
+    </div>
+    <div style="margin-top: 15px;">
+      <label>Bet Amount: </label>
+      <select id="betAmount">
+        <option value="10">10 coins</option>
+        <option value="50">50 coins</option>
+        <option value="100" selected>100 coins</option>
+        <option value="500">500 coins</option>
+        <option value="1000">1000 coins</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="card" id="joinGameCard">
+    <h2>3. Join Game</h2>
+    <button id="joinGameBtn" disabled>Join Game (Call RPC)</button>
+    <p style="color:#888; font-size: 13px; margin-top: 10px;">
+      This will call <code>join_game</code> RPC, deduct bet from wallet, and either create a new match or join existing one.
+    </p>
+  </div>
+
+  <div class="card waiting" id="matchCard" style="display:none;">
+    <h2>4. Match Status</h2>
+    <div class="match-status-panel">
+      <div class="label">Match ID</div>
+      <div class="value" id="matchIdDisplay">-</div>
+
+      <div class="label">Status</div>
+      <div class="value" id="matchStatusDisplay">-</div>
+
+      <div class="label">Match Type</div>
+      <div class="value" id="matchTypeDisplay">-</div>
+
+      <div id="opponentSection" style="display:none;">
+        <div class="label">Opponent</div>
+        <div class="opponent-info">
+          <div class="avatar" id="opponentAvatar">?</div>
+          <div>
+            <div id="opponentName">Waiting...</div>
+            <div style="font-size:11px; color:#888;" id="opponentStatus">-</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <button id="leaveMatchBtn" class="secondary">Leave Match</button>
+  </div>
+
+  <div class="card success" id="gameCard" style="display:none;">
+    <h2>5. Play & Submit Score</h2>
+    <div class="info-box">
+      <p>In a real game, this would be the actual gameplay. For testing, simulate a score:</p>
+    </div>
+    <div style="margin: 15px 0;">
+      <label>Your Score: </label>
+      <input type="number" id="scoreInput" value="1000" min="0" max="999999" style="width:120px;">
+      <label style="margin-left:15px;">Time (ms): </label>
+      <input type="number" id="timeInput" value="60000" min="0" style="width:120px;">
+    </div>
+    <button id="submitScoreBtn" class="success">Submit Score</button>
+    <button id="randomScoreBtn" class="secondary">Random Score</button>
+  </div>
+
+  <div class="card" id="resultCard" style="display:none;">
+    <h2>6. Match Result</h2>
+    <div id="resultDisplay" class="match-status-panel">
+      <!-- Filled dynamically -->
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Log</h2>
+    <button id="clearBtn">Clear Log</button>
+    <div id="log" class="log"></div>
+  </div>
+
+  <script type="module">
+    import { Client } from '@heroiclabs/nakama-js';
+
+    const SERVER_KEY = 'defaultkey';
+    const HOST = '136.243.136.206';
+    const PORT = 7350;
+
+    let client, session, socket;
+    let currentMatch = null;
+    let selectedGame = 'mahjong';
+    let matchStatus = 'idle'; // idle, waiting, ready, playing, completed
+
+    function log(message, type = 'info') {
+      const logEl = document.getElementById('log');
+      const time = new Date().toLocaleTimeString();
+      logEl.innerHTML += `<span class="${type}">[${time}] ${message}</span>\n`;
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    function updateStatus(status) {
+      const statusEl = document.getElementById('status');
+      statusEl.className = 'status ' + status;
+      const labels = {
+        connected: 'Connected',
+        disconnected: 'Disconnected',
+        waiting: 'Waiting for opponent...',
+        playing: 'In Match'
+      };
+      statusEl.textContent = labels[status] || status;
+    }
+
+    async function connect() {
+      try {
+        log('Connecting to Nakama server...');
+        client = new Client(SERVER_KEY, HOST, PORT, false);
+
+        const deviceId = 'auth-match-test-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5);
+        session = await client.authenticateDevice(deviceId, true, 'player_' + Date.now());
+        log('Authenticated as: ' + session.user_id, 'success');
+        document.getElementById('userInfo').textContent = ' User: ' + session.username;
+
+        socket = client.createSocket();
+
+        socket.ondisconnect = () => {
+          log('Socket disconnected', 'error');
+          updateStatus('disconnected');
+          resetUI();
+        };
+
+        // Listen for match data from server
+        socket.onmatchdata = (matchData) => {
+          const decoder = new TextDecoder();
+          let data;
+          try {
+            data = JSON.parse(decoder.decode(matchData.data));
+          } catch {
+            data = decoder.decode(matchData.data);
+          }
+
+          log(`[Server Message] OpCode: ${matchData.op_code}`, 'server');
+          log(`  Data: ${JSON.stringify(data)}`, 'server');
+
+          handleServerMessage(matchData.op_code, data);
+        };
+
+        socket.onmatchpresence = (presence) => {
+          presence.joins?.forEach(p => {
+            log(`Player joined: ${p.username}`, 'match');
+            if (p.user_id !== session.user_id) {
+              showOpponent(p.username);
+            }
+          });
+          presence.leaves?.forEach(p => {
+            log(`Player left: ${p.username}`, 'info');
+          });
+        };
+
+        // Listen for notifications (win/lose)
+        socket.onnotification = (notification) => {
+          log(`[Notification] ${notification.subject}`, 'match');
+          log(`  Content: ${JSON.stringify(notification.content)}`, 'match');
+
+          if (notification.code === 100) {
+            showResult('win', notification.content);
+          } else if (notification.code === 101) {
+            showResult('lose', notification.content);
+          }
+        };
+
+        await socket.connect(session, true);
+        log('Socket connected!', 'success');
+        updateStatus('connected');
+
+        document.getElementById('connectBtn').disabled = true;
+        document.getElementById('joinGameBtn').disabled = false;
+        document.getElementById('addCoinsBtn').disabled = false;
+        document.getElementById('refreshWalletBtn').disabled = false;
+
+        await refreshWallet();
+
+      } catch (e) {
+        log('Connection failed: ' + e.message, 'error');
+      }
+    }
+
+    async function refreshWallet() {
+      try {
+        const account = await client.getAccount(session);
+        const wallet = JSON.parse(account.wallet || '{}');
+        const coins = wallet.coins || 0;
+
+        document.getElementById('coinBalance').textContent = coins;
+        document.getElementById('walletDisplay').style.display = 'inline';
+        log(`Wallet: ${coins} coins`, 'info');
+      } catch (e) {
+        log('Failed to get wallet: ' + e.message, 'error');
+      }
+    }
+
+    async function addTestCoins() {
+      try {
+        // This would need a server-side RPC in production
+        // For testing, we'll try to call a test RPC
+        log('Attempting to add test coins...', 'info');
+
+        const response = await client.rpc(session, 'add_test_coins', { amount: 1000 });
+        log('Added 1000 coins!', 'success');
+        await refreshWallet();
+      } catch (e) {
+        log('add_test_coins RPC not available (add it to server for testing): ' + e.message, 'error');
+      }
+    }
+
+    async function joinGame() {
+      try {
+        const gameId = selectedGame;
+        const betAmount = parseInt(document.getElementById('betAmount').value);
+
+        log(`Calling RPC join_game: gameId=${gameId}, betAmount=${betAmount}`, 'info');
+
+        // Note: nakama-js rpc() expects a plain object or already-stringified JSON
+        // The SDK will handle the encoding
+        const response = await client.rpc(session, 'join_game', {
+          gameId: gameId,
+          betAmount: betAmount
+        });
+
+        // Handle both string and object payloads
+        let result;
+        if (typeof response.payload === 'string') {
+          result = JSON.parse(response.payload);
+        } else {
+          result = response.payload;
+        }
+        log(`RPC Response: ${JSON.stringify(result)}`, 'success');
+
+        const { matchId, action } = result;
+
+        log(`Match ${action}: ${matchId}`, 'match');
+
+        // Join the match via WebSocket
+        log('Joining match via WebSocket...', 'info');
+        currentMatch = await socket.joinMatch(matchId);
+
+        log(`Joined match: ${currentMatch.match_id}`, 'success');
+        log(`Players in match: ${currentMatch.presences?.length || 0}`, 'info');
+
+        showMatchPanel(matchId, action);
+        await refreshWallet();
+
+      } catch (e) {
+        log('Join game failed: ' + e.message, 'error');
+
+        if (e.message.includes('not found') || e.message.includes('Unrecognized')) {
+          log('Note: The join_game RPC is not registered on the server. Deploy the match handler first.', 'error');
+        }
+      }
+    }
+
+    function handleServerMessage(opCode, data) {
+      if (opCode === 1 && data.type === 'match_ready') {
+        log(`Match is READY! Type: ${data.matchType}`, 'match');
+
+        matchStatus = 'ready';
+        document.getElementById('matchStatusDisplay').textContent = 'READY - Start Playing!';
+        document.getElementById('matchTypeDisplay').textContent = data.matchType;
+
+        if (data.matchType === 'PVH') {
+          showOpponent('House', true);
+          log('No opponent found - playing against House (51% house edge)', 'waiting');
+        } else if (data.opponentName) {
+          const opponent = data.opponentName.find(n => n !== session.username);
+          if (opponent) showOpponent(opponent);
+        }
+
+        showGamePanel();
+      }
+    }
+
+    function showMatchPanel(matchId, action) {
+      document.getElementById('matchCard').style.display = 'block';
+      document.getElementById('matchIdDisplay').textContent = matchId;
+      document.getElementById('matchStatusDisplay').textContent = action === 'created' ? 'Waiting for opponent...' : 'Joining...';
+      document.getElementById('matchTypeDisplay').textContent = 'TBD';
+      document.getElementById('joinGameCard').style.opacity = '0.5';
+      document.getElementById('joinGameBtn').disabled = true;
+
+      if (action === 'created') {
+        updateStatus('waiting');
+        matchStatus = 'waiting';
+      }
+    }
+
+    function showOpponent(name, isHouse = false) {
+      document.getElementById('opponentSection').style.display = 'block';
+      document.getElementById('opponentName').textContent = name;
+      document.getElementById('opponentAvatar').textContent = isHouse ? 'H' : name.charAt(0).toUpperCase();
+      document.getElementById('opponentAvatar').style.background = isHouse ? '#7c3aed' : '#e94560';
+      document.getElementById('opponentStatus').textContent = isHouse ? 'AI Opponent (51% edge)' : 'Human Player';
+    }
+
+    function showGamePanel() {
+      document.getElementById('gameCard').style.display = 'block';
+      document.getElementById('matchCard').className = 'card success';
+      matchStatus = 'playing';
+      updateStatus('playing');
+    }
+
+    async function submitScore() {
+      try {
+        if (!currentMatch) {
+          log('No active match!', 'error');
+          return;
+        }
+
+        const score = parseInt(document.getElementById('scoreInput').value);
+        const timeMs = parseInt(document.getElementById('timeInput').value);
+
+        log(`Submitting score: ${score}, time: ${timeMs}ms`, 'info');
+
+        // OpCode 2 = SUBMIT_RESULT
+        await socket.sendMatchState(currentMatch.match_id, 2, JSON.stringify({
+          score,
+          timeMs
+        }));
+
+        log('Score submitted! Waiting for result...', 'success');
+        document.getElementById('submitScoreBtn').disabled = true;
+        document.getElementById('matchStatusDisplay').textContent = 'Score submitted - waiting for result...';
+
+      } catch (e) {
+        log('Submit score failed: ' + e.message, 'error');
+      }
+    }
+
+    function randomScore() {
+      document.getElementById('scoreInput').value = Math.floor(Math.random() * 10000);
+      document.getElementById('timeInput').value = Math.floor(30000 + Math.random() * 120000);
+    }
+
+    function showResult(outcome, content) {
+      document.getElementById('resultCard').style.display = 'block';
+      document.getElementById('gameCard').style.display = 'none';
+
+      const resultHtml = outcome === 'win'
+        ? `<div style="text-align:center; font-size:24px; color:#10b981;">YOU WON!</div>
+           <div style="text-align:center; font-size:18px; margin-top:10px;">Payout: <span style="color:#ffd93d;">${content.payout} coins</span></div>
+           <div style="text-align:center; color:#888; margin-top:5px;">Match type: ${content.matchType}</div>`
+        : `<div style="text-align:center; font-size:24px; color:#ef4444;">YOU LOST</div>
+           <div style="text-align:center; color:#888; margin-top:10px;">Match type: ${content.matchType}</div>`;
+
+      document.getElementById('resultDisplay').innerHTML = resultHtml;
+
+      matchStatus = 'completed';
+      refreshWallet();
+    }
+
+    async function leaveMatch() {
+      try {
+        if (currentMatch) {
+          await socket.leaveMatch(currentMatch.match_id);
+          log('Left match: ' + currentMatch.match_id, 'success');
+          currentMatch = null;
+        }
+        resetMatchUI();
+        await refreshWallet();
+      } catch (e) {
+        log('Leave match failed: ' + e.message, 'error');
+      }
+    }
+
+    function resetMatchUI() {
+      document.getElementById('matchCard').style.display = 'none';
+      document.getElementById('matchCard').className = 'card waiting';
+      document.getElementById('gameCard').style.display = 'none';
+      document.getElementById('resultCard').style.display = 'none';
+      document.getElementById('joinGameCard').style.opacity = '1';
+      document.getElementById('joinGameBtn').disabled = false;
+      document.getElementById('submitScoreBtn').disabled = false;
+      document.getElementById('opponentSection').style.display = 'none';
+      matchStatus = 'idle';
+      updateStatus('connected');
+    }
+
+    function resetUI() {
+      document.getElementById('connectBtn').disabled = false;
+      document.getElementById('joinGameBtn').disabled = true;
+      document.getElementById('addCoinsBtn').disabled = true;
+      document.getElementById('refreshWalletBtn').disabled = true;
+      document.getElementById('userInfo').textContent = '';
+      document.getElementById('walletDisplay').style.display = 'none';
+      resetMatchUI();
+      currentMatch = null;
+    }
+
+    // Game selection
+    document.querySelectorAll('.game-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.game-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        selectedGame = btn.dataset.game;
+        log(`Selected game: ${selectedGame}`, 'info');
+      });
+    });
+
+    // Event listeners
+    document.getElementById('connectBtn').onclick = connect;
+    document.getElementById('joinGameBtn').onclick = joinGame;
+    document.getElementById('addCoinsBtn').onclick = addTestCoins;
+    document.getElementById('refreshWalletBtn').onclick = refreshWallet;
+    document.getElementById('leaveMatchBtn').onclick = leaveMatch;
+    document.getElementById('submitScoreBtn').onclick = submitScore;
+    document.getElementById('randomScoreBtn').onclick = randomScore;
+    document.getElementById('clearBtn').onclick = () => document.getElementById('log').innerHTML = '';
+  </script>
+</body>
+</html>

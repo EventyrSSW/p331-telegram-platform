@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nakama Chat Test</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #1a1a2e;
+      color: #eee;
+    }
+    h1 { color: #00d9ff; }
+    .card {
+      background: #16213e;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 15px 0;
+      border: 1px solid #0f3460;
+    }
+    .card h2 { margin-top: 0; color: #00d9ff; }
+    button {
+      background: #e94560;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 5px 5px 5px 0;
+      font-size: 14px;
+    }
+    button:hover { background: #ff6b6b; }
+    button:disabled { background: #666; cursor: not-allowed; }
+    input, select {
+      padding: 10px;
+      border: 1px solid #0f3460;
+      border-radius: 5px;
+      background: #0f3460;
+      color: #eee;
+      margin: 5px 5px 5px 0;
+      font-size: 14px;
+    }
+    .log {
+      background: #0a0a15;
+      border: 1px solid #0f3460;
+      border-radius: 5px;
+      padding: 15px;
+      height: 300px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 13px;
+      white-space: pre-wrap;
+    }
+    .log .info { color: #00d9ff; }
+    .log .success { color: #95d5b2; }
+    .log .error { color: #fca5a5; }
+    .log .message { color: #ffd93d; }
+    .status {
+      display: inline-block;
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      margin-left: 10px;
+    }
+    .status.connected { background: #1b4332; color: #95d5b2; }
+    .status.disconnected { background: #7f1d1d; color: #fca5a5; }
+    .chat-input {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .chat-input input { flex: 1; }
+    a { color: #00d9ff; }
+  </style>
+  <script type="importmap">
+  {
+    "imports": {
+      "@heroiclabs/nakama-js": "https://esm.sh/@heroiclabs/nakama-js@2.8.0"
+    }
+  }
+  </script>
+</head>
+<body>
+  <p><a href="index.html">&larr; Back to Index</a></p>
+  <h1>Chat Test <span id="status" class="status disconnected">Disconnected</span></h1>
+
+  <div class="card">
+    <h2>1. Connect</h2>
+    <button id="connectBtn">Connect to Nakama</button>
+    <span id="userInfo"></span>
+  </div>
+
+  <div class="card">
+    <h2>2. Join Chat Room</h2>
+    <input type="text" id="roomName" placeholder="Room name" value="test-room">
+    <select id="roomType">
+      <option value="1">Room (public)</option>
+      <option value="2">Direct Message</option>
+      <option value="3">Group</option>
+    </select>
+    <button id="joinBtn" disabled>Join Room</button>
+    <button id="leaveBtn" disabled>Leave Room</button>
+    <p id="channelInfo" style="color:#888;"></p>
+  </div>
+
+  <div class="card">
+    <h2>3. Send Messages</h2>
+    <div class="chat-input">
+      <input type="text" id="messageInput" placeholder="Type a message..." disabled>
+      <button id="sendBtn" disabled>Send</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Log</h2>
+    <button id="clearBtn">Clear Log</button>
+    <div id="log" class="log"></div>
+  </div>
+
+  <script type="module">
+    import { Client } from '@heroiclabs/nakama-js';
+
+    const SERVER_KEY = 'defaultkey';
+    const HOST = '136.243.136.206';
+    const PORT = 7350;
+
+    let client, session, socket, currentChannel;
+
+    function log(message, type = 'info') {
+      const logEl = document.getElementById('log');
+      const time = new Date().toLocaleTimeString();
+      logEl.innerHTML += `<span class="${type}">[${time}] ${message}</span>\n`;
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    function updateStatus(connected) {
+      const statusEl = document.getElementById('status');
+      statusEl.className = 'status ' + (connected ? 'connected' : 'disconnected');
+      statusEl.textContent = connected ? 'Connected' : 'Disconnected';
+    }
+
+    async function connect() {
+      try {
+        log('Connecting to Nakama server...');
+        client = new Client(SERVER_KEY, HOST, PORT, false);
+
+        const deviceId = 'chat-test-' + Date.now();
+        session = await client.authenticateDevice(deviceId, true, 'chat_user_' + Date.now());
+        log('Authenticated as: ' + session.user_id, 'success');
+        document.getElementById('userInfo').textContent = ' User: ' + session.username;
+
+        socket = client.createSocket();
+
+        socket.ondisconnect = () => {
+          log('Socket disconnected', 'error');
+          updateStatus(false);
+          resetUI();
+        };
+
+        socket.onchannelmessage = (message) => {
+          const content = JSON.parse(message.content);
+          log(`[${message.username}]: ${content.text || JSON.stringify(content)}`, 'message');
+        };
+
+        socket.onchannelpresence = (presence) => {
+          presence.joins?.forEach(p => log(`${p.username} joined the room`, 'info'));
+          presence.leaves?.forEach(p => log(`${p.username} left the room`, 'info'));
+        };
+
+        await socket.connect(session, true);
+        log('Socket connected!', 'success');
+        updateStatus(true);
+
+        document.getElementById('connectBtn').disabled = true;
+        document.getElementById('joinBtn').disabled = false;
+      } catch (e) {
+        log('Connection failed: ' + e.message, 'error');
+      }
+    }
+
+    async function joinRoom() {
+      try {
+        const roomName = document.getElementById('roomName').value || 'test-room';
+        const roomType = parseInt(document.getElementById('roomType').value);
+
+        log(`Joining room: ${roomName} (type: ${roomType})...`);
+        currentChannel = await socket.joinChat(roomName, roomType, true, false);
+
+        log('Joined channel: ' + currentChannel.id, 'success');
+        document.getElementById('channelInfo').textContent = 'Channel ID: ' + currentChannel.id;
+
+        document.getElementById('joinBtn').disabled = true;
+        document.getElementById('leaveBtn').disabled = false;
+        document.getElementById('messageInput').disabled = false;
+        document.getElementById('sendBtn').disabled = false;
+
+        const messages = await client.listChannelMessages(session, currentChannel.id, 20, true);
+        if (messages.messages?.length > 0) {
+          log(`--- Previous ${messages.messages.length} messages ---`);
+          messages.messages.forEach(m => {
+            const content = JSON.parse(m.content);
+            log(`[${m.username}]: ${content.text || JSON.stringify(content)}`, 'message');
+          });
+          log('--- End of history ---');
+        }
+      } catch (e) {
+        log('Join room failed: ' + e.message, 'error');
+      }
+    }
+
+    async function leaveRoom() {
+      try {
+        if (currentChannel) {
+          await socket.leaveChat(currentChannel.id);
+          log('Left channel: ' + currentChannel.id, 'success');
+          currentChannel = null;
+          document.getElementById('channelInfo').textContent = '';
+        }
+        document.getElementById('joinBtn').disabled = false;
+        document.getElementById('leaveBtn').disabled = true;
+        document.getElementById('messageInput').disabled = true;
+        document.getElementById('sendBtn').disabled = true;
+      } catch (e) {
+        log('Leave room failed: ' + e.message, 'error');
+      }
+    }
+
+    async function sendMessage() {
+      try {
+        const input = document.getElementById('messageInput');
+        const text = input.value.trim();
+        if (!text || !currentChannel) return;
+
+        await socket.writeChatMessage(currentChannel.id, { text: text });
+        input.value = '';
+      } catch (e) {
+        log('Send message failed: ' + e.message, 'error');
+      }
+    }
+
+    function resetUI() {
+      document.getElementById('connectBtn').disabled = false;
+      document.getElementById('joinBtn').disabled = true;
+      document.getElementById('leaveBtn').disabled = true;
+      document.getElementById('messageInput').disabled = true;
+      document.getElementById('sendBtn').disabled = true;
+      document.getElementById('channelInfo').textContent = '';
+      document.getElementById('userInfo').textContent = '';
+      currentChannel = null;
+    }
+
+    // Event listeners
+    document.getElementById('connectBtn').onclick = connect;
+    document.getElementById('joinBtn').onclick = joinRoom;
+    document.getElementById('leaveBtn').onclick = leaveRoom;
+    document.getElementById('sendBtn').onclick = sendMessage;
+    document.getElementById('clearBtn').onclick = () => document.getElementById('log').innerHTML = '';
+    document.getElementById('messageInput').onkeypress = (e) => {
+      if (e.key === 'Enter') sendMessage();
+    };
+  </script>
+</body>
+</html>

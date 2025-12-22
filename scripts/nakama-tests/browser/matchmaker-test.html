@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nakama Matchmaker Test</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #1a1a2e;
+      color: #eee;
+    }
+    h1 { color: #00d9ff; }
+    .card {
+      background: #16213e;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 15px 0;
+      border: 1px solid #0f3460;
+    }
+    .card h2 { margin-top: 0; color: #00d9ff; }
+    .card.highlight { border-color: #e94560; background: #1f1f3a; }
+    button {
+      background: #e94560;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 5px 5px 5px 0;
+      font-size: 14px;
+    }
+    button:hover { background: #ff6b6b; }
+    button:disabled { background: #666; cursor: not-allowed; }
+    button.secondary { background: #0f3460; }
+    button.secondary:hover { background: #1a4a7a; }
+    input, select {
+      padding: 10px;
+      border: 1px solid #0f3460;
+      border-radius: 5px;
+      background: #0f3460;
+      color: #eee;
+      margin: 5px 5px 5px 0;
+      font-size: 14px;
+    }
+    .log {
+      background: #0a0a15;
+      border: 1px solid #0f3460;
+      border-radius: 5px;
+      padding: 15px;
+      height: 250px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 13px;
+      white-space: pre-wrap;
+    }
+    .log .info { color: #00d9ff; }
+    .log .success { color: #95d5b2; }
+    .log .error { color: #fca5a5; }
+    .log .match { color: #ffd93d; }
+    .log .waiting { color: #c084fc; }
+    .status {
+      display: inline-block;
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      margin-left: 10px;
+    }
+    .status.connected { background: #1b4332; color: #95d5b2; }
+    .status.disconnected { background: #7f1d1d; color: #fca5a5; }
+    .status.searching { background: #7c3aed; color: #e9d5ff; animation: pulse 1s infinite; }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .instructions {
+      background: #0f3460;
+      padding: 15px;
+      border-radius: 5px;
+      margin-bottom: 15px;
+    }
+    .instructions ol { margin: 10px 0; padding-left: 20px; }
+    a { color: #00d9ff; }
+    .player-count {
+      font-size: 24px;
+      font-weight: bold;
+      color: #00d9ff;
+    }
+  </style>
+  <script type="importmap">
+  {
+    "imports": {
+      "@heroiclabs/nakama-js": "https://esm.sh/@heroiclabs/nakama-js@2.8.0"
+    }
+  }
+  </script>
+</head>
+<body>
+  <p><a href="index.html">&larr; Back to Index</a></p>
+  <h1>Matchmaker Test <span id="status" class="status disconnected">Disconnected</span></h1>
+
+  <div class="card highlight">
+    <h2>How to Test Matchmaker</h2>
+    <div class="instructions">
+      <p><strong>Matchmaker requires at least 2 players!</strong></p>
+      <ol>
+        <li>Open this page in <strong>two browser tabs</strong></li>
+        <li>Click "Connect" in both tabs</li>
+        <li>Click "Find Match" in both tabs</li>
+        <li>Wait for the match to be found (usually &lt;5 seconds)</li>
+        <li>Both tabs will automatically join the match</li>
+      </ol>
+      <button id="openTabBtn" class="secondary">Open Another Tab</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>1. Connect</h2>
+    <button id="connectBtn">Connect to Nakama</button>
+    <span id="userInfo"></span>
+  </div>
+
+  <div class="card">
+    <h2>2. Matchmaker Settings</h2>
+    <div style="margin-bottom: 10px;">
+      <label>Min Players: </label>
+      <input type="number" id="minPlayers" value="2" min="2" max="10" style="width:60px">
+      <label style="margin-left:10px;">Max Players: </label>
+      <input type="number" id="maxPlayers" value="4" min="2" max="10" style="width:60px">
+    </div>
+    <div style="margin-bottom: 10px;">
+      <label>Query (optional): </label>
+      <input type="text" id="query" value="*" placeholder="* for any, or +mode:pvp" style="width:200px">
+    </div>
+    <div>
+      <label>String Properties: </label>
+      <input type="text" id="stringProps" placeholder='{"mode":"pvp"}' style="width:200px">
+    </div>
+    <div style="margin-top:5px;">
+      <label>Numeric Properties: </label>
+      <input type="text" id="numericProps" placeholder='{"skill":100}' style="width:200px">
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>3. Find Match</h2>
+    <button id="findBtn" disabled>Find Match</button>
+    <button id="cancelBtn" disabled>Cancel Search</button>
+    <p id="searchStatus" style="color:#888;"></p>
+    <p id="ticketInfo" style="font-family:monospace; color:#666;"></p>
+  </div>
+
+  <div class="card" id="matchCard" style="display:none;">
+    <h2>4. Match Found!</h2>
+    <p>Players in match: <span id="playerCount" class="player-count">0</span></p>
+    <div id="matchInfo" style="font-family:monospace; background:#0f3460; padding:10px; border-radius:5px;"></div>
+    <button id="leaveBtn" style="margin-top:10px;">Leave Match</button>
+  </div>
+
+  <div class="card">
+    <h2>Log</h2>
+    <button id="clearBtn">Clear Log</button>
+    <div id="log" class="log"></div>
+  </div>
+
+  <script type="module">
+    import { Client } from '@heroiclabs/nakama-js';
+
+    const SERVER_KEY = 'defaultkey';
+    const HOST = '136.243.136.206';
+    const PORT = 7350;
+
+    let client, session, socket, currentTicket, currentMatch;
+
+    function log(message, type = 'info') {
+      const logEl = document.getElementById('log');
+      const time = new Date().toLocaleTimeString();
+      logEl.innerHTML += `<span class="${type}">[${time}] ${message}</span>\n`;
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    function clearLog() {
+      document.getElementById('log').innerHTML = '';
+    }
+
+    function updateStatus(status) {
+      const statusEl = document.getElementById('status');
+      statusEl.className = 'status ' + status;
+      const labels = {
+        connected: 'Connected',
+        disconnected: 'Disconnected',
+        searching: 'Searching...'
+      };
+      statusEl.textContent = labels[status] || status;
+    }
+
+    async function connect() {
+      try {
+        log('Connecting to Nakama server...');
+        client = new Client(SERVER_KEY, HOST, PORT, false);
+
+        const deviceId = 'matchmaker-test-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5);
+        session = await client.authenticateDevice(deviceId, true, 'player_' + Date.now());
+        log('Authenticated as: ' + session.user_id, 'success');
+        document.getElementById('userInfo').textContent = ' User: ' + session.username;
+
+        socket = client.createSocket();
+
+        socket.ondisconnect = () => {
+          log('Socket disconnected', 'error');
+          updateStatus('disconnected');
+          resetUI();
+        };
+
+        // MATCHMAKER MATCHED EVENT
+        socket.onmatchmakermatched = async (matched) => {
+          log('========== MATCH FOUND! ==========', 'match');
+          log('Match Token: ' + matched.token.substring(0, 30) + '...', 'match');
+          log('Users matched: ' + matched.users?.length, 'match');
+
+          matched.users?.forEach((user, i) => {
+            log(`  Player ${i + 1}: ${user.presence.username}`, 'match');
+          });
+
+          // Auto-join the match
+          try {
+            currentMatch = await socket.joinMatch(null, matched.token);
+            log('Joined match: ' + currentMatch.match_id, 'success');
+
+            showMatchCard();
+            updateStatus('connected');
+            document.getElementById('searchStatus').textContent = '';
+            currentTicket = null;
+          } catch (e) {
+            log('Failed to join match: ' + e.message, 'error');
+          }
+        };
+
+        socket.onmatchpresence = (presence) => {
+          presence.joins?.forEach(p => log(`Player joined match: ${p.username}`, 'info'));
+          presence.leaves?.forEach(p => log(`Player left match: ${p.username}`, 'info'));
+          if (currentMatch) {
+            document.getElementById('playerCount').textContent = currentMatch.presences?.length || '?';
+          }
+        };
+
+        socket.onmatchdata = (data) => {
+          log('Match data received (opCode: ' + data.op_code + ')', 'info');
+        };
+
+        await socket.connect(session, true);
+        log('Socket connected!', 'success');
+        updateStatus('connected');
+
+        document.getElementById('connectBtn').disabled = true;
+        document.getElementById('findBtn').disabled = false;
+      } catch (e) {
+        log('Connection failed: ' + e.message, 'error');
+      }
+    }
+
+    async function findMatch() {
+      try {
+        const minPlayers = parseInt(document.getElementById('minPlayers').value) || 2;
+        const maxPlayers = parseInt(document.getElementById('maxPlayers').value) || 4;
+        const query = document.getElementById('query').value || '*';
+
+        let stringProps = {};
+        let numericProps = {};
+
+        try {
+          const sp = document.getElementById('stringProps').value;
+          if (sp) stringProps = JSON.parse(sp);
+        } catch (e) {
+          log('Invalid string properties JSON', 'error');
+          return;
+        }
+
+        try {
+          const np = document.getElementById('numericProps').value;
+          if (np) numericProps = JSON.parse(np);
+        } catch (e) {
+          log('Invalid numeric properties JSON', 'error');
+          return;
+        }
+
+        log(`Adding to matchmaker: query="${query}", min=${minPlayers}, max=${maxPlayers}`);
+        if (Object.keys(stringProps).length) log('String props: ' + JSON.stringify(stringProps));
+        if (Object.keys(numericProps).length) log('Numeric props: ' + JSON.stringify(numericProps));
+
+        const ticket = await socket.addMatchmaker(query, minPlayers, maxPlayers, stringProps, numericProps);
+        currentTicket = ticket.ticket;
+
+        log('Added to matchmaker!', 'success');
+        log('Ticket: ' + currentTicket, 'waiting');
+        log('Waiting for other players...', 'waiting');
+
+        document.getElementById('ticketInfo').textContent = 'Ticket: ' + currentTicket;
+        document.getElementById('searchStatus').textContent = 'Searching for match...';
+        document.getElementById('findBtn').disabled = true;
+        document.getElementById('cancelBtn').disabled = false;
+        updateStatus('searching');
+      } catch (e) {
+        log('Matchmaker failed: ' + e.message, 'error');
+      }
+    }
+
+    async function cancelMatchmaking() {
+      try {
+        if (currentTicket) {
+          await socket.removeMatchmaker(currentTicket);
+          log('Removed from matchmaker', 'success');
+          currentTicket = null;
+        }
+        document.getElementById('ticketInfo').textContent = '';
+        document.getElementById('searchStatus').textContent = '';
+        document.getElementById('findBtn').disabled = false;
+        document.getElementById('cancelBtn').disabled = true;
+        updateStatus('connected');
+      } catch (e) {
+        log('Cancel matchmaking failed: ' + e.message, 'error');
+      }
+    }
+
+    async function leaveMatch() {
+      try {
+        if (currentMatch) {
+          await socket.leaveMatch(currentMatch.match_id);
+          log('Left match', 'success');
+          currentMatch = null;
+        }
+        hideMatchCard();
+        document.getElementById('findBtn').disabled = false;
+      } catch (e) {
+        log('Leave match failed: ' + e.message, 'error');
+      }
+    }
+
+    function showMatchCard() {
+      document.getElementById('matchCard').style.display = 'block';
+      document.getElementById('matchInfo').innerHTML = `
+        <strong>Match ID:</strong> ${currentMatch.match_id}<br>
+        <strong>Players:</strong> ${currentMatch.presences?.length || 0}
+      `;
+      document.getElementById('playerCount').textContent = currentMatch.presences?.length || 0;
+      document.getElementById('findBtn').disabled = true;
+      document.getElementById('cancelBtn').disabled = true;
+    }
+
+    function hideMatchCard() {
+      document.getElementById('matchCard').style.display = 'none';
+    }
+
+    function resetUI() {
+      document.getElementById('connectBtn').disabled = false;
+      document.getElementById('findBtn').disabled = true;
+      document.getElementById('cancelBtn').disabled = true;
+      document.getElementById('ticketInfo').textContent = '';
+      document.getElementById('searchStatus').textContent = '';
+      document.getElementById('userInfo').textContent = '';
+      hideMatchCard();
+      currentTicket = null;
+      currentMatch = null;
+    }
+
+    // Event listeners
+    document.getElementById('openTabBtn').onclick = () => window.open(location.href, '_blank');
+    document.getElementById('connectBtn').onclick = connect;
+    document.getElementById('findBtn').onclick = findMatch;
+    document.getElementById('cancelBtn').onclick = cancelMatchmaking;
+    document.getElementById('leaveBtn').onclick = leaveMatch;
+    document.getElementById('clearBtn').onclick = clearLog;
+  </script>
+</body>
+</html>
