@@ -1,7 +1,137 @@
 // Nakama Server Runtime Module
 
-var WAIT_TIMEOUT_SEC = 30;
-var PLAY_TIMEOUT_SEC = 86400;
+// Default fallback values
+var DEFAULT_WAIT_TIMEOUT_SEC = 30;
+var DEFAULT_PLAY_TIMEOUT_SEC = 86400;
+var DEFAULT_COMMISSION_RATE = 0.10;
+var DEFAULT_HOUSE_EDGE = 0.51;
+
+function getConfig(nk) {
+  try {
+    var configReads = nk.storageRead([
+      { collection: "config", key: "game_settings", userId: null }
+    ]);
+    if (configReads.length > 0) {
+      return configReads[0].value;
+    }
+  } catch (e) {
+    // Fall through to defaults
+  }
+  return {
+    commissionRate: DEFAULT_COMMISSION_RATE,
+    waitTimeoutSec: DEFAULT_WAIT_TIMEOUT_SEC,
+    playTimeoutSec: DEFAULT_PLAY_TIMEOUT_SEC,
+    houseEdge: DEFAULT_HOUSE_EDGE,
+    minBet: 10,
+    maxBet: 10000,
+    skillTiers: [],
+    games: {}
+  };
+}
+
+function getGameLevels(nk, gameId) {
+  try {
+    var levelsReads = nk.storageRead([
+      { collection: "levels", key: gameId, userId: null }
+    ]);
+    if (levelsReads.length > 0) {
+      return levelsReads[0].value.levels || [];
+    }
+  } catch (e) {
+    // Fall through to empty
+  }
+  return [];
+}
+
+function getPlayerStats(nk, userId, gameId) {
+  try {
+    var statsReads = nk.storageRead([
+      { collection: "player_stats", key: gameId, userId: userId }
+    ]);
+    if (statsReads.length > 0) {
+      return statsReads[0].value;
+    }
+  } catch (e) {
+    // Fall through to defaults
+  }
+  return {
+    gamesPlayed: 0,
+    totalScore: 0,
+    averageScore: 0,
+    highScore: 0,
+    wins: 0,
+    losses: 0
+  };
+}
+
+function updatePlayerStats(nk, userId, gameId, score, won) {
+  var stats = getPlayerStats(nk, userId, gameId);
+
+  stats.gamesPlayed++;
+  stats.totalScore += score;
+  stats.averageScore = Math.floor(stats.totalScore / stats.gamesPlayed);
+  if (score > stats.highScore) {
+    stats.highScore = score;
+  }
+  if (won) {
+    stats.wins++;
+  } else {
+    stats.losses++;
+  }
+
+  nk.storageWrite([
+    {
+      collection: "player_stats",
+      key: gameId,
+      userId: userId,
+      value: stats,
+      permissionRead: 1, // Owner only
+      permissionWrite: 0 // Server only
+    }
+  ]);
+
+  return stats;
+}
+
+function selectLevelForPlayer(nk, userId, gameId, config) {
+  var stats = getPlayerStats(nk, userId, gameId);
+  var levels = getGameLevels(nk, gameId);
+
+  if (levels.length === 0) {
+    return null;
+  }
+
+  // Find appropriate tier based on player's average score
+  var playerAvgScore = stats.averageScore || 0;
+  var levelRange = [1, 20]; // Default to beginner range
+
+  var skillTiers = config.skillTiers || [];
+  for (var i = 0; i < skillTiers.length; i++) {
+    var tier = skillTiers[i];
+    if (playerAvgScore >= tier.minScore && playerAvgScore <= tier.maxScore) {
+      levelRange = tier.levelRange;
+      break;
+    }
+  }
+
+  // Filter levels within the range
+  var eligibleLevels = [];
+  for (var j = 0; j < levels.length; j++) {
+    var level = levels[j];
+    if (level.id >= levelRange[0] && level.id <= levelRange[1]) {
+      eligibleLevels.push(level);
+    }
+  }
+
+  if (eligibleLevels.length === 0) {
+    // Fallback to first level
+    return levels[0];
+  }
+
+  // Random selection from eligible levels
+  var randomIndex = Math.floor(Math.random() * eligibleLevels.length);
+  return eligibleLevels[randomIndex];
+}
 
 // Generate sample mahjong levels for initial setup
 // In production, these would be loaded from a file or admin API
@@ -314,7 +444,7 @@ function matchInit(ctx, logger, nk, params) {
     housePlayer: false,
     creatorId: params.creatorId,
     createdAt: Date.now(),
-    deadline: Date.now() + (WAIT_TIMEOUT_SEC * 1000),
+    deadline: Date.now() + (DEFAULT_WAIT_TIMEOUT_SEC * 1000),
     results: {}
   };
 
@@ -362,7 +492,7 @@ function matchJoin(ctx, logger, nk, dispatcher, tick, state, presences) {
 
   if (playerCount === 2) {
     state.status = "ready";
-    state.deadline = Date.now() + (PLAY_TIMEOUT_SEC * 1000);
+    state.deadline = Date.now() + (DEFAULT_PLAY_TIMEOUT_SEC * 1000);
 
     dispatcher.matchLabelUpdate(JSON.stringify({
       gameId: state.gameId,
@@ -402,7 +532,7 @@ function matchLoop(ctx, logger, nk, dispatcher, tick, state, messages) {
     };
 
     state.status = "ready";
-    state.deadline = now + (PLAY_TIMEOUT_SEC * 1000);
+    state.deadline = now + (DEFAULT_PLAY_TIMEOUT_SEC * 1000);
 
     dispatcher.matchLabelUpdate(JSON.stringify({
       gameId: state.gameId,
