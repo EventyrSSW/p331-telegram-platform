@@ -473,6 +473,11 @@ if (matches.length > 0) {
 function matchInit(ctx, logger, nk, params) {
   logger.info("Match init: gameId=" + params.gameId + ", bet=" + params.betAmount);
 
+  var config = getConfig(nk);
+
+  // Select a level for the creator based on their skill
+  var selectedLevel = selectLevelForPlayer(nk, params.creatorId, params.gameId, config);
+
   var state = {
     gameId: params.gameId,
     betAmount: params.betAmount,
@@ -481,15 +486,23 @@ function matchInit(ctx, logger, nk, params) {
     housePlayer: false,
     creatorId: params.creatorId,
     createdAt: Date.now(),
-    deadline: Date.now() + (DEFAULT_WAIT_TIMEOUT_SEC * 1000),
-    results: {}
+    deadline: Date.now() + (config.waitTimeoutSec * 1000),
+    results: {},
+    level: selectedLevel,
+    config: {
+      commissionRate: config.commissionRate,
+      playTimeoutSec: config.playTimeoutSec
+    }
   };
 
   var label = JSON.stringify({
     gameId: params.gameId,
     betAmount: params.betAmount,
-    status: "waiting"
+    status: "waiting",
+    levelId: selectedLevel ? selectedLevel.id : 0
   });
+
+  logger.info("Selected level " + (selectedLevel ? selectedLevel.id : "none") + " for player " + params.creatorId);
 
   return {
     state: state,
