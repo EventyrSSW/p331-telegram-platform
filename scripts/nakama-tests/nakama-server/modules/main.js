@@ -542,12 +542,13 @@ function matchJoin(ctx, logger, nk, dispatcher, tick, state, presences) {
 
   if (playerCount === 2) {
     state.status = "ready";
-    state.deadline = Date.now() + (DEFAULT_PLAY_TIMEOUT_SEC * 1000);
+    state.deadline = Date.now() + (state.config.playTimeoutSec * 1000);
 
     dispatcher.matchLabelUpdate(JSON.stringify({
       gameId: state.gameId,
       betAmount: state.betAmount,
-      status: "ready"
+      status: "ready",
+      levelId: state.level ? state.level.id : 0
     }));
 
     var playerNames = [];
@@ -555,13 +556,29 @@ function matchJoin(ctx, logger, nk, dispatcher, tick, state, presences) {
       playerNames.push(state.players[userId].username);
     }
 
+    var gameInfo = {
+      id: state.gameId,
+      level: state.level ? {
+        id: state.level.id,
+        name: state.level.name,
+        tier: state.level.tier,
+        tiles: state.level.tiles,
+        totalPairs: state.level.totalPairs,
+        timeBonus: state.level.timeBonus,
+        metadata: state.level.metadata
+      } : null
+    };
+
     dispatcher.broadcastMessage(1, JSON.stringify({
       type: "match_ready",
       matchType: "PVP",
-      opponentName: playerNames
+      opponentName: playerNames,
+      game: gameInfo,
+      betAmount: state.betAmount,
+      commissionRate: state.config.commissionRate
     }), null, null, true);
 
-    logger.info("Match ready! PVP mode");
+    logger.info("Match ready! PVP mode, level " + (state.level ? state.level.id : "none"));
   }
 
   return { state: state };
