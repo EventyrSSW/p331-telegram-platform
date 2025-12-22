@@ -19,6 +19,27 @@ function InitModule(ctx, logger, nk, initializer) {
   initializer.registerRpc("join_game", rpcJoinGame);
   initializer.registerRpc("add_test_coins", rpcAddTestCoins);
 
+  // Create leaderboards for each game type
+  var gameTypes = ["mahjong", "solitaire", "puzzle"];
+  for (var i = 0; i < gameTypes.length; i++) {
+    var gameId = gameTypes[i];
+    var leaderboardId = gameId + "_wins";
+    try {
+      nk.leaderboardCreate(
+        leaderboardId,                    // id
+        false,                            // authoritative
+        "desc",                           // sort order
+        "incr",                           // operator
+        "0 0 * * 1",                      // reset schedule (weekly on Monday)
+        { gameId: gameId, type: "wins" }  // metadata
+      );
+      logger.info("Created leaderboard: " + leaderboardId);
+    } catch (e) {
+      // Leaderboard already exists, ignore
+      logger.debug("Leaderboard " + leaderboardId + " already exists or error: " + e.message);
+    }
+  }
+
   logger.info("Game match module initialized!");
 }
 
