@@ -82,7 +82,7 @@ function rpcJoinGame(ctx, logger, nk, payload) {
       data = parsed;
     } catch (e) {
       logger.error("Parse error: " + e.message + ", payload was: " + payload);
-      throw new Error("Invalid payload format. Expected JSON with gameId and betAmount");
+      return JSON.stringify({ error: "Invalid payload format. Expected JSON with gameId and betAmount", code: "INVALID_PAYLOAD" });
     }
   var gameId = data.gameId;
   var betAmount = data.betAmount;
@@ -122,7 +122,12 @@ betAmount = parseInt(betAmount);
   logger.info("Wallet coins: " + wallet.coins);
 
   if ((wallet.coins || 0) < betAmount) {
-    throw new Error("Insufficient balance");
+    return JSON.stringify({
+      error: "Insufficient balance",
+      code: "INSUFFICIENT_BALANCE",
+      required: betAmount,
+      available: wallet.coins || 0
+    });
   }
 
 logger.info("About to deduct " + betAmount + " coins from wallet");
