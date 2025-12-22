@@ -599,20 +599,39 @@ function matchLoop(ctx, logger, nk, dispatcher, tick, state, messages) {
     };
 
     state.status = "ready";
-    state.deadline = now + (DEFAULT_PLAY_TIMEOUT_SEC * 1000);
+    state.deadline = now + (state.config.playTimeoutSec * 1000);
 
     dispatcher.matchLabelUpdate(JSON.stringify({
       gameId: state.gameId,
       betAmount: state.betAmount,
       status: "ready",
-      matchType: "PVH"
+      matchType: "PVH",
+      levelId: state.level ? state.level.id : 0
     }));
+
+    var gameInfo = {
+      id: state.gameId,
+      level: state.level ? {
+        id: state.level.id,
+        name: state.level.name,
+        tier: state.level.tier,
+        tiles: state.level.tiles,
+        totalPairs: state.level.totalPairs,
+        timeBonus: state.level.timeBonus,
+        metadata: state.level.metadata
+      } : null
+    };
 
     dispatcher.broadcastMessage(1, JSON.stringify({
       type: "match_ready",
       matchType: "PVH",
-      message: "No opponent found, playing against house"
+      message: "No opponent found, playing against house",
+      game: gameInfo,
+      betAmount: state.betAmount,
+      commissionRate: state.config.commissionRate
     }), null, null, true);
+
+    logger.info("Match ready! PVH mode, level " + (state.level ? state.level.id : "none"));
   }
 
   if (state.status === "ready" && now > state.deadline) {
