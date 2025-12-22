@@ -730,7 +730,7 @@ function generateHouseScore(playerScore) {
 }
 
 function resolveMatch(nk, logger, dispatcher, state) {
-  var commissionRate = 0.10;
+  var commissionRate = state.config.commissionRate || DEFAULT_COMMISSION_RATE;
   var pool = state.betAmount * 2;
   var commission = Math.floor(pool * commissionRate);
   var payout = pool - commission;
@@ -760,6 +760,19 @@ function resolveMatch(nk, logger, dispatcher, state) {
       winnerScore = result.score;
       winner = state.players[userId];
       winnerId = userId;
+    }
+  }
+
+  // Update player stats for all real players
+  for (var userId in state.players) {
+    var player = state.players[userId];
+    if (!player.isHouse) {
+      var playerResult = state.results[userId];
+      var playerScore = playerResult ? playerResult.score : 0;
+      var playerWon = (userId === winnerId);
+
+      updatePlayerStats(nk, userId, state.gameId, playerScore, playerWon);
+      logger.info("Updated stats for " + userId + ": score=" + playerScore + ", won=" + playerWon);
     }
   }
 
