@@ -9,7 +9,7 @@ var DEFAULT_HOUSE_EDGE = 0.51;
 function getConfig(nk) {
   try {
     var configReads = nk.storageRead([
-      { collection: "config", key: "game_settings", userId: null }
+      { collection: "config", key: "game_settings", userId: "" }
     ]);
     if (configReads.length > 0) {
       return configReads[0].value;
@@ -32,7 +32,7 @@ function getConfig(nk) {
 function getGameLevels(nk, gameId) {
   try {
     var levelsReads = nk.storageRead([
-      { collection: "levels", key: gameId, userId: null }
+      { collection: "levels", key: gameId, userId: "" }
     ]);
     if (levelsReads.length > 0) {
       return levelsReads[0].value.levels || [];
@@ -248,7 +248,7 @@ function InitModule(ctx, logger, nk, initializer) {
 
   // Initialize game config if not exists
   var configReads = nk.storageRead([
-    { collection: "config", key: "game_settings", userId: null }
+    { collection: "config", key: "game_settings", userId: "" }
   ]);
 
   if (configReads.length === 0) {
@@ -283,7 +283,7 @@ function InitModule(ctx, logger, nk, initializer) {
       {
         collection: "config",
         key: "game_settings",
-        userId: null,
+        userId: "",
         value: defaultConfig,
         permissionRead: 2,
         permissionWrite: 0
@@ -294,7 +294,7 @@ function InitModule(ctx, logger, nk, initializer) {
 
   // Initialize mahjong levels if not exists
   var levelsReads = nk.storageRead([
-    { collection: "levels", key: "mahjong", userId: null }
+    { collection: "levels", key: "mahjong", userId: "" }
   ]);
 
   if (levelsReads.length === 0) {
@@ -305,7 +305,7 @@ function InitModule(ctx, logger, nk, initializer) {
       {
         collection: "levels",
         key: "mahjong",
-        userId: null,
+        userId: "",
         value: { levels: sampleLevels },
         permissionRead: 2,
         permissionWrite: 0
@@ -397,7 +397,7 @@ function rpcAdminUpdateLevels(ctx, logger, nk, payload) {
     {
       collection: "levels",
       key: gameId,
-      userId: null,
+      userId: "",
       value: { levels: levels, updatedAt: Date.now(), updatedBy: ctx.userId },
       permissionRead: 2,
       permissionWrite: 0
