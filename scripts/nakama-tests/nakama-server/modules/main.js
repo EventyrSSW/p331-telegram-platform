@@ -395,6 +395,28 @@ function resolveMatch(nk, logger, dispatcher, state) {
     );
 
     logger.info("Paid " + payout + " coins to " + winner.userId);
+
+    // Update leaderboard for winner
+    var leaderboardId = state.gameId + "_wins";
+    try {
+      nk.leaderboardRecordWrite(
+        leaderboardId,
+        winner.userId,
+        winner.username,
+        1,  // score: increment wins by 1
+        winnerScore,  // subscore: their game score
+        {
+          matchId: ctx ? ctx.matchId : "unknown",
+          matchType: state.housePlayer ? "PVH" : "PVP",
+          betAmount: state.betAmount,
+          payout: payout
+        },
+        2  // operator: 2 = increment
+      );
+      logger.info("Leaderboard updated for " + winner.username + " on " + leaderboardId);
+    } catch (e) {
+      logger.warn("Failed to update leaderboard: " + e.message);
+    }
   }
 
   for (var userId in state.players) {
