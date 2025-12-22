@@ -8,13 +8,14 @@
     * { box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      max-width: 1000px;
+      max-width: 1200px;
       margin: 0 auto;
       padding: 20px;
       background: #1a1a2e;
       color: #eee;
     }
     h1 { color: #00d9ff; }
+    h3 { color: #00d9ff; margin-top: 0; }
     .card {
       background: #16213e;
       border-radius: 8px;
@@ -26,6 +27,7 @@
     .card.highlight { border-color: #e94560; background: #1f1f3a; }
     .card.success { border-color: #10b981; }
     .card.waiting { border-color: #f59e0b; }
+    .card.level-card { border-color: #7c3aed; background: #1f1f3a; }
     button {
       background: #e94560;
       color: white;
@@ -42,6 +44,8 @@
     button.secondary:hover { background: #1a4a7a; }
     button.success { background: #10b981; }
     button.success:hover { background: #34d399; }
+    button.purple { background: #7c3aed; }
+    button.purple:hover { background: #8b5cf6; }
     input, select {
       padding: 10px;
       border: 1px solid #0f3460;
@@ -68,6 +72,7 @@
     .log .match { color: #ffd93d; }
     .log .waiting { color: #c084fc; }
     .log .server { color: #f472b6; }
+    .log .level { color: #818cf8; }
     .status {
       display: inline-block;
       padding: 5px 10px;
@@ -147,6 +152,107 @@
       justify-content: center;
       font-weight: bold;
     }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+    @media (max-width: 768px) {
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .stat-item {
+      background: #0f3460;
+      padding: 10px;
+      border-radius: 5px;
+      text-align: center;
+    }
+    .stat-item .stat-value { font-size: 20px; font-weight: bold; color: #00d9ff; }
+    .stat-item .stat-label { font-size: 11px; color: #888; margin-top: 5px; }
+    .tier-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .tier-beginner { background: #4ade80; color: #000; }
+    .tier-novice { background: #60a5fa; color: #000; }
+    .tier-intermediate { background: #f59e0b; color: #000; }
+    .tier-advanced { background: #f97316; color: #fff; }
+    .tier-expert { background: #ef4444; color: #fff; }
+    .tier-master { background: #a855f7; color: #fff; }
+    .level-info {
+      background: #1a1a2e;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 10px 0;
+      border: 2px solid #7c3aed;
+    }
+    .level-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .level-name { font-size: 18px; font-weight: bold; color: #fff; }
+    .tile-preview {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 10px;
+      max-height: 100px;
+      overflow: hidden;
+    }
+    .tile {
+      width: 30px;
+      height: 40px;
+      background: #fef3c7;
+      border: 1px solid #d97706;
+      border-radius: 3px;
+      font-size: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #000;
+    }
+    .config-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #0f3460;
+    }
+    .config-item:last-child { border-bottom: none; }
+    .config-label { color: #888; }
+    .config-value { font-weight: bold; color: #00d9ff; }
+    .tabs {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 15px;
+    }
+    .tab {
+      padding: 10px 20px;
+      background: #0f3460;
+      border: none;
+      border-radius: 5px 5px 0 0;
+      color: #888;
+      cursor: pointer;
+    }
+    .tab.active {
+      background: #1f2937;
+      color: #00d9ff;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
   </style>
   <script type="importmap">
   {
@@ -160,20 +266,6 @@
   <p><a href="index.html">&larr; Back to Index</a></p>
   <h1>Server Authoritative Match Test <span id="status" class="status disconnected">Disconnected</span></h1>
 
-  <div class="card highlight">
-    <h2>About This Test</h2>
-    <div class="info-box">
-      <p><strong>This page tests Server Authoritative Matches</strong> - where the server controls match logic.</p>
-      <p>Before testing, you need to deploy the match handler to Nakama:</p>
-      <ol style="margin: 10px 0; padding-left: 20px;">
-        <li>Add <code>main.ts</code> to your Nakama server's <code>data/modules/</code> folder</li>
-        <li>Restart Nakama server</li>
-        <li>The RPCs <code>join_game</code> and <code>submit_result</code> will be available</li>
-      </ol>
-      <p><strong>Flow:</strong> Call RPC &rarr; Get matchId &rarr; Join match via WebSocket &rarr; Wait for opponent/house &rarr; Play &rarr; Submit score</p>
-    </div>
-  </div>
-
   <div class="card">
     <h2>1. Connect & Wallet</h2>
     <button id="connectBtn">Connect to Nakama</button>
@@ -185,20 +277,26 @@
     </div>
   </div>
 
+  <div class="grid-2">
+    <div class="card">
+      <h2>Game Config</h2>
+      <button id="getConfigBtn" class="purple" disabled>Get Config</button>
+      <div id="configDisplay" style="margin-top: 15px;"></div>
+    </div>
+
+    <div class="card">
+      <h2>Player Stats</h2>
+      <button id="getStatsBtn" class="purple" disabled>Get My Stats</button>
+      <div id="statsDisplay" style="margin-top: 15px;"></div>
+    </div>
+  </div>
+
   <div class="card">
     <h2>2. Select Game & Bet</h2>
     <div class="game-select">
       <div class="game-btn selected" data-game="mahjong">
         <div class="name">Mahjong</div>
         <div class="desc">Tile matching puzzle</div>
-      </div>
-      <div class="game-btn" data-game="solitaire">
-        <div class="name">Solitaire</div>
-        <div class="desc">Classic card game</div>
-      </div>
-      <div class="game-btn" data-game="puzzle">
-        <div class="name">Puzzle</div>
-        <div class="desc">Logic puzzle</div>
       </div>
     </div>
     <div style="margin-top: 15px;">
@@ -210,6 +308,7 @@
         <option value="500">500 coins</option>
         <option value="1000">1000 coins</option>
       </select>
+      <span id="betLimitsDisplay" style="margin-left: 10px; color: #888; font-size: 12px;"></span>
     </div>
   </div>
 
@@ -218,6 +317,7 @@
     <button id="joinGameBtn" disabled>Join Game (Call RPC)</button>
     <p style="color:#888; font-size: 13px; margin-top: 10px;">
       This will call <code>join_game</code> RPC, deduct bet from wallet, and either create a new match or join existing one.
+      <br>Based on your stats, you'll be assigned a level from your skill tier.
     </p>
   </div>
 
@@ -247,6 +347,37 @@
     <button id="leaveMatchBtn" class="secondary">Leave Match</button>
   </div>
 
+  <div class="card level-card" id="levelCard" style="display:none;">
+    <h2>Level Data</h2>
+    <div class="level-info">
+      <div class="level-header">
+        <span class="level-name" id="levelName">-</span>
+        <span class="tier-badge" id="levelTier">-</span>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-value" id="levelId">-</div>
+          <div class="stat-label">Level ID</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="levelPairs">-</div>
+          <div class="stat-label">Total Pairs</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="levelTimeBonus">-</div>
+          <div class="stat-label">Time Bonus</div>
+        </div>
+      </div>
+      <div style="margin-top: 15px;">
+        <div class="label">Tile Preview (first 20)</div>
+        <div class="tile-preview" id="tilePreview"></div>
+      </div>
+      <div style="margin-top: 10px;">
+        <button id="showFullLevelBtn" class="secondary">Show Full Level JSON</button>
+      </div>
+    </div>
+  </div>
+
   <div class="card success" id="gameCard" style="display:none;">
     <h2>5. Play & Submit Score</h2>
     <div class="info-box">
@@ -267,12 +398,23 @@
     <div id="resultDisplay" class="match-status-panel">
       <!-- Filled dynamically -->
     </div>
+    <button id="playAgainBtn" class="success">Play Again</button>
   </div>
 
   <div class="card">
     <h2>Log</h2>
-    <button id="clearBtn">Clear Log</button>
-    <div id="log" class="log"></div>
+    <div class="tabs">
+      <button class="tab active" data-tab="log">Messages</button>
+      <button class="tab" data-tab="levelJson">Level JSON</button>
+    </div>
+    <div id="logTab" class="tab-content active">
+      <button id="clearBtn">Clear Log</button>
+      <div id="log" class="log"></div>
+    </div>
+    <div id="levelJsonTab" class="tab-content">
+      <button id="copyLevelBtn" class="secondary">Copy to Clipboard</button>
+      <div id="levelJson" class="log" style="height: 400px;"></div>
+    </div>
   </div>
 
   <script type="module">
@@ -284,8 +426,10 @@
 
     let client, session, socket;
     let currentMatch = null;
+    let currentLevel = null;
     let selectedGame = 'mahjong';
-    let matchStatus = 'idle'; // idle, waiting, ready, playing, completed
+    let matchStatus = 'idle';
+    let gameConfig = null;
 
     function log(message, type = 'info') {
       const logEl = document.getElementById('log');
@@ -306,6 +450,18 @@
       statusEl.textContent = labels[status] || status;
     }
 
+    function getTierClass(tier) {
+      const classes = {
+        beginner: 'tier-beginner',
+        novice: 'tier-novice',
+        intermediate: 'tier-intermediate',
+        advanced: 'tier-advanced',
+        expert: 'tier-expert',
+        master: 'tier-master'
+      };
+      return classes[tier] || 'tier-beginner';
+    }
+
     async function connect() {
       try {
         log('Connecting to Nakama server...');
@@ -324,7 +480,6 @@
           resetUI();
         };
 
-        // Listen for match data from server
         socket.onmatchdata = (matchData) => {
           const decoder = new TextDecoder();
           let data;
@@ -335,7 +490,7 @@
           }
 
           log(`[Server Message] OpCode: ${matchData.op_code}`, 'server');
-          log(`  Data: ${JSON.stringify(data)}`, 'server');
+          log(`  Data: ${JSON.stringify(data).substring(0, 200)}...`, 'server');
 
           handleServerMessage(matchData.op_code, data);
         };
@@ -352,14 +507,13 @@
           });
         };
 
-        // Listen for notifications (win/lose)
         socket.onnotification = (notification) => {
           log(`[Notification] ${notification.subject}`, 'match');
           log(`  Content: ${JSON.stringify(notification.content)}`, 'match');
 
           if (notification.code === 100) {
             showResult('win', notification.content);
-          } else if (notification.code === 101) {
+          } else if (notification.code === 101 || notification.code === 102) {
             showResult('lose', notification.content);
           }
         };
@@ -372,8 +526,12 @@
         document.getElementById('joinGameBtn').disabled = false;
         document.getElementById('addCoinsBtn').disabled = false;
         document.getElementById('refreshWalletBtn').disabled = false;
+        document.getElementById('getConfigBtn').disabled = false;
+        document.getElementById('getStatsBtn').disabled = false;
 
         await refreshWallet();
+        await getConfig();
+        await getPlayerStats();
 
       } catch (e) {
         log('Connection failed: ' + e.message, 'error');
@@ -396,15 +554,134 @@
 
     async function addTestCoins() {
       try {
-        // This would need a server-side RPC in production
-        // For testing, we'll try to call a test RPC
         log('Attempting to add test coins...', 'info');
-
         const response = await client.rpc(session, 'add_test_coins', { amount: 1000 });
         log('Added 1000 coins!', 'success');
         await refreshWallet();
       } catch (e) {
-        log('add_test_coins RPC not available (add it to server for testing): ' + e.message, 'error');
+        log('add_test_coins RPC failed: ' + e.message, 'error');
+      }
+    }
+
+    async function getConfig() {
+      try {
+        log('Fetching game config...', 'info');
+        const response = await client.rpc(session, 'get_config', {});
+
+        let config;
+        if (typeof response.payload === 'string') {
+          config = JSON.parse(response.payload);
+        } else {
+          config = response.payload;
+        }
+
+        gameConfig = config;
+        log('Config loaded!', 'success');
+
+        // Display config
+        let configHtml = `
+          <div class="config-item">
+            <span class="config-label">Commission Rate</span>
+            <span class="config-value">${(config.commissionRate * 100).toFixed(0)}%</span>
+          </div>
+          <div class="config-item">
+            <span class="config-label">Min Bet</span>
+            <span class="config-value">${config.minBet} coins</span>
+          </div>
+          <div class="config-item">
+            <span class="config-label">Max Bet</span>
+            <span class="config-value">${config.maxBet} coins</span>
+          </div>
+          <div class="config-item">
+            <span class="config-label">Wait Timeout</span>
+            <span class="config-value">${config.waitTimeoutSec}s</span>
+          </div>
+        `;
+
+        if (config.skillTiers && config.skillTiers.length > 0) {
+          configHtml += `<div style="margin-top: 15px;"><strong>Skill Tiers:</strong></div>`;
+          config.skillTiers.forEach(tier => {
+            configHtml += `
+              <div class="config-item">
+                <span class="tier-badge ${getTierClass(tier.name)}">${tier.name}</span>
+                <span style="color: #888;">Score ${tier.minScore}-${tier.maxScore} → Levels ${tier.levelRange[0]}-${tier.levelRange[1]}</span>
+              </div>
+            `;
+          });
+        }
+
+        document.getElementById('configDisplay').innerHTML = configHtml;
+        document.getElementById('betLimitsDisplay').textContent = `(Min: ${config.minBet}, Max: ${config.maxBet})`;
+
+      } catch (e) {
+        log('get_config RPC failed: ' + e.message, 'error');
+        document.getElementById('configDisplay').innerHTML = `<span style="color:#fca5a5;">Failed to load config</span>`;
+      }
+    }
+
+    async function getPlayerStats() {
+      try {
+        log('Fetching player stats...', 'info');
+        const response = await client.rpc(session, 'get_player_stats', { gameId: 'mahjong' });
+
+        let result;
+        if (typeof response.payload === 'string') {
+          result = JSON.parse(response.payload);
+        } else {
+          result = response.payload;
+        }
+
+        const stats = result.stats;
+        log('Stats loaded!', 'success');
+
+        // Determine player's tier
+        let playerTier = 'beginner';
+        if (gameConfig && gameConfig.skillTiers) {
+          for (const tier of gameConfig.skillTiers) {
+            if (stats.averageScore >= tier.minScore && stats.averageScore <= tier.maxScore) {
+              playerTier = tier.name;
+              break;
+            }
+          }
+        }
+
+        const statsHtml = `
+          <div style="margin-bottom: 10px;">
+            <span class="tier-badge ${getTierClass(playerTier)}">${playerTier.toUpperCase()}</span>
+          </div>
+          <div class="stats-grid">
+            <div class="stat-item">
+              <div class="stat-value">${stats.gamesPlayed}</div>
+              <div class="stat-label">Games Played</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value">${stats.averageScore}</div>
+              <div class="stat-label">Avg Score</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value">${stats.highScore}</div>
+              <div class="stat-label">High Score</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" style="color: #10b981;">${stats.wins}</div>
+              <div class="stat-label">Wins</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" style="color: #ef4444;">${stats.losses}</div>
+              <div class="stat-label">Losses</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value">${stats.gamesPlayed > 0 ? ((stats.wins / stats.gamesPlayed) * 100).toFixed(0) : 0}%</div>
+              <div class="stat-label">Win Rate</div>
+            </div>
+          </div>
+        `;
+
+        document.getElementById('statsDisplay').innerHTML = statsHtml;
+
+      } catch (e) {
+        log('get_player_stats RPC failed: ' + e.message, 'error');
+        document.getElementById('statsDisplay').innerHTML = `<span style="color:#fca5a5;">Failed to load stats</span>`;
       }
     }
 
@@ -415,27 +692,36 @@
 
         log(`Calling RPC join_game: gameId=${gameId}, betAmount=${betAmount}`, 'info');
 
-        // Note: nakama-js rpc() expects a plain object or already-stringified JSON
-        // The SDK will handle the encoding
         const response = await client.rpc(session, 'join_game', {
           gameId: gameId,
           betAmount: betAmount
         });
 
-        // Handle both string and object payloads
         let result;
         if (typeof response.payload === 'string') {
           result = JSON.parse(response.payload);
         } else {
           result = response.payload;
         }
+
+        // Check for error response
+        if (result.error) {
+          log(`Error: ${result.error} (${result.code})`, 'error');
+          if (result.code === 'INSUFFICIENT_BALANCE') {
+            log(`Required: ${result.required}, Available: ${result.available}`, 'error');
+          } else if (result.code === 'BET_TOO_LOW') {
+            log(`Min bet is ${result.minBet}`, 'error');
+          } else if (result.code === 'BET_TOO_HIGH') {
+            log(`Max bet is ${result.maxBet}`, 'error');
+          }
+          return;
+        }
+
         log(`RPC Response: ${JSON.stringify(result)}`, 'success');
 
         const { matchId, action } = result;
-
         log(`Match ${action}: ${matchId}`, 'match');
 
-        // Join the match via WebSocket
         log('Joining match via WebSocket...', 'info');
         currentMatch = await socket.joinMatch(matchId);
 
@@ -447,10 +733,6 @@
 
       } catch (e) {
         log('Join game failed: ' + e.message, 'error');
-
-        if (e.message.includes('not found') || e.message.includes('Unrecognized')) {
-          log('Note: The join_game RPC is not registered on the server. Deploy the match handler first.', 'error');
-        }
       }
     }
 
@@ -464,14 +746,68 @@
 
         if (data.matchType === 'PVH') {
           showOpponent('House', true);
-          log('No opponent found - playing against House (51% house edge)', 'waiting');
+          log('No opponent found - playing against House', 'waiting');
         } else if (data.opponentName) {
           const opponent = data.opponentName.find(n => n !== session.username);
           if (opponent) showOpponent(opponent);
         }
 
+        // Display level data
+        if (data.game && data.game.level) {
+          currentLevel = data.game.level;
+          showLevelData(data.game.level);
+          log(`Level assigned: ${data.game.level.id} - ${data.game.level.name} (${data.game.level.tier})`, 'level');
+        }
+
+        // Show commission rate
+        if (data.commissionRate) {
+          log(`Commission rate: ${(data.commissionRate * 100).toFixed(0)}%`, 'info');
+        }
+
         showGamePanel();
       }
+
+      if (opCode === 3 && data.type === 'match_result') {
+        log(`Match result received!`, 'match');
+        log(`Winner: ${data.winner}, Score: ${data.winnerScore}`, 'match');
+      }
+    }
+
+    function showLevelData(level) {
+      document.getElementById('levelCard').style.display = 'block';
+      document.getElementById('levelName').textContent = level.name || `Level ${level.id}`;
+      document.getElementById('levelId').textContent = level.id;
+      document.getElementById('levelPairs').textContent = level.totalPairs || '-';
+      document.getElementById('levelTimeBonus').textContent = level.timeBonus ? `${level.timeBonus}s` : '-';
+
+      const tierBadge = document.getElementById('levelTier');
+      tierBadge.textContent = (level.tier || 'unknown').toUpperCase();
+      tierBadge.className = `tier-badge ${getTierClass(level.tier)}`;
+
+      // Show tile preview
+      const tilePreview = document.getElementById('tilePreview');
+      tilePreview.innerHTML = '';
+
+      if (level.tiles && level.tiles.length > 0) {
+        const tilesToShow = level.tiles.slice(0, 20);
+        tilesToShow.forEach(tile => {
+          const tileEl = document.createElement('div');
+          tileEl.className = 'tile';
+          tileEl.textContent = tile.type ? tile.type.substring(0, 4) : '?';
+          tileEl.title = `Type: ${tile.type}, Layer: ${tile.layer}, X: ${tile.x}, Y: ${tile.y}`;
+          tilePreview.appendChild(tileEl);
+        });
+
+        if (level.tiles.length > 20) {
+          const moreEl = document.createElement('div');
+          moreEl.style.cssText = 'padding: 10px; color: #888;';
+          moreEl.textContent = `+${level.tiles.length - 20} more`;
+          tilePreview.appendChild(moreEl);
+        }
+      }
+
+      // Store full level JSON
+      document.getElementById('levelJson').textContent = JSON.stringify(level, null, 2);
     }
 
     function showMatchPanel(matchId, action) {
@@ -493,7 +829,7 @@
       document.getElementById('opponentName').textContent = name;
       document.getElementById('opponentAvatar').textContent = isHouse ? 'H' : name.charAt(0).toUpperCase();
       document.getElementById('opponentAvatar').style.background = isHouse ? '#7c3aed' : '#e94560';
-      document.getElementById('opponentStatus').textContent = isHouse ? 'AI Opponent (51% edge)' : 'Human Player';
+      document.getElementById('opponentStatus').textContent = isHouse ? 'AI Opponent' : 'Human Player';
     }
 
     function showGamePanel() {
@@ -515,7 +851,6 @@
 
         log(`Submitting score: ${score}, time: ${timeMs}ms`, 'info');
 
-        // OpCode 2 = SUBMIT_RESULT
         await socket.sendMatchState(currentMatch.match_id, 2, JSON.stringify({
           score,
           timeMs
@@ -544,12 +879,14 @@
            <div style="text-align:center; font-size:18px; margin-top:10px;">Payout: <span style="color:#ffd93d;">${content.payout} coins</span></div>
            <div style="text-align:center; color:#888; margin-top:5px;">Match type: ${content.matchType}</div>`
         : `<div style="text-align:center; font-size:24px; color:#ef4444;">YOU LOST</div>
-           <div style="text-align:center; color:#888; margin-top:10px;">Match type: ${content.matchType}</div>`;
+           <div style="text-align:center; color:#888; margin-top:10px;">Match type: ${content.matchType}</div>
+           ${content.lostAmount ? `<div style="text-align:center; color:#888;">Lost: ${content.lostAmount} coins</div>` : ''}`;
 
       document.getElementById('resultDisplay').innerHTML = resultHtml;
 
       matchStatus = 'completed';
       refreshWallet();
+      getPlayerStats(); // Refresh stats after match
     }
 
     async function leaveMatch() {
@@ -558,6 +895,7 @@
           await socket.leaveMatch(currentMatch.match_id);
           log('Left match: ' + currentMatch.match_id, 'success');
           currentMatch = null;
+          currentLevel = null;
         }
         resetMatchUI();
         await refreshWallet();
@@ -566,16 +904,24 @@
       }
     }
 
+    function playAgain() {
+      resetMatchUI();
+      getPlayerStats();
+    }
+
     function resetMatchUI() {
       document.getElementById('matchCard').style.display = 'none';
       document.getElementById('matchCard').className = 'card waiting';
       document.getElementById('gameCard').style.display = 'none';
       document.getElementById('resultCard').style.display = 'none';
+      document.getElementById('levelCard').style.display = 'none';
       document.getElementById('joinGameCard').style.opacity = '1';
       document.getElementById('joinGameBtn').disabled = false;
       document.getElementById('submitScoreBtn').disabled = false;
       document.getElementById('opponentSection').style.display = 'none';
+      document.getElementById('levelJson').textContent = '';
       matchStatus = 'idle';
+      currentLevel = null;
       updateStatus('connected');
     }
 
@@ -584,11 +930,25 @@
       document.getElementById('joinGameBtn').disabled = true;
       document.getElementById('addCoinsBtn').disabled = true;
       document.getElementById('refreshWalletBtn').disabled = true;
+      document.getElementById('getConfigBtn').disabled = true;
+      document.getElementById('getStatsBtn').disabled = true;
       document.getElementById('userInfo').textContent = '';
       document.getElementById('walletDisplay').style.display = 'none';
+      document.getElementById('configDisplay').innerHTML = '';
+      document.getElementById('statsDisplay').innerHTML = '';
       resetMatchUI();
       currentMatch = null;
     }
+
+    // Tab switching
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(tab.dataset.tab + 'Tab').classList.add('active');
+      });
+    });
 
     // Game selection
     document.querySelectorAll('.game-btn').forEach(btn => {
@@ -605,10 +965,20 @@
     document.getElementById('joinGameBtn').onclick = joinGame;
     document.getElementById('addCoinsBtn').onclick = addTestCoins;
     document.getElementById('refreshWalletBtn').onclick = refreshWallet;
+    document.getElementById('getConfigBtn').onclick = getConfig;
+    document.getElementById('getStatsBtn').onclick = getPlayerStats;
     document.getElementById('leaveMatchBtn').onclick = leaveMatch;
     document.getElementById('submitScoreBtn').onclick = submitScore;
     document.getElementById('randomScoreBtn').onclick = randomScore;
+    document.getElementById('playAgainBtn').onclick = playAgain;
     document.getElementById('clearBtn').onclick = () => document.getElementById('log').innerHTML = '';
+    document.getElementById('showFullLevelBtn').onclick = () => {
+      document.querySelector('[data-tab="levelJson"]').click();
+    };
+    document.getElementById('copyLevelBtn').onclick = () => {
+      navigator.clipboard.writeText(document.getElementById('levelJson').textContent);
+      log('Level JSON copied to clipboard!', 'success');
+    };
   </script>
 </body>
 </html>
