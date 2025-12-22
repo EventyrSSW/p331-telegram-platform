@@ -221,6 +221,8 @@ function InitModule(ctx, logger, nk, initializer) {
 
   initializer.registerRpc("join_game", rpcJoinGame);
   initializer.registerRpc("add_test_coins", rpcAddTestCoins);
+  initializer.registerRpc("get_config", rpcGetConfig);
+  initializer.registerRpc("get_player_stats", rpcGetPlayerStats);
 
   // Create leaderboards for each game type
   var gameTypes = ["mahjong", "solitaire", "puzzle"];
@@ -323,6 +325,41 @@ function rpcAddTestCoins(ctx, logger, nk, payload) {
   logger.info("Added " + amount + " test coins to " + userId);
 
   return JSON.stringify({ success: true, added: amount });
+}
+
+function rpcGetConfig(ctx, logger, nk, payload) {
+  logger.info("get_config called by " + ctx.userId);
+
+  var config = getConfig(nk);
+
+  // Return public config
+  return JSON.stringify({
+    commissionRate: config.commissionRate,
+    minBet: config.minBet,
+    maxBet: config.maxBet,
+    waitTimeoutSec: config.waitTimeoutSec,
+    skillTiers: config.skillTiers,
+    games: config.games
+  });
+}
+
+function rpcGetPlayerStats(ctx, logger, nk, payload) {
+  var data = {};
+  try {
+    if (payload && payload !== "") {
+      data = JSON.parse(payload);
+    }
+  } catch (e) {
+    // Use defaults
+  }
+
+  var gameId = data.gameId || "mahjong";
+  var stats = getPlayerStats(nk, ctx.userId, gameId);
+
+  return JSON.stringify({
+    gameId: gameId,
+    stats: stats
+  });
 }
 
 //function rpcJoinGame(ctx, logger, nk, payload) {
