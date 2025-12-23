@@ -1,0 +1,1 @@
+export { BottomWalletBar } from './BottomWalletBar';

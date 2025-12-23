@@ -10,3 +10,4 @@ export { BuyCoinsCard, type CoinPackage } from './BuyCoinsCard';
 export { UnityGame } from './UnityGame';
 export { SplashScreen } from './SplashScreen';
 export { CategoryFilter } from './CategoryFilter';
+export { BottomWalletBar } from './BottomWalletBar';
