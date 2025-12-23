@@ -1,6 +1,6 @@
 import { createBrowserRouter } from 'react-router-dom';
 import { HomePage } from './pages/HomePage';
-import { SettingsPage } from './pages/SettingsPage';
+import { StorePage } from './pages/StorePage';
 import { GamePage } from './pages/GamePage';
 
 export const router = createBrowserRouter([
@@ -9,8 +9,8 @@ export const router = createBrowserRouter([
     element: <HomePage />,
   },
   {
-    path: '/settings',
-    element: <SettingsPage />,
+    path: '/store',
+    element: <StorePage />,
   },
   {
     path: '/game/:gameId',

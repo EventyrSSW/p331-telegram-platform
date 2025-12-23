@@ -55,7 +55,18 @@
       "Bash(node test-routes.js:*)",
       "Bash(pkill:*)",
       "Bash(/Users/olegvoytenko/Development/p331-telegram-platform/server/test-endpoints.sh)",
-      "Bash(npx vite build)"
+      "Bash(npx vite build)",
+      "Bash(npm view:*)",
+      "Bash(node 01-authentication.js:*)",
+      "Bash(node 02-user-account.js:*)",
+      "Bash(node:*)",
+      "Bash(timeout 15 node:*)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "Bash(xargs cat:*)",
+      "Bash(git -C /Users/olegvoytenko/Development/p331-telegram-platform diff /Users/olegvoytenko/Development/p331-telegram-platform/src/components/index.ts)",
+      "Skill(superpowers:finishing-a-development-branch)",
+      "Bash(npm test)"
     ],
     "deny": [],
     "ask": []
