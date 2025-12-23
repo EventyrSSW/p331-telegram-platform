@@ -5,7 +5,7 @@
   right: 0;
   bottom: 0;
   background-color: #000000;
-  z-index: 1000;
+  z-index: 500; /* Lower than TonConnect modal (1000) so it appears on top */
   display: flex;
   flex-direction: column;
   padding-top: var(--tg-header-safe-area);
