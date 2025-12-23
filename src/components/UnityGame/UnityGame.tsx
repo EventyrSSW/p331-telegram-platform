@@ -1,12 +1,20 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import styles from './UnityGame.module.css';
 
+interface LevelCompleteData {
+  level: number;
+  score: number;
+  coins: number;
+}
+
 interface UnityGameProps {
   gameSlug: string;
+  levelData?: number;
+  onLevelComplete?: (data: LevelCompleteData) => void;
   onBack?: () => void;
 }
 
-export const UnityGame: React.FC<UnityGameProps> = ({ gameSlug, onBack }) => {
+export const UnityGame: React.FC<UnityGameProps> = ({ gameSlug, levelData, onLevelComplete, onBack }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const unityInstanceRef = useRef<any>(null);
@@ -93,6 +101,39 @@ export const UnityGame: React.FC<UnityGameProps> = ({ gameSlug, onBack }) => {
           .then((instance: any) => {
             unityInstanceRef.current = instance;
             setIsLoading(false);
+
+            // Store Unity instance globally for level control
+            (window as any).unityInstance = instance;
+
+            // Setup setLevelData function
+            (window as any).setLevelData = (levelDataString: string) => {
+              if (instance) {
+                console.log('Setting level data:', levelDataString);
+                instance.SendMessage('WebGLBridge', 'SetLevelDataString', levelDataString);
+                return true;
+              }
+              console.error('Unity instance not ready yet');
+              return false;
+            };
+
+            // Setup level completion callback
+            (window as any).onLevelComplete = (data: LevelCompleteData) => {
+              console.log('Level completed:', data);
+              onLevelComplete?.(data);
+            };
+
+            // Setup levelComplete event listener
+            window.addEventListener('levelComplete', ((event: CustomEvent<LevelCompleteData>) => {
+              console.log('Level complete event:', event.detail);
+              onLevelComplete?.(event.detail);
+            }) as EventListener);
+
+            // If levelData prop provided, send it to Unity after short delay
+            if (levelData !== undefined) {
+              setTimeout(() => {
+                instance.SendMessage('WebGLBridge', 'ReceiveLevelData', levelData.toString());
+              }, 1000);
+            }
           })
           .catch((err: Error) => {
             setError(err.message);
@@ -108,6 +149,12 @@ export const UnityGame: React.FC<UnityGameProps> = ({ gameSlug, onBack }) => {
 
     return () => {
       window.removeEventListener('resize', updateCanvasSize);
+
+      // Remove level complete listener
+      window.removeEventListener('levelComplete', () => {});
+      (window as any).unityInstance = null;
+      (window as any).setLevelData = null;
+      (window as any).onLevelComplete = null;
 
       // Close all tracked audio contexts
       audioContextsRef.current.forEach(ctx => {
@@ -139,7 +186,7 @@ export const UnityGame: React.FC<UnityGameProps> = ({ gameSlug, onBack }) => {
         // Script might already be removed
       }
     };
-  }, [gameSlug]);
+  }, [gameSlug, levelData, onLevelComplete]);
 
   return (
     <div ref={containerRef} className={styles.container}>
