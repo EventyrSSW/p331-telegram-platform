@@ -129,6 +129,9 @@ export function TelegramProvider({ children }: TelegramProviderProps) {
     root.style.setProperty('--tg-safe-area-right', `${safeAreaInset.right}px`)
     root.style.setProperty('--tg-content-safe-area-top', `${contentSafeAreaInset.top}px`)
     root.style.setProperty('--tg-content-safe-area-bottom', `${contentSafeAreaInset.bottom}px`)
+    // Combined top safe area: system (notch) + Telegram UI (close/share icons in fullscreen)
+    const combinedTop = safeAreaInset.top + contentSafeAreaInset.top
+    root.style.setProperty('--tg-header-safe-area', `${combinedTop}px`)
   }, [safeAreaInset, contentSafeAreaInset])
 
   return (

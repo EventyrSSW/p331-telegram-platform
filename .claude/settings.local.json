@@ -66,7 +66,13 @@
       "Bash(xargs cat:*)",
       "Bash(git -C /Users/olegvoytenko/Development/p331-telegram-platform diff /Users/olegvoytenko/Development/p331-telegram-platform/src/components/index.ts)",
       "Skill(superpowers:finishing-a-development-branch)",
-      "Bash(npm test)"
+      "Bash(npm test)",
+      "Bash(git ls-tree:*)",
+      "Bash(git -C /Users/olegvoytenko/Development/p331-telegram-platform log --oneline -3)",
+      "Bash(git log:*)",
+      "Bash(git -C /Users/olegvoytenko/Development/p331-telegram-platform branch --show-current)",
+      "Bash(git -C /Users/olegvoytenko/Development/p331-telegram-platform merge-base HEAD main)",
+      "Bash(git -C /Users/olegvoytenko/Development/p331-telegram-platform merge-base HEAD master)"
     ],
     "deny": [],
     "ask": []
