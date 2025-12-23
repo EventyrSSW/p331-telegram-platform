@@ -1,16 +1,20 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { Header } from '../../components/Header/Header';
+import { BottomNavBar } from '../../components/BottomNavBar/BottomNavBar';
 import { api, Game } from '../../services/api';
 import { haptic } from '../../providers/TelegramProvider';
 import styles from './GameDetailPage.module.css';
 
-// Bet tiers configuration
+// Bet tiers configuration: entry and win amounts
 const BET_TIERS = [
+  { win: 1, entry: 0.60 },
+  { win: 2, entry: 1.20 },
   { win: 3, entry: 1.80 },
-  { win: 5, entry: 3.00 },
-  { win: 10, entry: 6.00 },
-  { win: 25, entry: 15.00 },
-  { win: 50, entry: 30.00 },
+  { win: 4, entry: 2.40 },
+  { win: 8, entry: 4.80 },
+  { win: 16, entry: 9.60 },
+  { win: 20, entry: 12.00 },
 ];
 
 export function GameDetailPage() {
@@ -19,8 +23,7 @@ export function GameDetailPage() {
   const [game, setGame] = useState<Game | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [betTierIndex, setBetTierIndex] = useState(0);
-  const [filledSlots] = useState(3); // Mock: 3 players already joined
+  const [betTierIndex, setBetTierIndex] = useState(0); // Start with $1 to win
 
   useEffect(() => {
     async function fetchGame() {
@@ -84,12 +87,17 @@ export function GameDetailPage() {
   };
 
   const currentTier = BET_TIERS[betTierIndex];
-  const totalSlots = 7;
+  const totalSlots = BET_TIERS.length;
+  const filledSlots = betTierIndex + 1; // Dynamic: fills based on selected tier
 
   if (loading) {
     return (
       <div className={styles.page}>
-        <div className={styles.loading}>Loading...</div>
+        <Header />
+        <main className={styles.main}>
+          <div className={styles.loading}>Loading...</div>
+        </main>
+        <BottomNavBar />
       </div>
     );
   }
@@ -97,21 +105,27 @@ export function GameDetailPage() {
   if (error || !game) {
     return (
       <div className={styles.page}>
-        <div className={styles.error}>
-          <div className={styles.errorTitle}>Oops!</div>
-          <div className={styles.errorMessage}>
-            {error || 'Game not found'}
+        <Header />
+        <main className={styles.main}>
+          <div className={styles.error}>
+            <div className={styles.errorTitle}>Oops!</div>
+            <div className={styles.errorMessage}>
+              {error || 'Game not found'}
+            </div>
+            <button className={styles.errorButton} onClick={handleRetry}>
+              Try Again
+            </button>
           </div>
-          <button className={styles.errorButton} onClick={handleRetry}>
-            Try Again
-          </button>
-        </div>
+        </main>
+        <BottomNavBar />
       </div>
     );
   }
 
   return (
     <div className={styles.page}>
+      <Header />
+
       {/* Hero Section with Back Button */}
       <section className={styles.heroSection}>
         <button className={styles.backButton} onClick={handleBack}>
@@ -130,7 +144,7 @@ export function GameDetailPage() {
       </section>
 
       {/* Bet Selection Section */}
-      <main className={styles.main}>
+      <main className={styles.betSection}>
         {/* Win Amount Selector */}
         <div className={styles.winSection}>
           <div className={styles.winLabel}>
@@ -166,32 +180,29 @@ export function GameDetailPage() {
           <span className={styles.entryLabel}> Entry</span>
         </div>
 
-        {/* Player Slots */}
-        <div className={styles.slotsContainer}>
+        {/* Entry Bar - fills dynamically based on tier */}
+        <div className={styles.entryBarContainer}>
           {Array.from({ length: totalSlots }).map((_, index) => {
             const isFilled = index < filledSlots;
-            let slotClass = styles.slot;
-            if (isFilled) {
-              if (index === 0) slotClass += ` ${styles.slotFilled1}`;
-              else if (index === 1) slotClass += ` ${styles.slotFilled2}`;
-              else slotClass += ` ${styles.slotFilled3}`;
-            } else {
-              slotClass += ` ${styles.slotEmpty}`;
-            }
-            return <div key={index} className={slotClass} />;
+            return (
+              <div
+                key={index}
+                className={`${styles.entryBarSlot} ${isFilled ? styles.entryBarFilled : styles.entryBarEmpty}`}
+              />
+            );
           })}
         </div>
-      </main>
 
-      {/* Play Button */}
-      <div className={styles.playButtonContainer}>
+        {/* Play Button */}
         <button className={styles.playButton} onClick={handlePlay}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
             <path d="M8 5V19L19 12L8 5Z"/>
           </svg>
           <span>Play</span>
         </button>
-      </div>
+      </main>
+
+      <BottomNavBar />
     </div>
   );
 }
