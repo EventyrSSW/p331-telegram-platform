@@ -1,29 +1,26 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTonWallet } from '@tonconnect/ui-react';
 import {
   Header,
-  ActionCard,
-  PlaceholderCard,
-  FeaturedCard,
-  Section,
+  FeaturedCarousel,
+  CategoryFilter,
   GameGrid,
+  Section,
+  BottomWalletBar,
   Game,
 } from '../../components';
 import { useGames } from '../../hooks/useGames';
 import styles from './HomePage.module.css';
 
 export const HomePage = () => {
-  const { games, featuredGame, isLoading, error, refetch } = useGames();
+  const { games, featuredGames, isLoading, error, refetch } = useGames();
   const navigate = useNavigate();
+  const wallet = useTonWallet();
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   const handleGameClick = (game: Game) => {
     navigate(`/game/${game.slug}`);
-  };
-
-  const handleSurpriseMe = () => {
-    if (games.length > 0) {
-      const randomGame = games[Math.floor(Math.random() * games.length)];
-      navigate(`/game/${randomGame.slug}`);
-    }
   };
 
   if (error) {
@@ -51,45 +48,41 @@ export const HomePage = () => {
     );
   }
 
+  // Filter games by selected category
+  const filteredGames = selectedCategory
+    ? games.filter((game) => game.category.toLowerCase() === selectedCategory.toLowerCase())
+    : games;
+
   return (
     <div className={styles.page}>
       <Header />
 
       <main className={styles.main}>
-        {/* Quick Actions Section */}
-        <div className={styles.quickActions}>
-          <div className={styles.actionItem}>
-            <ActionCard
-              icon="layers"
-              label="Surprise me!"
-              onClick={handleSurpriseMe}
-            />
-          </div>
-          <div className={styles.actionItem}>
-            <PlaceholderCard icon="clock" />
-          </div>
-          <div className={styles.actionItem}>
-            <PlaceholderCard icon="clock" />
-          </div>
-        </div>
-
-        {/* Featured Section */}
-        {featuredGame && (
-          <Section title="Featured">
-            <FeaturedCard game={featuredGame} onPlay={handleGameClick} />
-          </Section>
+        {/* Featured Games Carousel */}
+        {featuredGames.length > 0 && (
+          <section className={styles.featuredSection}>
+            <FeaturedCarousel games={featuredGames} onGameClick={handleGameClick} />
+          </section>
         )}
 
-        {/* Popular Games Section */}
-        <Section title="Popular Games">
-          <GameGrid games={games} onGameClick={handleGameClick} />
-        </Section>
+        {/* Category Filter */}
+        <section className={styles.categoriesSection}>
+          <CategoryFilter
+            selectedCategory={selectedCategory}
+            onCategoryChange={setSelectedCategory}
+          />
+        </section>
 
-        {/* New Games Section */}
-        <Section title="New Games">
-          <GameGrid games={games} onGameClick={handleGameClick} />
+        {/* Games Grid */}
+        <Section
+          title={selectedCategory ? `${selectedCategory} Games` : 'Most Popular Games'}
+        >
+          <GameGrid games={filteredGames} onGameClick={handleGameClick} />
         </Section>
       </main>
+
+      {/* Bottom Wallet Bar - only shows when wallet not connected */}
+      {!wallet && <BottomWalletBar />}
     </div>
   );
 };

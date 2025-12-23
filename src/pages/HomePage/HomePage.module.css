@@ -4,26 +4,16 @@
 }
 
 .main {
-  padding-bottom: 48px;
-}
-
-.quickActions {
-  display: flex;
-  gap: 12px;
   padding: 16px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  scroll-snap-type: x mandatory;
+  padding-bottom: 80px; /* Space for bottom wallet bar */
 }
 
-.quickActions::-webkit-scrollbar {
-  display: none;
+.featuredSection {
+  margin-bottom: 24px;
 }
 
-.actionItem {
-  flex-shrink: 0;
-  scroll-snap-align: start;
+.categoriesSection {
+  margin-bottom: 24px;
 }
 
 .error {
