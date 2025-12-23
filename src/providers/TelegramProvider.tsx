@@ -1,5 +1,12 @@
 import { useEffect, useState, createContext, useContext, ReactNode } from 'react'
 
+interface SafeAreaInset {
+  top: number
+  bottom: number
+  left: number
+  right: number
+}
+
 interface WebApp {
   ready: () => void
   expand: () => void
@@ -15,6 +22,8 @@ interface WebApp {
       username?: string
     }
   }
+  safeAreaInset?: SafeAreaInset
+  contentSafeAreaInset?: SafeAreaInset
   onEvent: (event: string, callback: () => void) => void
   offEvent: (event: string, callback: () => void) => void
   MainButton: {
@@ -35,13 +44,19 @@ interface TelegramContextValue {
   isTelegram: boolean
   colorScheme: 'dark' | 'light'
   webApp: WebApp | null
+  safeAreaInset: SafeAreaInset
+  contentSafeAreaInset: SafeAreaInset
 }
+
+const defaultInset: SafeAreaInset = { top: 0, bottom: 0, left: 0, right: 0 }
 
 const TelegramContext = createContext<TelegramContextValue>({
   isReady: false,
   isTelegram: false,
   colorScheme: 'dark',
   webApp: null,
+  safeAreaInset: defaultInset,
+  contentSafeAreaInset: defaultInset,
 })
 
 export function useTelegram() {
@@ -57,6 +72,8 @@ export function TelegramProvider({ children }: TelegramProviderProps) {
   const [isTelegram, setIsTelegram] = useState(false)
   const [colorScheme, setColorScheme] = useState<'dark' | 'light'>('dark')
   const [webApp, setWebApp] = useState<WebApp | null>(null)
+  const [safeAreaInset, setSafeAreaInset] = useState<SafeAreaInset>(defaultInset)
+  const [contentSafeAreaInset, setContentSafeAreaInset] = useState<SafeAreaInset>(defaultInset)
 
   useEffect(() => {
     const initTelegram = () => {
@@ -70,8 +87,24 @@ export function TelegramProvider({ children }: TelegramProviderProps) {
         setIsTelegram(true)
         setColorScheme(tg.colorScheme || 'dark')
 
+        if (tg.safeAreaInset) {
+          setSafeAreaInset(tg.safeAreaInset)
+        }
+        if (tg.contentSafeAreaInset) {
+          setContentSafeAreaInset(tg.contentSafeAreaInset)
+        }
+
         tg.onEvent('themeChanged', () => {
           setColorScheme(tg.colorScheme || 'dark')
+        })
+
+        tg.onEvent('viewportChanged', () => {
+          if (tg.safeAreaInset) {
+            setSafeAreaInset(tg.safeAreaInset)
+          }
+          if (tg.contentSafeAreaInset) {
+            setContentSafeAreaInset(tg.contentSafeAreaInset)
+          }
         })
       } else {
         setIsTelegram(false)
@@ -88,8 +121,18 @@ export function TelegramProvider({ children }: TelegramProviderProps) {
     }
   }, [])
 
+  useEffect(() => {
+    const root = document.documentElement
+    root.style.setProperty('--tg-safe-area-top', `${safeAreaInset.top}px`)
+    root.style.setProperty('--tg-safe-area-bottom', `${safeAreaInset.bottom}px`)
+    root.style.setProperty('--tg-safe-area-left', `${safeAreaInset.left}px`)
+    root.style.setProperty('--tg-safe-area-right', `${safeAreaInset.right}px`)
+    root.style.setProperty('--tg-content-safe-area-top', `${contentSafeAreaInset.top}px`)
+    root.style.setProperty('--tg-content-safe-area-bottom', `${contentSafeAreaInset.bottom}px`)
+  }, [safeAreaInset, contentSafeAreaInset])
+
   return (
-    <TelegramContext.Provider value={{ isReady, isTelegram, colorScheme, webApp }}>
+    <TelegramContext.Provider value={{ isReady, isTelegram, colorScheme, webApp, safeAreaInset, contentSafeAreaInset }}>
       {children}
     </TelegramContext.Provider>
   )
@@ -113,6 +156,8 @@ declare global {
             username?: string
           }
         }
+        safeAreaInset?: SafeAreaInset
+        contentSafeAreaInset?: SafeAreaInset
         onEvent: (event: string, callback: () => void) => void
         offEvent: (event: string, callback: () => void) => void
         MainButton: {
