@@ -192,9 +192,27 @@
   <script type="module">
     import { Client } from '@heroiclabs/nakama-js';
 
-    const SERVER_KEY = 'defaultkey';
-    const HOST = '136.243.136.206';
-    const PORT = 7350;
+    // ========== NAKAMA CONFIGURATION ==========
+    // Production (HTTPS):
+    const NAKAMA_CONFIG = {
+      host: 'nakama-server.eventyr.cloud',
+      port: 443,
+      serverKey: 'defaultkey',
+      useSSL: true
+    };
+    // Local/Direct IP (uncomment below, comment above):
+    // const NAKAMA_CONFIG = {
+    //   host: '136.243.136.206',
+    //   port: 7350,
+    //   serverKey: 'defaultkey',
+    //   useSSL: false
+    // };
+    // ============================================
+
+    const SERVER_KEY = NAKAMA_CONFIG.serverKey;
+    const HOST = NAKAMA_CONFIG.host;
+    const PORT = NAKAMA_CONFIG.port;
+    const USE_SSL = NAKAMA_CONFIG.useSSL;
 
     let client, session, socket;
     let currentChannel, currentMatch, mmTicket;
@@ -217,7 +235,7 @@
     // Connection
     async function connect() {
       try {
-        client = new Client(SERVER_KEY, HOST, PORT, false);
+        client = new Client(SERVER_KEY, HOST, PORT, USE_SSL);
         const deviceId = 'all-test-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5);
         session = await client.authenticateDevice(deviceId, true, 'user_' + Date.now());
 
@@ -484,41 +502,6 @@
         logTo('groupsLog', 'Error: ' + e.message, 'error');
       }
     }
-
-    // Event listeners
-    document.getElementById('connectBtn').onclick = connect;
-    document.getElementById('disconnectBtn').onclick = disconnect;
-
-    // Chat
-    document.getElementById('joinChatBtn').onclick = joinChat;
-    document.getElementById('leaveChatBtn').onclick = leaveChat;
-    document.getElementById('sendChatBtn').onclick = sendChat;
-
-    // Match
-    document.getElementById('createMatchBtn').onclick = createMatch;
-    document.getElementById('joinMatchBtn').onclick = joinMatchById;
-    document.getElementById('leaveMatchBtn').onclick = leaveCurrentMatch;
-    document.getElementById('sendMatchStateBtn').onclick = sendMatchState;
-    document.getElementById('sendRandomPosBtn').onclick = sendRandomPos;
-
-    // Matchmaker
-    document.getElementById('findMatchBtn').onclick = findMatch;
-    document.getElementById('cancelMMBtn').onclick = cancelMM;
-
-    // Storage
-    document.getElementById('writeStorageBtn').onclick = writeStorage;
-    document.getElementById('readStorageBtn').onclick = readStorage;
-    document.getElementById('listStorageBtn').onclick = listStorage;
-    document.getElementById('deleteStorageBtn').onclick = deleteStorage;
-
-    // Friends
-    document.getElementById('listFriendsBtn').onclick = listFriends;
-    document.getElementById('listRequestsBtn').onclick = listRequests;
-
-    // Groups
-    document.getElementById('createGroupBtn').onclick = createGroup;
-    document.getElementById('listGroupsBtn').onclick = listGroups;
-    document.getElementById('listMyGroupsBtn').onclick = listMyGroups;
   </script>
 </body>
 </html>

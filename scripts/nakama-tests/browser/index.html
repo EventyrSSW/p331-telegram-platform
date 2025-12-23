@@ -60,7 +60,7 @@
 
   <div class="card">
     <h2>Server Info</h2>
-    <p><strong>Server:</strong> <code>http://136.243.136.206:7350</code></p>
+    <p><strong>Server:</strong> <code>https://nakama-server.eventyr.cloud</code></p>
     <p><strong>Server Key:</strong> <code>defaultkey</code></p>
     <div id="serverStatus" class="status loading">Loading SDK...</div>
   </div>
@@ -99,11 +99,28 @@ python3 -m http.server 8080
   <script type="module">
     import { Client } from '@heroiclabs/nakama-js';
 
+    // ========== NAKAMA CONFIGURATION ==========
+    // Production (HTTPS):
+    const NAKAMA_CONFIG = {
+      host: 'nakama-server.eventyr.cloud',
+      port: 443,
+      serverKey: 'defaultkey',
+      useSSL: true
+    };
+    // Local/Direct IP (uncomment below, comment above):
+    // const NAKAMA_CONFIG = {
+    //   host: '136.243.136.206',
+    //   port: 7350,
+    //   serverKey: 'defaultkey',
+    //   useSSL: false
+    // };
+    // ============================================
+
     const statusEl = document.getElementById('serverStatus');
     statusEl.textContent = 'SDK loaded, checking server...';
 
     try {
-      const client = new Client('defaultkey', '136.243.136.206', 7350, false);
+      const client = new Client(NAKAMA_CONFIG.serverKey, NAKAMA_CONFIG.host, NAKAMA_CONFIG.port, NAKAMA_CONFIG.useSSL);
       const session = await client.authenticateDevice('health-check-' + Date.now(), true);
       statusEl.className = 'status connected';
       statusEl.textContent = 'Server is online! Connected as: ' + session.user_id;

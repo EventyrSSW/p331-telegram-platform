@@ -445,14 +445,22 @@
   <script type="module">
     import { Client } from '@heroiclabs/nakama-js';
 
-    // ========== CONFIGURATION ==========
+    // ========== NAKAMA CONFIGURATION ==========
+    // Production (HTTPS):
     const NAKAMA_CONFIG = {
       host: 'nakama-server.eventyr.cloud',
       port: 443,
       serverKey: 'defaultkey',
       useSSL: true
     };
-    // ====================================
+    // Local/Direct IP (uncomment below, comment above):
+    // const NAKAMA_CONFIG = {
+    //   host: '136.243.136.206',
+    //   port: 7350,
+    //   serverKey: 'defaultkey',
+    //   useSSL: false
+    // };
+    // ============================================
 
     const SERVER_KEY = NAKAMA_CONFIG.serverKey;
     const HOST = NAKAMA_CONFIG.host;
