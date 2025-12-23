@@ -1,25 +1,69 @@
 .card {
-  background-color: transparent;
+  background-color: var(--color-bg-card);
   border: none;
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   cursor: pointer;
   padding: 0;
   width: 100%;
   min-width: 0;
-  transition: transform 0.2s ease;
+  overflow: hidden;
+  position: relative;
+  box-shadow: var(--shadow-card);
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
 }
 
 .card:hover {
-  transform: translateY(-4px) scale(1.02);
+  transform: scale(1.02);
+  box-shadow: var(--shadow-card-hover);
+}
+
+.card:active {
+  transform: scale(0.98);
+}
+
+/* Ribbon Badge Container */
+.ribbonContainer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 80px;
+  height: 80px;
+  overflow: hidden;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.ribbon {
+  position: absolute;
+  top: 16px;
+  left: -24px;
+  width: 100px;
+  transform: rotate(-45deg);
+  padding: 4px 0;
+  text-align: center;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-text-primary);
+}
+
+.ribbonFeatured {
+  background: var(--color-badge-featured);
+  box-shadow: var(--shadow-badge-featured);
+}
+
+.ribbonHot {
+  background: var(--color-badge-hot);
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
 }
 
 .thumbnailWrapper {
   aspect-ratio: 1 / 1;
   overflow: hidden;
-  border-radius: 16px;
-  background-color: var(--color-bg-card);
   width: 100%;
   position: relative;
+  background-color: var(--color-bg-card);
 }
 
 .thumbnail {
@@ -31,12 +75,18 @@
   left: 0;
 }
 
-.title {
-  font-size: 13px;
-  font-weight: 500;
+.titleArea {
+  background: var(--color-bg-card-title);
+  padding: 12px 8px;
   text-align: center;
-  margin-top: 8px;
+}
+
+.title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  display: block;
 }
