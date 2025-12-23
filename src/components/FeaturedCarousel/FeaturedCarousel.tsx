@@ -16,24 +16,29 @@ const VideoSlide = ({ game, onGameClick }: { game: Game; onGameClick: (game: Gam
     if (!video || !game.videoUrl) return;
 
     const tryPlay = () => {
-      video.play().catch(() => {
-        // Autoplay failed, show thumbnail
-        setVideoFailed(true);
-      });
+      if (video.paused) {
+        video.play().catch(() => {
+          setVideoFailed(true);
+        });
+      }
     };
 
-    // If video is already ready, play immediately
-    if (video.readyState >= 3) {
-      tryPlay();
-    }
+    // Try immediately
+    tryPlay();
 
-    // Also listen for events in case video isn't ready yet
+    // Retry after a short delay (for first load timing)
+    const timeout = setTimeout(tryPlay, 100);
+
+    // Also listen for events
     video.addEventListener('canplay', tryPlay);
     video.addEventListener('loadeddata', tryPlay);
+    video.addEventListener('loadedmetadata', tryPlay);
 
     return () => {
+      clearTimeout(timeout);
       video.removeEventListener('canplay', tryPlay);
       video.removeEventListener('loadeddata', tryPlay);
+      video.removeEventListener('loadedmetadata', tryPlay);
     };
   }, [game.videoUrl]);
 
@@ -54,6 +59,7 @@ const VideoSlide = ({ game, onGameClick }: { game: Game; onGameClick: (game: Gam
           className={styles.video}
           src={game.videoUrl}
           poster={game.thumbnail}
+          autoPlay
           muted
           loop
           playsInline
