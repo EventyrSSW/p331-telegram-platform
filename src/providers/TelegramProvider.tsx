@@ -83,19 +83,25 @@ export function TelegramProvider({ children }: TelegramProviderProps) {
         tg.ready()
         tg.expand()
 
-        // Lock to portrait orientation
-        if (tg.lockOrientation) {
-          tg.lockOrientation()
+        // Lock to portrait orientation (optional - may not be supported)
+        try {
+          tg.lockOrientation?.()
+        } catch {
+          // Method not supported in this Telegram version
         }
 
-        // Disable swipe-to-close gesture
-        if (tg.disableVerticalSwipes) {
-          tg.disableVerticalSwipes()
+        // Disable swipe-to-close gesture (optional - may not be supported)
+        try {
+          tg.disableVerticalSwipes?.()
+        } catch {
+          // Method not supported in this Telegram version
         }
 
-        // Request fullscreen mode
-        if (tg.requestFullscreen) {
-          tg.requestFullscreen()
+        // Request fullscreen mode (optional - may not be supported)
+        try {
+          tg.requestFullscreen?.()
+        } catch {
+          // Method not supported in this Telegram version
         }
 
         setWebApp(tg)
