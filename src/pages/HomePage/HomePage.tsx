@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { haptic } from '../../providers/TelegramProvider';
+
+// Track if initial haptic has been triggered this session
+let initialHapticTriggered = false;
 import {
   Header,
   FeaturedCarousel,
@@ -18,9 +21,10 @@ export const HomePage = () => {
   const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  // Haptic feedback when page loads
+  // Haptic feedback only on first app load
   useEffect(() => {
-    if (!isLoading && !error) {
+    if (!isLoading && !error && !initialHapticTriggered) {
+      initialHapticTriggered = true;
       haptic.medium();
     }
   }, [isLoading, error]);
