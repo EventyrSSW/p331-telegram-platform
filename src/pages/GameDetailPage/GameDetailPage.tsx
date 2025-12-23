@@ -98,7 +98,7 @@ export function GameDetailPage() {
     );
   }
 
-  const heroImage = game.mainUrl || game.thumbnail;
+  const heroImage = game.thumbnail;
   const screenshots = [
     game.screen1Url,
     game.screen2Url,
