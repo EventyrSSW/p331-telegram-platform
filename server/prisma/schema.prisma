@@ -77,6 +77,8 @@ model Game {
   screen4Url      String?
   rating          Float?
   reviewCount     Int?
+  videoUrl        String?
+  topPromoted     Boolean   @default(false)
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
