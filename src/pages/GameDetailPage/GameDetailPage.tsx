@@ -1,10 +1,17 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Header } from '../../components/Header/Header';
-import { BottomNavBar } from '../../components/BottomNavBar/BottomNavBar';
 import { api, Game } from '../../services/api';
 import { haptic } from '../../providers/TelegramProvider';
 import styles from './GameDetailPage.module.css';
+
+// Bet tiers configuration
+const BET_TIERS = [
+  { win: 3, entry: 1.80 },
+  { win: 5, entry: 3.00 },
+  { win: 10, entry: 6.00 },
+  { win: 25, entry: 15.00 },
+  { win: 50, entry: 30.00 },
+];
 
 export function GameDetailPage() {
   const { gameId } = useParams<{ gameId: string }>();
@@ -12,6 +19,8 @@ export function GameDetailPage() {
   const [game, setGame] = useState<Game | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [betTierIndex, setBetTierIndex] = useState(0);
+  const [filledSlots] = useState(3); // Mock: 3 players already joined
 
   useEffect(() => {
     async function fetchGame() {
@@ -37,7 +46,26 @@ export function GameDetailPage() {
     fetchGame();
   }, [gameId]);
 
-  const handlePlayNow = () => {
+  const handleBack = () => {
+    haptic.light();
+    navigate('/');
+  };
+
+  const handleDecrease = () => {
+    haptic.light();
+    if (betTierIndex > 0) {
+      setBetTierIndex(betTierIndex - 1);
+    }
+  };
+
+  const handleIncrease = () => {
+    haptic.light();
+    if (betTierIndex < BET_TIERS.length - 1) {
+      setBetTierIndex(betTierIndex + 1);
+    }
+  };
+
+  const handlePlay = () => {
     haptic.medium();
     if (gameId) {
       navigate(`/game/${gameId}`);
@@ -55,35 +83,13 @@ export function GameDetailPage() {
     }
   };
 
-  const renderStars = (rating: number) => {
-    const stars = [];
-    const fullStars = Math.floor(rating);
-    const hasHalfStar = rating % 1 >= 0.5;
-
-    for (let i = 0; i < fullStars; i++) {
-      stars.push(<span key={`full-${i}`} className={styles.star}>★</span>);
-    }
-
-    if (hasHalfStar) {
-      stars.push(<span key="half" className={styles.star}>★</span>);
-    }
-
-    const emptyStars = 5 - stars.length;
-    for (let i = 0; i < emptyStars; i++) {
-      stars.push(<span key={`empty-${i}`} className={styles.starEmpty}>★</span>);
-    }
-
-    return stars;
-  };
+  const currentTier = BET_TIERS[betTierIndex];
+  const totalSlots = 7;
 
   if (loading) {
     return (
       <div className={styles.page}>
-        <Header />
-        <main className={styles.main}>
-          <div className={styles.loading}>Loading game details...</div>
-        </main>
-        <BottomNavBar />
+        <div className={styles.loading}>Loading...</div>
       </div>
     );
   }
@@ -91,86 +97,101 @@ export function GameDetailPage() {
   if (error || !game) {
     return (
       <div className={styles.page}>
-        <Header />
-        <main className={styles.main}>
-          <div className={styles.error}>
-            <div className={styles.errorTitle}>Oops!</div>
-            <div className={styles.errorMessage}>
-              {error || 'Game not found'}
-            </div>
-            <button className={styles.errorButton} onClick={handleRetry}>
-              Try Again
-            </button>
+        <div className={styles.error}>
+          <div className={styles.errorTitle}>Oops!</div>
+          <div className={styles.errorMessage}>
+            {error || 'Game not found'}
           </div>
-        </main>
-        <BottomNavBar />
+          <button className={styles.errorButton} onClick={handleRetry}>
+            Try Again
+          </button>
+        </div>
       </div>
     );
   }
 
-  const heroImage = game.thumbnail;
-  const screenshots = [
-    game.screen1Url,
-    game.screen2Url,
-    game.screen3Url,
-    game.screen4Url,
-  ].filter(Boolean);
-
   return (
     <div className={styles.page}>
-      <Header />
-
-      <main className={styles.main}>
-        <section className={styles.heroSection}>
-          <img
-            src={heroImage}
-            alt={game.title}
-            className={styles.heroImage}
-          />
-          <div className={styles.heroOverlay}>
-            <h1 className={styles.gameTitle}>{game.title}</h1>
-          </div>
-        </section>
-
-        {screenshots.length > 0 && (
-          <section className={styles.screenshotsSection}>
-            <h2 className={styles.sectionTitle}>Screenshots</h2>
-            <div className={styles.screenshotCarousel}>
-              {screenshots.map((screenshot, index) => (
-                <div key={index} className={styles.screenshotItem}>
-                  <img
-                    src={screenshot}
-                    alt={`Screenshot ${index + 1}`}
-                    className={styles.screenshotImage}
-                  />
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        <section className={styles.reviewsSection}>
-          <div className={styles.reviewsCard}>
-            <div className={styles.ratingValue}>
-              {game.rating?.toFixed(1) || '0.0'}
-            </div>
-            <div className={styles.stars}>
-              {renderStars(game.rating || 0)}
-            </div>
-            <div className={styles.reviewCount}>
-              {game.reviewCount || 0} reviews
-            </div>
-          </div>
-        </section>
-      </main>
-
-      <section className={styles.ctaSection}>
-        <button className={styles.playButton} onClick={handlePlayNow}>
-          Play Now
+      {/* Hero Section with Back Button */}
+      <section className={styles.heroSection}>
+        <button className={styles.backButton} onClick={handleBack}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
         </button>
+        <img
+          src={game.thumbnail}
+          alt={game.title}
+          className={styles.heroImage}
+        />
+        <div className={styles.heroOverlay}>
+          <h1 className={styles.gameTitle}>{game.title}</h1>
+        </div>
       </section>
 
-      <BottomNavBar />
+      {/* Bet Selection Section */}
+      <main className={styles.main}>
+        {/* Win Amount Selector */}
+        <div className={styles.winSection}>
+          <div className={styles.winLabel}>
+            <span>WIN</span>
+            <div className={styles.winUnderline} />
+          </div>
+          <div className={styles.winAmountRow}>
+            <button
+              className={styles.stepperButton}
+              onClick={handleDecrease}
+              disabled={betTierIndex === 0}
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M5 12H19" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
+              </svg>
+            </button>
+            <span className={styles.winAmount}>${currentTier.win}</span>
+            <button
+              className={styles.stepperButton}
+              onClick={handleIncrease}
+              disabled={betTierIndex === BET_TIERS.length - 1}
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Entry Fee */}
+        <div className={styles.entryFee}>
+          <span className={styles.entryAmount}>${currentTier.entry.toFixed(2)}</span>
+          <span className={styles.entryLabel}> Entry</span>
+        </div>
+
+        {/* Player Slots */}
+        <div className={styles.slotsContainer}>
+          {Array.from({ length: totalSlots }).map((_, index) => {
+            const isFilled = index < filledSlots;
+            let slotClass = styles.slot;
+            if (isFilled) {
+              if (index === 0) slotClass += ` ${styles.slotFilled1}`;
+              else if (index === 1) slotClass += ` ${styles.slotFilled2}`;
+              else slotClass += ` ${styles.slotFilled3}`;
+            } else {
+              slotClass += ` ${styles.slotEmpty}`;
+            }
+            return <div key={index} className={slotClass} />;
+          })}
+        </div>
+      </main>
+
+      {/* Play Button */}
+      <div className={styles.playButtonContainer}>
+        <button className={styles.playButton} onClick={handlePlay}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M8 5V19L19 12L8 5Z"/>
+          </svg>
+          <span>Play</span>
+        </button>
+      </div>
     </div>
   );
 }
