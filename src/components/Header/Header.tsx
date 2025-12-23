@@ -4,11 +4,12 @@ import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
 import { Address } from '@ton/core';
 import { useAuth } from '../../contexts/AuthContext';
 import { useConfig } from '../../contexts/ConfigContext';
+import { api } from '../../services/api';
 import { AddTonModal } from '../AddTonModal/AddTonModal';
 import styles from './Header.module.css';
 
 export const Header = () => {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const { config } = useConfig();
   const [tonConnectUI] = useTonConnectUI();
   const wallet = useTonWallet();
@@ -60,9 +61,18 @@ export const Header = () => {
       };
 
       // Send transaction - this will open wallet for user confirmation
-      await tonConnectUI.sendTransaction(transaction);
+      const result = await tonConnectUI.sendTransaction(transaction);
 
-      alert(`Successfully added ${amount} TON!`);
+      // Transaction successful - add coins to user balance (1 TON = 1 Coin)
+      await api.addCoins(amount, {
+        transactionHash: result.boc,
+        tonAmount: amountInNanoTon,
+      });
+
+      // Refresh user data to get updated balance
+      await refreshUser();
+
+      alert(`Successfully added ${amount} coins!`);
     } catch (error) {
       console.error('Failed to send TON:', error);
 
