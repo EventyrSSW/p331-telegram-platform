@@ -7,6 +7,72 @@ interface FeaturedCarouselProps {
   onGameClick: (game: Game) => void;
 }
 
+const VideoSlide = ({ game, onGameClick }: { game: Game; onGameClick: (game: Game) => void }) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [videoFailed, setVideoFailed] = useState(false);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !game.videoUrl) return;
+
+    // Try to play video when it's ready
+    const handleCanPlay = () => {
+      video.play().catch(() => {
+        // Autoplay failed, show thumbnail
+        setVideoFailed(true);
+      });
+    };
+
+    video.addEventListener('canplay', handleCanPlay);
+    return () => video.removeEventListener('canplay', handleCanPlay);
+  }, [game.videoUrl]);
+
+  const handleVideoError = () => {
+    setVideoFailed(true);
+  };
+
+  const showVideo = game.videoUrl && !videoFailed;
+
+  return (
+    <div
+      className={styles.slide}
+      onClick={() => onGameClick(game)}
+    >
+      {showVideo && (
+        <video
+          ref={videoRef}
+          className={styles.video}
+          src={game.videoUrl}
+          poster={game.thumbnail}
+          muted
+          loop
+          playsInline
+          onError={handleVideoError}
+        />
+      )}
+      <img
+        src={game.thumbnail}
+        alt={game.title}
+        className={styles.image}
+        style={{ display: showVideo ? 'none' : 'block' }}
+      />
+      <div className={styles.overlay}>
+        <span className={styles.category}>{game.category}</span>
+        <h3 className={styles.title}>{game.title}</h3>
+        <button
+          className={styles.playButton}
+          onClick={(e) => {
+            e.stopPropagation();
+            onGameClick(game);
+          }}
+        >
+          Play Now
+        </button>
+      </div>
+    </div>
+  );
+};
+
 export const FeaturedCarousel = ({ games, onGameClick }: FeaturedCarouselProps) => {
   const [activeIndex, setActiveIndex] = useState(0);
   const carouselRef = useRef<HTMLDivElement>(null);
@@ -45,41 +111,7 @@ export const FeaturedCarousel = ({ games, onGameClick }: FeaturedCarouselProps) 
     <div className={styles.container}>
       <div className={styles.carousel} ref={carouselRef}>
         {games.map((game) => (
-          <div
-            key={game.id}
-            className={styles.slide}
-            onClick={() => onGameClick(game)}
-          >
-            {game.videoUrl ? (
-              <video
-                className={styles.video}
-                src={game.videoUrl}
-                autoPlay
-                muted
-                loop
-                playsInline
-              />
-            ) : (
-              <img
-                src={game.thumbnail}
-                alt={game.title}
-                className={styles.image}
-              />
-            )}
-            <div className={styles.overlay}>
-              <span className={styles.category}>{game.category}</span>
-              <h3 className={styles.title}>{game.title}</h3>
-              <button
-                className={styles.playButton}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onGameClick(game);
-                }}
-              >
-                Play Now
-              </button>
-            </div>
-          </div>
+          <VideoSlide key={game.id} game={game} onGameClick={onGameClick} />
         ))}
       </div>
       {games.length > 1 && (
