@@ -54,8 +54,23 @@ export function AddTonModal({
       return;
     }
 
+    if (value === '.') {
+      setAmount(prev => {
+        // Don't add decimal if already has one
+        if (prev.includes('.')) return prev;
+        return prev + '.';
+      });
+      return;
+    }
+
     setAmount(prev => {
-      if (prev === '0') return value;
+      // If current is just "0", replace with new digit (unless it's another 0)
+      if (prev === '0' && value !== '0') return value;
+
+      // Limit decimal places to 2
+      const decimalIndex = prev.indexOf('.');
+      if (decimalIndex !== -1 && prev.length - decimalIndex > 2) return prev;
+
       const newAmount = prev + value;
       if (Number(newAmount) > MAX_AMOUNT) return prev;
       return newAmount;
@@ -133,7 +148,13 @@ export function AddTonModal({
               {digit}
             </button>
           ))}
-          <div className={`${styles.numpadKey} ${styles.numpadKeyEmpty}`} />
+          <button
+            className={styles.numpadKey}
+            onClick={() => handleNumpadClick('.')}
+            disabled={isProcessing}
+          >
+            .
+          </button>
           <button
             className={styles.numpadKey}
             onClick={() => handleNumpadClick('0')}
