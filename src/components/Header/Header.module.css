@@ -4,7 +4,7 @@
   z-index: 100;
   height: calc(56px + var(--tg-header-safe-area, 0px));
   padding: var(--tg-header-safe-area, 0px) 16px 0 16px;
-  background: var(--color-bg-secondary);
+  background: var(--color-bg-hero);
   display: flex;
   align-items: center;
   justify-content: space-between;
