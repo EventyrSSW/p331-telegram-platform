@@ -1,13 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTonWallet } from '@tonconnect/ui-react';
 import {
   Header,
   FeaturedCarousel,
   CategoryFilter,
   GameGrid,
   Section,
-  BottomWalletBar,
+  BottomNavBar,
   Game,
 } from '../../components';
 import { useGames } from '../../hooks/useGames';
@@ -16,7 +15,6 @@ import styles from './HomePage.module.css';
 export const HomePage = () => {
   const { games, featuredGames, isLoading, error, refetch } = useGames();
   const navigate = useNavigate();
-  const wallet = useTonWallet();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   const handleGameClick = (game: Game) => {
@@ -81,8 +79,7 @@ export const HomePage = () => {
         </Section>
       </main>
 
-      {/* Bottom Wallet Bar - only shows when wallet not connected */}
-      {!wallet && <BottomWalletBar />}
+      <BottomNavBar />
     </div>
   );
 };
