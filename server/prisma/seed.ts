@@ -18,7 +18,7 @@ const games = [
     rating: 4.9,
     reviewCount: 7,
     videoUrl: null,
-    topPromoted: true,
+    topPromoted: false,
   },
   {
     slug: 'puzzle-master',
