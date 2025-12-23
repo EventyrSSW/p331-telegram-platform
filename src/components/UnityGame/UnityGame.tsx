@@ -19,9 +19,15 @@ export const UnityGame: React.FC<UnityGameProps> = ({ gameSlug, levelData, onLev
   const containerRef = useRef<HTMLDivElement>(null);
   const unityInstanceRef = useRef<any>(null);
   const audioContextsRef = useRef<AudioContext[]>([]);
+  const onLevelCompleteRef = useRef(onLevelComplete);
   const [progress, setProgress] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Keep the ref updated with the latest callback
+  useEffect(() => {
+    onLevelCompleteRef.current = onLevelComplete;
+  }, [onLevelComplete]);
 
   const handleBack = useCallback(async () => {
     // Close all tracked audio contexts
@@ -119,14 +125,8 @@ export const UnityGame: React.FC<UnityGameProps> = ({ gameSlug, levelData, onLev
             // Setup level completion callback
             (window as any).onLevelComplete = (data: LevelCompleteData) => {
               console.log('Level completed:', data);
-              onLevelComplete?.(data);
+              onLevelCompleteRef.current?.(data);
             };
-
-            // Setup levelComplete event listener
-            window.addEventListener('levelComplete', ((event: CustomEvent<LevelCompleteData>) => {
-              console.log('Level complete event:', event.detail);
-              onLevelComplete?.(event.detail);
-            }) as EventListener);
 
             // If levelData prop provided, send it to Unity after short delay
             if (levelData !== undefined) {
@@ -150,8 +150,7 @@ export const UnityGame: React.FC<UnityGameProps> = ({ gameSlug, levelData, onLev
     return () => {
       window.removeEventListener('resize', updateCanvasSize);
 
-      // Remove level complete listener
-      window.removeEventListener('levelComplete', () => {});
+      // Cleanup global Unity references
       (window as any).unityInstance = null;
       (window as any).setLevelData = null;
       (window as any).onLevelComplete = null;
