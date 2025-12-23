@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Header } from '../../components';
+import { Header, BottomNavBar } from '../../components';
 import { api, User } from '../../services/api';
 import styles from './ProfilePage.module.css';
 
@@ -110,6 +110,7 @@ export const ProfilePage = () => {
           </div>
         </div>
       </main>
+      <BottomNavBar />
     </div>
   );
 };
