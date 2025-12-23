@@ -67,6 +67,7 @@ export function AddTonModal({
 
     if (!isWalletConnected) {
       haptic.medium();
+      onClose(); // Close modal first so TonConnect modal is visible
       onConnectWallet();
       return;
     }
