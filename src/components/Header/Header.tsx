@@ -1,17 +1,80 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
+import { Address } from '@ton/core';
 import { useAuth } from '../../contexts/AuthContext';
+import { useConfig } from '../../contexts/ConfigContext';
 import { AddTonModal } from '../AddTonModal/AddTonModal';
 import styles from './Header.module.css';
 
 export const Header = () => {
   const { user } = useAuth();
+  const { config } = useConfig();
+  const [tonConnectUI] = useTonConnectUI();
+  const wallet = useTonWallet();
   const [isAddTonModalOpen, setIsAddTonModalOpen] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  const handleAddTon = (amount: number) => {
-    console.log('Adding TON:', amount);
-    // TODO: Implement actual TON addition logic
-    setIsAddTonModalOpen(false);
+  const isTestnet = config?.ton.network === 'testnet';
+
+  const handleConnectWallet = () => {
+    tonConnectUI.openModal();
+  };
+
+  const handleSendTransaction = async (amount: number) => {
+    if (!wallet || !config?.ton.receiverAddress) {
+      if (!config?.ton.receiverAddress) {
+        alert('Payment not configured. Please try again later.');
+        return;
+      }
+      tonConnectUI.openModal();
+      return;
+    }
+
+    setIsProcessing(true);
+
+    try {
+      // Convert TON to nanoTON (1 TON = 10^9 nanoTON)
+      const amountInNanoTon = (amount * 1_000_000_000).toString();
+
+      // Parse and normalize receiver address for TonConnect
+      let receiverAddress: string;
+      try {
+        const parsed = Address.parse(config.ton.receiverAddress);
+        receiverAddress = parsed.toString({ bounceable: true, testOnly: isTestnet });
+      } catch (e) {
+        console.error('Failed to parse receiver address:', config.ton.receiverAddress, e);
+        alert('Invalid payment address configuration. Please contact support.');
+        return;
+      }
+
+      // Create transaction request
+      const transaction = {
+        validUntil: Math.floor(Date.now() / 1000) + 600, // 10 minutes from now
+        messages: [
+          {
+            address: receiverAddress,
+            amount: amountInNanoTon,
+          },
+        ],
+      };
+
+      // Send transaction - this will open wallet for user confirmation
+      await tonConnectUI.sendTransaction(transaction);
+
+      alert(`Successfully added ${amount} TON!`);
+    } catch (error) {
+      console.error('Failed to send TON:', error);
+
+      if (error instanceof Error && error.message.includes('cancelled')) {
+        alert('Transaction cancelled.');
+      } else {
+        alert('Failed to send TON. Please try again.');
+      }
+      throw error; // Re-throw to let modal know it failed
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const formatBalance = (balance: number): string => {
@@ -76,7 +139,10 @@ export const Header = () => {
         isOpen={isAddTonModalOpen}
         onClose={() => setIsAddTonModalOpen(false)}
         currentBalance={0}
-        onAdd={handleAddTon}
+        isWalletConnected={!!wallet}
+        onConnectWallet={handleConnectWallet}
+        onSendTransaction={handleSendTransaction}
+        isProcessing={isProcessing}
       />
     </header>
   );

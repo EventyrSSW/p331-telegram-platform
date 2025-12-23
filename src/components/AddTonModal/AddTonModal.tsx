@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import styles from './AddTonModal.module.css';
 import { haptic } from '../../providers/TelegramProvider';
 
@@ -6,29 +7,43 @@ interface AddTonModalProps {
   isOpen: boolean;
   onClose: () => void;
   currentBalance: number;
-  onAdd: (amount: number) => void;
+  isWalletConnected: boolean;
+  onConnectWallet: () => void;
+  onSendTransaction: (amount: number) => Promise<void>;
+  isProcessing?: boolean;
 }
 
 const PRESET_AMOUNTS = [10, 20, 50, 100];
 const MAX_AMOUNT = 10000;
 
-export function AddTonModal({ isOpen, onClose, currentBalance, onAdd }: AddTonModalProps) {
+export function AddTonModal({
+  isOpen,
+  onClose,
+  currentBalance,
+  isWalletConnected,
+  onConnectWallet,
+  onSendTransaction,
+  isProcessing = false,
+}: AddTonModalProps) {
   const [amount, setAmount] = useState('0');
 
   if (!isOpen) return null;
 
   const handleClose = () => {
+    if (isProcessing) return;
     haptic.light();
     setAmount('0');
     onClose();
   };
 
   const handlePresetClick = (presetAmount: number) => {
+    if (isProcessing) return;
     haptic.light();
     setAmount(presetAmount.toString());
   };
 
   const handleNumpadClick = (value: string) => {
+    if (isProcessing) return;
     haptic.light();
 
     if (value === 'backspace') {
@@ -47,21 +62,38 @@ export function AddTonModal({ isOpen, onClose, currentBalance, onAdd }: AddTonMo
     });
   };
 
-  const handleAdd = () => {
+  const handleAction = async () => {
+    if (isProcessing) return;
+
+    if (!isWalletConnected) {
+      haptic.medium();
+      onConnectWallet();
+      return;
+    }
+
     const numericAmount = Number(amount);
     if (numericAmount > 0) {
       haptic.medium();
-      onAdd(numericAmount);
-      setAmount('0');
-      onClose();
+      try {
+        await onSendTransaction(numericAmount);
+        setAmount('0');
+        onClose();
+      } catch {
+        // Error handling is done in the parent component
+      }
     }
   };
 
   const numericAmount = Number(amount);
+  const isButtonDisabled = isWalletConnected && numericAmount === 0;
 
-  return (
+  const modalContent = (
     <div className={styles.overlay}>
-      <button className={styles.closeButton} onClick={handleClose}>
+      <button
+        className={styles.closeButton}
+        onClick={handleClose}
+        disabled={isProcessing}
+      >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M18 6L6 18M6 6l12 12" />
         </svg>
@@ -83,6 +115,7 @@ export function AddTonModal({ isOpen, onClose, currentBalance, onAdd }: AddTonMo
               key={preset}
               className={styles.presetButton}
               onClick={() => handlePresetClick(preset)}
+              disabled={isProcessing}
             >
               {preset} TON
             </button>
@@ -95,6 +128,7 @@ export function AddTonModal({ isOpen, onClose, currentBalance, onAdd }: AddTonMo
               key={digit}
               className={styles.numpadKey}
               onClick={() => handleNumpadClick(digit)}
+              disabled={isProcessing}
             >
               {digit}
             </button>
@@ -103,12 +137,14 @@ export function AddTonModal({ isOpen, onClose, currentBalance, onAdd }: AddTonMo
           <button
             className={styles.numpadKey}
             onClick={() => handleNumpadClick('0')}
+            disabled={isProcessing}
           >
             0
           </button>
           <button
             className={styles.numpadKey}
             onClick={() => handleNumpadClick('backspace')}
+            disabled={isProcessing}
           >
             <svg
               className={styles.backspaceIcon}
@@ -124,11 +160,19 @@ export function AddTonModal({ isOpen, onClose, currentBalance, onAdd }: AddTonMo
 
         <div className={styles.bottomSection}>
           <button
-            className={styles.addButton}
-            onClick={handleAdd}
-            disabled={numericAmount === 0}
+            className={`${styles.addButton} ${!isWalletConnected ? styles.connectButton : ''}`}
+            onClick={handleAction}
+            disabled={isButtonDisabled || isProcessing}
           >
-            Add {numericAmount > 0 ? `${amount} TON` : 'TON'}
+            {isProcessing ? (
+              'Processing...'
+            ) : !isWalletConnected ? (
+              'Connect Wallet'
+            ) : numericAmount > 0 ? (
+              `Add ${amount} TON`
+            ) : (
+              'Add TON'
+            )}
           </button>
           <p className={styles.termsText}>
             By adding TON you agree to our{' '}
@@ -138,4 +182,7 @@ export function AddTonModal({ isOpen, onClose, currentBalance, onAdd }: AddTonMo
       </div>
     </div>
   );
+
+  // Use portal to render at body level, ensuring it covers BottomNavBar
+  return createPortal(modalContent, document.body);
 }
