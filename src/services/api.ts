@@ -29,6 +29,15 @@ export interface Game {
   category: string;
   description?: string;
   featured?: boolean;
+  mainUrl?: string;
+  screen1Url?: string;
+  screen2Url?: string;
+  screen3Url?: string;
+  screen4Url?: string;
+  rating?: number;
+  reviewCount?: number;
+  videoUrl?: string;
+  topPromoted?: boolean;
 }
 
 export interface UserBalance {
