@@ -1,4 +1,4 @@
-import { Header } from '../../components';
+import { Header, BottomNavBar } from '../../components';
 import styles from './LeaderboardPage.module.css';
 
 interface LeaderboardPlayer {
@@ -68,6 +68,7 @@ export const LeaderboardPage = () => {
           </div>
         )}
       </main>
+      <BottomNavBar />
     </div>
   );
 };
