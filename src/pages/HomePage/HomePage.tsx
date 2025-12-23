@@ -30,7 +30,7 @@ export const HomePage = () => {
   }, [isLoading, error]);
 
   const handleGameClick = (game: Game) => {
-    navigate(`/game/${game.slug}`);
+    navigate(`/game/${game.slug}/details`);
   };
 
   if (error) {
