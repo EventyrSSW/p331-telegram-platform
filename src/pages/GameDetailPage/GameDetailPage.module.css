@@ -1,11 +1,10 @@
 .page {
   min-height: 100vh;
   background-color: var(--color-bg-page);
-  padding-top: 60px;
 }
 
 .main {
-  padding-bottom: 100px;
+  padding-bottom: 160px;
 }
 
 .heroSection {
@@ -65,8 +64,8 @@
 }
 
 .screenshotItem {
-  flex: 0 0 30%;
-  aspect-ratio: 16 / 9;
+  flex: 0 0 28%;
+  aspect-ratio: 9 / 16;
   border-radius: var(--radius-md);
   overflow: hidden;
   scroll-snap-align: start;
@@ -122,11 +121,12 @@
 .ctaSection {
   padding: var(--spacing-md);
   position: fixed;
-  bottom: 0;
+  bottom: 70px;
   left: 0;
   right: 0;
-  background: linear-gradient(180deg, transparent 0%, var(--color-bg-page) 20%);
-  padding-bottom: calc(var(--spacing-md) + var(--tg-safe-area-bottom));
+  background: linear-gradient(180deg, transparent 0%, var(--color-bg-page) 30%);
+  padding-bottom: var(--spacing-md);
+  z-index: 10;
 }
 
 .playButton {

@@ -17,7 +17,7 @@ const games = [
     screen4Url: 'https://play-lh.googleusercontent.com/ZatixCG0ETaB5pWzKXfgYvl1doZ7NDFLSENCCMvh9POibV4ej1dfO6QWzpu1t2hXyRFbKHauDSpCuRz_e0xzoQ=w5120-h2880-rw',
     rating: 4.9,
     reviewCount: 7,
-    videoUrl: null,
+    videoUrl: "https://tixta.b-cdn.net/tg_game_videos/mahjong_updated.mp4",
     topPromoted: false,
   },
   {
@@ -51,7 +51,7 @@ const games = [
     screen4Url: 'https://is1-ssl.mzstatic.com/image/thumb/Purple115/v4/85/e1/b8/85e1b851-f26d-dcef-6314-489f659c61e4/pr_source.png/392x696bb.png',
     rating: 4.42,
     reviewCount: 4597,
-    videoUrl: null,
+    videoUrl: "https://tixta.b-cdn.net/tg_game_videos/bubble1_updated.mp4",
     topPromoted: false,
   },
   {
@@ -153,7 +153,7 @@ const games = [
     screen4Url: 'https://is1-ssl.mzstatic.com/image/thumb/PurpleSource126/v4/3e/23/5d/3e235d49-bdd9-b27b-2a27-d51db87cd708/d86a3b93-23a5-4420-833f-1e703876147b_NumberShoot_Skillz_iphone_S003.png/392x696bb.png',
     rating: 4.75,
     reviewCount: 49,
-    videoUrl: null,
+    videoUrl: "https://tixta.b-cdn.net/tg_game_videos/number_updated.mp4",
     topPromoted: false,
   },
   {

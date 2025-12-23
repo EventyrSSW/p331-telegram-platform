@@ -1,0 +1,894 @@
+{
+  "designSystemProfile": {
+    "name": "Gaming Platform Main Screen",
+    "version": "1.0.0",
+    "description": "Dark-themed competitive gaming platform with hero sections, promotional banners, ribbon badges, and game card grids. Features neon accents, hexagonal patterns, and vibrant CTAs."
+  },
+
+  "colorPalette": {
+    "backgrounds": {
+      "primary": {
+        "value": "#000000",
+        "usage": "Main screen background, root container, between-card gaps"
+      },
+      "heroSection": {
+        "value": "#0D1117",
+        "usage": "Hero card background base color"
+      },
+      "hexPattern": {
+        "value": "rgba(30, 40, 50, 0.5)",
+        "usage": "Hexagonal grid pattern on hero backgrounds"
+      },
+      "circularVignette": {
+        "value": "radial-gradient(circle at center, rgba(20, 30, 40, 0.3) 0%, rgba(0, 0, 0, 0.9) 70%)",
+        "usage": "Dark vignette around hero character"
+      }
+    },
+    "accents": {
+      "orange": {
+        "value": "#FF6B35",
+        "usage": "Primary CTA buttons, 'Play Now' actions"
+      },
+      "orangeHover": {
+        "value": "#FF8555",
+        "usage": "Hover state for orange buttons"
+      },
+      "orangeActive": {
+        "value": "#E55A25",
+        "usage": "Pressed state for orange buttons"
+      },
+      "cyan": {
+        "value": "#00E5A0",
+        "usage": "Success text, money values, bonus labels"
+      },
+      "cyanLight": {
+        "value": "#4DFFC3",
+        "usage": "Timer text, highlighted values"
+      },
+      "neonBlue": {
+        "value": "#00BFFF",
+        "usage": "Character outline glow, energy effects"
+      },
+      "gold": {
+        "value": "#FFD700",
+        "usage": "Crown icons, premium indicators, VIP badges"
+      }
+    },
+    "promotional": {
+      "greenGradientStart": {
+        "value": "#1A3D2E",
+        "usage": "Bonus card gradient start (left)"
+      },
+      "greenGradientEnd": {
+        "value": "#0F2922",
+        "usage": "Bonus card gradient end (right)"
+      },
+      "bonusLabel": {
+        "value": "#4ADE80",
+        "usage": "'WELCOME BONUS' label text color"
+      }
+    },
+    "badges": {
+      "featured": {
+        "value": "#FF4757",
+        "usage": "'FEATURED' ribbon badge background"
+      },
+      "new": {
+        "value": "#3B82F6",
+        "usage": "'NEW' ribbon badge background"
+      },
+      "multiplayer": {
+        "background": "rgba(30, 40, 55, 0.9)",
+        "border": "rgba(60, 75, 95, 0.6)",
+        "text": "#FFFFFF"
+      }
+    },
+    "text": {
+      "primary": {
+        "value": "#FFFFFF",
+        "usage": "Headlines, game titles, button text"
+      },
+      "secondary": {
+        "value": "#B0B8C4",
+        "usage": "Subtitles, descriptions, taglines"
+      },
+      "muted": {
+        "value": "#6B7280",
+        "usage": "Timestamps, helper text"
+      },
+      "label": {
+        "value": "#9CA3AF",
+        "usage": "Small labels like 'left', 'SCORE:'"
+      }
+    },
+    "borders": {
+      "card": {
+        "value": "rgba(255, 255, 255, 0.08)",
+        "usage": "Subtle card borders"
+      },
+      "promotional": {
+        "value": "rgba(74, 222, 128, 0.2)",
+        "usage": "Green promotional card border"
+      }
+    }
+  },
+
+  "gradients": {
+    "heroVignette": {
+      "value": "radial-gradient(ellipse at 50% 40%, transparent 20%, rgba(0, 0, 0, 0.85) 70%)",
+      "direction": "radial from center",
+      "applyTo": ["hero section overlay", "featured character spotlight"]
+    },
+    "promotionalCard": {
+      "value": "linear-gradient(135deg, #1A3D2E 0%, #0F2922 60%, #0A1F18 100%)",
+      "direction": "135deg",
+      "applyTo": ["welcome bonus card", "deposit promo cards"]
+    },
+    "neonGlow": {
+      "value": "linear-gradient(180deg, rgba(0, 191, 255, 0.6) 0%, rgba(0, 191, 255, 0) 100%)",
+      "direction": "180deg",
+      "applyTo": ["character outline glow effect"]
+    },
+    "orangeButton": {
+      "value": "linear-gradient(180deg, #FF7A45 0%, #FF5722 100%)",
+      "direction": "180deg",
+      "applyTo": ["primary CTA buttons - subtle depth"]
+    },
+    "cardOverlay": {
+      "value": "linear-gradient(180deg, transparent 50%, rgba(0, 0, 0, 0.7) 100%)",
+      "direction": "180deg",
+      "applyTo": ["game card bottom for title legibility"]
+    }
+  },
+
+  "elementStyling": {
+    "heroSection": {
+      "container": {
+        "background": "#0D1117",
+        "borderRadius": "0",
+        "position": "relative",
+        "overflow": "hidden",
+        "minHeight": "400px",
+        "padding": "20px"
+      },
+      "hexagonalBackground": {
+        "pattern": "hexagon-grid",
+        "color": "rgba(40, 55, 70, 0.4)",
+        "size": "50px",
+        "strokeWidth": "1px",
+        "opacity": 0.3
+      },
+      "circularFrame": {
+        "border": "2px solid rgba(100, 120, 140, 0.3)",
+        "borderRadius": "50%",
+        "width": "280px",
+        "height": "280px",
+        "position": "absolute",
+        "center": true
+      },
+      "characterSilhouette": {
+        "filter": "drop-shadow(0 0 30px rgba(0, 191, 255, 0.5))",
+        "outline": {
+          "color": "#00BFFF",
+          "width": "2px",
+          "blur": "8px"
+        }
+      },
+      "crownIcon": {
+        "color": "#FFD700",
+        "size": "24px",
+        "position": "above character head",
+        "shadow": "drop-shadow(0 2px 4px rgba(255, 215, 0, 0.5))"
+      }
+    },
+
+    "multiplayerBadge": {
+      "description": "'REAL TIME MULTIPLAYER' pill badge at top",
+      "container": {
+        "background": "rgba(30, 40, 55, 0.9)",
+        "backdropFilter": "blur(8px)",
+        "borderRadius": "20px",
+        "border": "1px solid rgba(60, 75, 95, 0.6)",
+        "padding": "8px 16px",
+        "display": "flex",
+        "alignItems": "center",
+        "gap": "8px"
+      },
+      "icon": {
+        "type": "users/multiplayer",
+        "color": "#FFFFFF",
+        "size": "16px"
+      },
+      "text": {
+        "color": "#FFFFFF",
+        "fontSize": "12px",
+        "fontWeight": 600,
+        "letterSpacing": "0.05em",
+        "textTransform": "uppercase"
+      }
+    },
+
+    "gameTitle": {
+      "introducing": {
+        "color": "#9CA3AF",
+        "fontSize": "14px",
+        "fontWeight": 400,
+        "fontStyle": "italic",
+        "letterSpacing": "0.1em"
+      },
+      "mainTitle": {
+        "color": "#FFFFFF",
+        "fontSize": "48px",
+        "fontWeight": 800,
+        "fontFamily": "'Press Start 2P', 'Orbitron', monospace",
+        "textShadow": "0 0 20px rgba(255, 255, 255, 0.3)",
+        "letterSpacing": "0.05em"
+      },
+      "tagline": {
+        "color": "#B0B8C4",
+        "fontSize": "14px",
+        "fontWeight": 500,
+        "letterSpacing": "0.3em",
+        "textTransform": "uppercase"
+      }
+    },
+
+    "primaryCTAButton": {
+      "description": "'Play Now' main action button",
+      "container": {
+        "background": "#FF6B35",
+        "borderRadius": "32px",
+        "padding": "18px 64px",
+        "border": "none",
+        "cursor": "pointer",
+        "minWidth": "200px",
+        "boxShadow": "0 4px 20px rgba(255, 107, 53, 0.4)"
+      },
+      "text": {
+        "color": "#FFFFFF",
+        "fontSize": "18px",
+        "fontWeight": 700,
+        "letterSpacing": "0.02em"
+      },
+      "hover": {
+        "background": "#FF8555",
+        "transform": "translateY(-2px)",
+        "boxShadow": "0 6px 28px rgba(255, 107, 53, 0.5)"
+      },
+      "active": {
+        "background": "#E55A25",
+        "transform": "translateY(0)",
+        "boxShadow": "0 2px 12px rgba(255, 107, 53, 0.4)"
+      }
+    },
+
+    "promotionalCard": {
+      "description": "Welcome bonus / deposit promo card",
+      "container": {
+        "background": "linear-gradient(135deg, #1A3D2E 0%, #0F2922 60%, #0A1F18 100%)",
+        "borderRadius": "16px",
+        "border": "1px solid rgba(74, 222, 128, 0.15)",
+        "padding": "20px",
+        "display": "flex",
+        "justifyContent": "space-between",
+        "alignItems": "center",
+        "position": "relative",
+        "overflow": "hidden"
+      },
+      "label": {
+        "color": "#4ADE80",
+        "fontSize": "11px",
+        "fontWeight": 600,
+        "letterSpacing": "0.1em",
+        "textTransform": "uppercase",
+        "marginBottom": "4px"
+      },
+      "headline": {
+        "color": "#FFFFFF",
+        "fontSize": "20px",
+        "fontWeight": 700,
+        "marginBottom": "12px"
+      },
+      "timer": {
+        "container": {
+          "display": "flex",
+          "alignItems": "center",
+          "gap": "6px"
+        },
+        "icon": {
+          "type": "clock",
+          "color": "#4DFFC3",
+          "size": "16px"
+        },
+        "time": {
+          "color": "#4DFFC3",
+          "fontSize": "14px",
+          "fontWeight": 600
+        },
+        "suffix": {
+          "color": "#9CA3AF",
+          "fontSize": "12px",
+          "fontWeight": 400
+        }
+      },
+      "actionButton": {
+        "background": "rgba(0, 0, 0, 0.4)",
+        "borderRadius": "20px",
+        "padding": "10px 20px",
+        "border": "1px solid rgba(255, 255, 255, 0.1)",
+        "color": "#FFFFFF",
+        "fontSize": "13px",
+        "fontWeight": 600,
+        "hover": {
+          "background": "rgba(0, 0, 0, 0.6)",
+          "borderColor": "rgba(255, 255, 255, 0.2)"
+        }
+      },
+      "promotionalGraphic": {
+        "position": "absolute",
+        "right": "20px",
+        "size": "80px"
+      }
+    },
+
+    "ribbonBadge": {
+      "description": "Corner ribbon badges (FEATURED, NEW)",
+      "container": {
+        "position": "absolute",
+        "top": "0",
+        "left": "0",
+        "overflow": "hidden",
+        "width": "80px",
+        "height": "80px",
+        "zIndex": 10
+      },
+      "ribbon": {
+        "position": "absolute",
+        "top": "16px",
+        "left": "-24px",
+        "width": "100px",
+        "transform": "rotate(-45deg)",
+        "padding": "4px 0",
+        "textAlign": "center"
+      },
+      "variants": {
+        "featured": {
+          "background": "#FF4757",
+          "color": "#FFFFFF",
+          "fontSize": "9px",
+          "fontWeight": 700,
+          "letterSpacing": "0.05em",
+          "textTransform": "uppercase",
+          "boxShadow": "0 2px 8px rgba(255, 71, 87, 0.4)"
+        },
+        "new": {
+          "background": "#3B82F6",
+          "color": "#FFFFFF",
+          "fontSize": "9px",
+          "fontWeight": 700,
+          "letterSpacing": "0.05em",
+          "textTransform": "uppercase",
+          "boxShadow": "0 2px 8px rgba(59, 130, 246, 0.4)"
+        },
+        "hot": {
+          "background": "#F59E0B",
+          "color": "#FFFFFF"
+        },
+        "live": {
+          "background": "#EF4444",
+          "color": "#FFFFFF"
+        }
+      }
+    },
+
+    "featuredGameCard": {
+      "description": "Large featured game card with artwork",
+      "container": {
+        "borderRadius": "20px",
+        "overflow": "hidden",
+        "position": "relative",
+        "aspectRatio": "16/9"
+      },
+      "image": {
+        "objectFit": "cover",
+        "width": "100%",
+        "height": "100%"
+      },
+      "titleOverlay": {
+        "position": "absolute",
+        "bottom": "0",
+        "left": "0",
+        "right": "0",
+        "padding": "40px 20px 20px",
+        "background": "linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.8) 100%)"
+      },
+      "gameTitle": {
+        "fontFamily": "'Bangers', 'Comic Sans MS', cursive",
+        "fontSize": "clamp(32px, 8vw, 56px)",
+        "color": "#FFFFFF",
+        "textShadow": "2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000"
+      }
+    },
+
+    "gameCardGrid": {
+      "container": {
+        "display": "grid",
+        "gridTemplateColumns": "repeat(2, 1fr)",
+        "gap": "12px",
+        "padding": "0 12px"
+      },
+      "card": {
+        "description": "Standard game card in grid",
+        "container": {
+          "borderRadius": "20px",
+          "overflow": "hidden",
+          "position": "relative",
+          "aspectRatio": "1/1.1",
+          "background": "#1A1A1A"
+        },
+        "thumbnail": {
+          "width": "100%",
+          "height": "calc(100% - 48px)",
+          "objectFit": "cover",
+          "borderRadius": "20px 20px 0 0"
+        },
+        "titleArea": {
+          "background": "#000000",
+          "padding": "12px 8px",
+          "textAlign": "center"
+        },
+        "title": {
+          "color": "#FFFFFF",
+          "fontSize": "15px",
+          "fontWeight": 600,
+          "overflow": "hidden",
+          "textOverflow": "ellipsis",
+          "whiteSpace": "nowrap"
+        },
+        "hover": {
+          "transform": "scale(1.02)",
+          "boxShadow": "0 8px 32px rgba(0, 0, 0, 0.5)"
+        },
+        "active": {
+          "transform": "scale(0.98)"
+        }
+      }
+    },
+
+    "inGameOverlay": {
+      "description": "Score/currency display on game cards (like Ball Bounce)",
+      "container": {
+        "position": "absolute",
+        "top": "12px",
+        "left": "12px",
+        "right": "12px"
+      },
+      "currencyDisplay": {
+        "color": "#FFFFFF",
+        "fontSize": "32px",
+        "fontWeight": 800,
+        "textShadow": "0 2px 8px rgba(0, 0, 0, 0.5)"
+      },
+      "scoreLabel": {
+        "color": "rgba(255, 255, 255, 0.7)",
+        "fontSize": "12px",
+        "fontWeight": 500,
+        "letterSpacing": "0.05em"
+      }
+    }
+  },
+
+  "layout": {
+    "screen": {
+      "background": "#000000",
+      "padding": "0"
+    },
+    "sections": {
+      "gap": "16px",
+      "padding": "12px"
+    },
+    "gameGrid": {
+      "columns": 2,
+      "gap": "12px",
+      "padding": "0 12px"
+    }
+  },
+
+  "typography": {
+    "fontFamily": {
+      "primary": "'Inter', 'SF Pro Display', -apple-system, sans-serif",
+      "display": "'Orbitron', 'Press Start 2P', monospace",
+      "decorative": "'Bangers', 'Comic Sans MS', cursive"
+    },
+    "scale": {
+      "heroTitle": {
+        "fontSize": "48px",
+        "fontWeight": 800,
+        "lineHeight": 1.1,
+        "letterSpacing": "0.05em"
+      },
+      "sectionTitle": {
+        "fontSize": "20px",
+        "fontWeight": 700,
+        "lineHeight": 1.3
+      },
+      "cardTitle": {
+        "fontSize": "15px",
+        "fontWeight": 600,
+        "lineHeight": 1.2
+      },
+      "label": {
+        "fontSize": "11px",
+        "fontWeight": 600,
+        "lineHeight": 1,
+        "letterSpacing": "0.1em",
+        "textTransform": "uppercase"
+      },
+      "buttonText": {
+        "fontSize": "16px",
+        "fontWeight": 700,
+        "lineHeight": 1
+      },
+      "badgeText": {
+        "fontSize": "9px",
+        "fontWeight": 700,
+        "letterSpacing": "0.05em",
+        "textTransform": "uppercase"
+      }
+    }
+  },
+
+  "effects": {
+    "shadows": {
+      "card": {
+        "value": "0 4px 16px rgba(0, 0, 0, 0.4)",
+        "applyTo": ["game cards", "promotional cards"]
+      },
+      "cardHover": {
+        "value": "0 8px 32px rgba(0, 0, 0, 0.6)",
+        "applyTo": ["cards on hover"]
+      },
+      "ctaButton": {
+        "value": "0 4px 20px rgba(255, 107, 53, 0.4)",
+        "applyTo": ["orange CTA buttons"]
+      },
+      "ctaButtonHover": {
+        "value": "0 6px 28px rgba(255, 107, 53, 0.5)",
+        "applyTo": ["orange CTA on hover"]
+      },
+      "neonGlow": {
+        "value": "0 0 30px rgba(0, 191, 255, 0.5)",
+        "applyTo": ["character silhouette", "energy effects"]
+      },
+      "ribbonBadge": {
+        "featured": "0 2px 8px rgba(255, 71, 87, 0.4)",
+        "new": "0 2px 8px rgba(59, 130, 246, 0.4)"
+      }
+    },
+    "borderRadius": {
+      "none": "0",
+      "sm": "8px",
+      "md": "12px",
+      "lg": "16px",
+      "xl": "20px",
+      "xxl": "24px",
+      "full": "9999px",
+      "button": "32px"
+    },
+    "transitions": {
+      "fast": "0.15s ease",
+      "normal": "0.2s ease",
+      "slow": "0.3s ease",
+      "bounce": "0.4s cubic-bezier(0.34, 1.56, 0.64, 1)"
+    }
+  },
+
+  "componentStates": {
+    "primaryButton": {
+      "default": {
+        "background": "#FF6B35",
+        "transform": "none",
+        "boxShadow": "0 4px 20px rgba(255, 107, 53, 0.4)"
+      },
+      "hover": {
+        "background": "#FF8555",
+        "transform": "translateY(-2px)",
+        "boxShadow": "0 6px 28px rgba(255, 107, 53, 0.5)"
+      },
+      "active": {
+        "background": "#E55A25",
+        "transform": "translateY(0)",
+        "boxShadow": "0 2px 12px rgba(255, 107, 53, 0.4)"
+      },
+      "disabled": {
+        "background": "#4B4B4B",
+        "opacity": 0.6,
+        "cursor": "not-allowed"
+      },
+      "focus": {
+        "outline": "2px solid #FF8555",
+        "outlineOffset": "2px"
+      }
+    },
+    "secondaryButton": {
+      "default": {
+        "background": "rgba(0, 0, 0, 0.4)",
+        "border": "1px solid rgba(255, 255, 255, 0.1)"
+      },
+      "hover": {
+        "background": "rgba(0, 0, 0, 0.6)",
+        "border": "1px solid rgba(255, 255, 255, 0.2)"
+      },
+      "active": {
+        "background": "rgba(0, 0, 0, 0.7)"
+      }
+    },
+    "gameCard": {
+      "default": {
+        "transform": "none",
+        "boxShadow": "0 4px 16px rgba(0, 0, 0, 0.4)"
+      },
+      "hover": {
+        "transform": "scale(1.02)",
+        "boxShadow": "0 8px 32px rgba(0, 0, 0, 0.6)"
+      },
+      "active": {
+        "transform": "scale(0.98)"
+      },
+      "focus": {
+        "outline": "2px solid #FF6B35",
+        "outlineOffset": "2px"
+      }
+    }
+  },
+
+  "animations": {
+    "pulseGlow": {
+      "keyframes": "0%{filter:drop-shadow(0 0 20px rgba(0,191,255,0.4))} 50%{filter:drop-shadow(0 0 40px rgba(0,191,255,0.7))} 100%{filter:drop-shadow(0 0 20px rgba(0,191,255,0.4))}",
+      "duration": "2s",
+      "iteration": "infinite",
+      "applyTo": ["character neon outline"]
+    },
+    "floatBadge": {
+      "keyframes": "0%{transform:translateY(0)} 50%{transform:translateY(-4px)} 100%{transform:translateY(0)}",
+      "duration": "3s",
+      "iteration": "infinite",
+      "applyTo": ["promotional graphics", "floating elements"]
+    },
+    "countdownPulse": {
+      "keyframes": "0%{opacity:1} 50%{opacity:0.7} 100%{opacity:1}",
+      "duration": "1s",
+      "iteration": "infinite",
+      "applyTo": ["timer when under 1 minute"]
+    },
+    "cardEnter": {
+      "from": {
+        "opacity": 0,
+        "transform": "translateY(20px)"
+      },
+      "to": {
+        "opacity": 1,
+        "transform": "translateY(0)"
+      },
+      "duration": "0.4s",
+      "stagger": "0.1s"
+    }
+  },
+
+  "criticalRules": {
+    "DO_NOT": [
+      {
+        "rule": "DO NOT use orange accent for non-CTA elements",
+        "wrong": ".card-title { color: #FF6B35 }",
+        "correct": "Orange (#FF6B35) is ONLY for primary action buttons like 'Play Now'"
+      },
+      {
+        "rule": "DO NOT apply neon glow to cards or containers",
+        "wrong": ".game-card { box-shadow: 0 0 30px rgba(0, 191, 255, 0.5) }",
+        "correct": "Neon glow is for character silhouettes and energy effects only"
+      },
+      {
+        "rule": "DO NOT use green gradient on non-promotional elements",
+        "wrong": ".game-card { background: linear-gradient(135deg, #1A3D2E...) }",
+        "correct": "Green gradient is reserved for bonus/deposit promotional cards"
+      },
+      {
+        "rule": "DO NOT apply ribbon badge styles to inline badges",
+        "wrong": ".multiplayer-badge { transform: rotate(-45deg) }",
+        "correct": "Ribbon badges are corner overlays only; pill badges are for inline use"
+      },
+      {
+        "rule": "DO NOT use sharp corners on game cards",
+        "wrong": ".game-card { border-radius: 4px }",
+        "correct": "Game cards use 20px border-radius consistently"
+      },
+      {
+        "rule": "DO NOT put game title inside thumbnail area",
+        "wrong": "Title overlapping game thumbnail",
+        "correct": "Title goes in dedicated area below thumbnail with black background"
+      },
+      {
+        "rule": "DO NOT use colored backgrounds between cards",
+        "wrong": ".grid-container { background: #1A1A1A }",
+        "correct": "Grid gaps show pure black (#000000) page background"
+      }
+    ],
+    "ALWAYS": [
+      {
+        "rule": "ALWAYS use pure black (#000000) for page background",
+        "context": "Creates contrast and makes cards pop"
+      },
+      {
+        "rule": "ALWAYS use 20px border-radius for game cards",
+        "context": "Consistent card styling throughout"
+      },
+      {
+        "rule": "ALWAYS pair ribbon badges with corner positioning",
+        "context": "Ribbons are rotated -45deg in top-left corner"
+      },
+      {
+        "rule": "ALWAYS include hexagonal pattern on hero sections",
+        "context": "Defines the gaming aesthetic"
+      },
+      {
+        "rule": "ALWAYS use green (#4ADE80) for bonus-related text",
+        "context": "Visual association with money/rewards"
+      },
+      {
+        "rule": "ALWAYS provide color-matched glow on CTA buttons",
+        "context": "Orange button gets orange glow shadow"
+      },
+      {
+        "rule": "ALWAYS use uppercase + letter-spacing for badges and labels",
+        "context": "Creates visual hierarchy and emphasis"
+      }
+    ]
+  },
+
+  "cssVariables": {
+    "colors": {
+      "--color-bg-page": "#000000",
+      "--color-bg-hero": "#0D1117",
+      "--color-bg-card": "#1A1A1A",
+      "--color-accent-orange": "#FF6B35",
+      "--color-accent-orange-hover": "#FF8555",
+      "--color-accent-orange-active": "#E55A25",
+      "--color-accent-cyan": "#00E5A0",
+      "--color-accent-cyan-light": "#4DFFC3",
+      "--color-accent-neon": "#00BFFF",
+      "--color-accent-gold": "#FFD700",
+      "--color-promo-green-start": "#1A3D2E",
+      "--color-promo-green-end": "#0F2922",
+      "--color-badge-featured": "#FF4757",
+      "--color-badge-new": "#3B82F6",
+      "--color-text-primary": "#FFFFFF",
+      "--color-text-secondary": "#B0B8C4",
+      "--color-text-muted": "#6B7280",
+      "--color-border-subtle": "rgba(255, 255, 255, 0.08)"
+    },
+    "spacing": {
+      "--spacing-xs": "4px",
+      "--spacing-sm": "8px",
+      "--spacing-md": "12px",
+      "--spacing-lg": "16px",
+      "--spacing-xl": "20px",
+      "--spacing-xxl": "24px"
+    },
+    "radius": {
+      "--radius-sm": "8px",
+      "--radius-md": "12px",
+      "--radius-lg": "16px",
+      "--radius-xl": "20px",
+      "--radius-button": "32px",
+      "--radius-full": "9999px"
+    },
+    "shadows": {
+      "--shadow-card": "0 4px 16px rgba(0, 0, 0, 0.4)",
+      "--shadow-card-hover": "0 8px 32px rgba(0, 0, 0, 0.6)",
+      "--shadow-cta": "0 4px 20px rgba(255, 107, 53, 0.4)",
+      "--shadow-cta-hover": "0 6px 28px rgba(255, 107, 53, 0.5)",
+      "--shadow-neon": "0 0 30px rgba(0, 191, 255, 0.5)"
+    }
+  },
+
+  "selectorMapping": {
+    "body, .app-root": {
+      "background": "var(--color-bg-page)",
+      "color": "var(--color-text-primary)"
+    },
+    ".hero-section": {
+      "background": "var(--color-bg-hero)",
+      "position": "relative",
+      "overflow": "hidden"
+    },
+    ".hero-section::before": {
+      "content": "''",
+      "position": "absolute",
+      "inset": "0",
+      "backgroundImage": "url('hexagon-pattern.svg')",
+      "opacity": "0.3",
+      "pointerEvents": "none"
+    },
+    ".btn-primary, .cta-button": {
+      "background": "var(--color-accent-orange)",
+      "color": "#FFFFFF",
+      "borderRadius": "var(--radius-button)",
+      "padding": "18px 64px",
+      "fontWeight": "700",
+      "boxShadow": "var(--shadow-cta)"
+    },
+    ".btn-primary:hover": {
+      "background": "var(--color-accent-orange-hover)",
+      "transform": "translateY(-2px)",
+      "boxShadow": "var(--shadow-cta-hover)"
+    },
+    ".promo-card": {
+      "background": "linear-gradient(135deg, var(--color-promo-green-start), var(--color-promo-green-end))",
+      "borderRadius": "var(--radius-lg)",
+      "border": "1px solid rgba(74, 222, 128, 0.15)"
+    },
+    ".badge-ribbon": {
+      "position": "absolute",
+      "top": "16px",
+      "left": "-24px",
+      "width": "100px",
+      "transform": "rotate(-45deg)",
+      "textAlign": "center",
+      "fontSize": "9px",
+      "fontWeight": "700",
+      "textTransform": "uppercase",
+      "letterSpacing": "0.05em"
+    },
+    ".badge-ribbon--featured": {
+      "background": "var(--color-badge-featured)",
+      "color": "#FFFFFF"
+    },
+    ".badge-ribbon--new": {
+      "background": "var(--color-badge-new)",
+      "color": "#FFFFFF"
+    },
+    ".game-grid": {
+      "display": "grid",
+      "gridTemplateColumns": "repeat(2, 1fr)",
+      "gap": "var(--spacing-md)"
+    },
+    ".game-card": {
+      "borderRadius": "var(--radius-xl)",
+      "overflow": "hidden",
+      "transition": "transform 0.2s ease, box-shadow 0.2s ease"
+    },
+    ".game-card:hover": {
+      "transform": "scale(1.02)",
+      "boxShadow": "var(--shadow-card-hover)"
+    },
+    ".game-card__title": {
+      "background": "#000000",
+      "padding": "12px 8px",
+      "textAlign": "center",
+      "fontSize": "15px",
+      "fontWeight": "600"
+    },
+    ".bonus-label": {
+      "color": "var(--color-accent-cyan)",
+      "fontSize": "11px",
+      "fontWeight": "600",
+      "letterSpacing": "0.1em",
+      "textTransform": "uppercase"
+    },
+    ".timer-text": {
+      "color": "var(--color-accent-cyan-light)",
+      "fontWeight": "600"
+    }
+  },
+
+  "implementationNotes": {
+    "hexagonalPattern": "Use SVG pattern or CSS clip-path for hexagonal grid; keep subtle at 20-30% opacity",
+    "ribbonBadge": "Requires overflow:hidden on parent container with fixed width/height corner crop area",
+    "neonEffect": "Combine drop-shadow filter with semi-transparent stroke for authentic neon look",
+    "cardGrid": "Use CSS Grid with gap, not margins, for consistent spacing that shows page background",
+    "buttonPadding": "CTA buttons need generous horizontal padding (64px+) for visual weight",
+    "titleTruncation": "Apply text-overflow: ellipsis on card titles to handle long game names",
+    "touchFeedback": "Use transform: scale(0.98) for press states on mobile",
+    "colorSemantics": "Orange = action, Green = money/bonus, Blue = new/info, Red = featured/live"
+  }
+}

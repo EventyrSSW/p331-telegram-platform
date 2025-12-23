@@ -1,509 +1,586 @@
-# Main Screen Redesign Implementation Plan
+# Main Screen Design System Redesign Implementation Plan
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Redesign the main screen with a Store icon in header, bottom sticky wallet bar, category filtering for games, and featured games carousel at the top.
+**Goal:** Update the main/play screen to match the gaming-platform-main-screen-design-system.json specification with pure black backgrounds, orange CTAs, 20px border-radius cards, ribbon badges, and new color palette.
 
-**Architecture:**
-1. Rename SettingsPage to StorePage and update route from /settings to /store
-2. Replace settings gear icon with Store bag icon in Header linking to /store
-3. Create CategoryFilter component for horizontal scrollable category tags (mock data)
-4. Create BottomWalletBar sticky component showing balance + connect wallet button (redirects to /store)
-5. Create FeaturedCarousel component for games with `featured=true`
-6. Update useGames hook to return featuredGames array
-7. Update HomePage with new layout: carousel, categories, filtered games grid
+**Architecture:** Update CSS variables to new design system colors, then update each component (GameCard, GameGrid, FeaturedCarousel, CategoryFilter, Section, HomePage) to match new styling. Add ribbon badge support for featured/new games. Keep existing React component structure.
 
-**Tech Stack:** React 18, TypeScript, CSS Modules, React Router, TON Connect UI React
+**Tech Stack:** React, CSS Modules, CSS Custom Properties
 
 ---
 
-## Task 1: Create StorePage (Copy and Rename from SettingsPage)
+### Task 1: Update CSS Variables to New Design System
 
 **Files:**
-- Create: `src/pages/StorePage/StorePage.tsx`
-- Create: `src/pages/StorePage/StorePage.module.css`
-- Create: `src/pages/StorePage/index.ts`
+- Modify: `src/styles/variables.css`
+- Modify: `src/styles/global.css`
 
-**Step 1: Create StorePage barrel export**
+**Step 1: Replace color variables with new design system**
 
-Create `src/pages/StorePage/index.ts`:
-```typescript
-export { StorePage } from './StorePage';
-```
+In `src/styles/variables.css`, replace the entire content:
 
-**Step 2: Create StorePage CSS (copy from SettingsPage)**
-
-Create `src/pages/StorePage/StorePage.module.css`:
 ```css
-.page {
-  min-height: 100vh;
-  background-color: var(--color-bg-primary);
-}
+:root {
+  /* Background Colors - Design System */
+  --color-bg-page: #000000;
+  --color-bg-hero: #0D1117;
+  --color-bg-card: #1A1A1A;
+  --color-bg-card-title: #000000;
 
-.main {
-  padding: 16px;
-  padding-bottom: 48px;
-}
+  /* Legacy aliases for compatibility */
+  --color-bg-primary: #000000;
+  --color-bg-secondary: #0D1117;
+  --color-bg-tertiary: #1A1A1A;
+  --color-bg-elevated: #252525;
 
-.walletConnected {
-  padding: 16px;
-  background-color: var(--color-bg-card);
-  border-radius: 16px;
-}
+  /* Accent Colors - Design System */
+  --color-accent-orange: #FF6B35;
+  --color-accent-orange-hover: #FF8555;
+  --color-accent-orange-active: #E55A25;
+  --color-accent-cyan: #00E5A0;
+  --color-accent-cyan-light: #4DFFC3;
+  --color-accent-neon: #00BFFF;
+  --color-accent-gold: #FFD700;
 
-.walletInfo {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
+  /* Legacy aliases */
+  --color-accent-primary: #FF6B35;
+  --color-accent-light: #FF8555;
+  --color-accent-dark: #E55A25;
 
-.walletLabel {
-  font-size: 14px;
-  color: var(--color-text-secondary);
-  margin-bottom: 4px;
-}
+  /* Promotional Colors */
+  --color-promo-green-start: #1A3D2E;
+  --color-promo-green-end: #0F2922;
+  --color-promo-label: #4ADE80;
 
-.walletAddress {
-  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
-  font-size: 14px;
+  /* Badge Colors */
+  --color-badge-featured: #FF4757;
+  --color-badge-new: #3B82F6;
+  --color-badge-hot: #F59E0B;
+
+  /* Text Colors */
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #B0B8C4;
+  --color-text-muted: #6B7280;
+  --color-text-label: #9CA3AF;
+  --color-text-on-accent: #FFFFFF;
+
+  /* Border Colors */
+  --color-border-subtle: rgba(255, 255, 255, 0.08);
+  --color-border-medium: rgba(255, 255, 255, 0.12);
+  --color-border-accent: #FF6B35;
+
+  /* Status Colors */
+  --color-status-notification: #FF4757;
+  --color-status-success: #2ED573;
+  --color-status-warning: #FFA502;
+
+  /* Overlay Colors */
+  --overlay-dark: rgba(0, 0, 0, 0.6);
+  --overlay-gradient: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.8) 100%);
+  --overlay-card: linear-gradient(180deg, transparent 50%, rgba(0, 0, 0, 0.7) 100%);
+
+  /* Spacing */
+  --spacing-xxs: 4px;
+  --spacing-xs: 8px;
+  --spacing-sm: 12px;
+  --spacing-md: 16px;
+  --spacing-lg: 20px;
+  --spacing-xl: 24px;
+  --spacing-xxl: 48px;
+
+  /* Border Radius - Design System */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-xxl: 24px;
+  --radius-button: 32px;
+  --radius-full: 9999px;
+
+  /* Shadows - Design System */
+  --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --shadow-card-hover: 0 8px 32px rgba(0, 0, 0, 0.6);
+  --shadow-cta: 0 4px 20px rgba(255, 107, 53, 0.4);
+  --shadow-cta-hover: 0 6px 28px rgba(255, 107, 53, 0.5);
+  --shadow-neon: 0 0 30px rgba(0, 191, 255, 0.5);
+  --shadow-badge-featured: 0 2px 8px rgba(255, 71, 87, 0.4);
+  --shadow-badge-new: 0 2px 8px rgba(59, 130, 246, 0.4);
+
+  /* Legacy shadows */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --shadow-accent: 0 4px 20px rgba(255, 107, 53, 0.3);
+  --shadow-accent-strong: 0 8px 32px rgba(255, 107, 53, 0.5);
+
+  /* Gradients - Design System */
+  --gradient-cta-button: linear-gradient(180deg, #FF7A45 0%, #FF5722 100%);
+  --gradient-promo-card: linear-gradient(135deg, #1A3D2E 0%, #0F2922 60%, #0A1F18 100%);
+  --gradient-hero-vignette: radial-gradient(ellipse at 50% 40%, transparent 20%, rgba(0, 0, 0, 0.85) 70%);
+
+  /* Legacy gradient aliases */
+  --gradient-primary-button: linear-gradient(180deg, #FF7A45 0%, #FF5722 100%);
+  --gradient-accent-card: linear-gradient(145deg, #1A3D2E 0%, #0F2922 50%, #0A1F18 100%);
+  --gradient-card-overlay: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.8) 100%);
+  --gradient-header-fade: linear-gradient(180deg, #0D1117 0%, transparent 100%);
+
+  /* Typography */
+  --font-family-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-family-display: 'Orbitron', 'Press Start 2P', monospace;
+  --font-family-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* Transitions - Design System */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.2s ease;
+  --transition-slow: 0.3s ease;
+  --transition-bounce: 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  --transition-spring: 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* Telegram Safe Areas - set dynamically by TelegramProvider */
+  --tg-safe-area-top: 0px;
+  --tg-safe-area-bottom: 0px;
+  --tg-safe-area-left: 0px;
+  --tg-safe-area-right: 0px;
+  --tg-content-safe-area-top: 0px;
+  --tg-content-safe-area-bottom: 0px;
+  --tg-header-safe-area: 0px;
+}
+```
+
+**Step 2: Update global.css background**
+
+In `src/styles/global.css`, update to:
+
+```css
+@import './reset.css';
+@import './variables.css';
+
+html,
+body {
+  background-color: var(--color-bg-page);
   color: var(--color-text-primary);
-  font-weight: 500;
+  font-family: var(--font-family-primary);
+  overflow-x: hidden;
 }
 
-.disconnectButton {
-  padding: 8px 16px;
-  background-color: transparent;
-  border: 1px solid var(--color-border-subtle);
-  border-radius: 9999px;
-  color: var(--color-text-primary);
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.disconnectButton:hover {
-  border-color: #ef4444;
-  color: #ef4444;
-}
-
-.connectButton {
+#root {
   width: 100%;
-  padding: 16px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border: none;
-  border-radius: 16px;
-  color: white;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  transition: transform 0.2s ease;
-}
-
-.connectButton:hover {
-  transform: translateY(-1px);
-}
-
-.connectButton:active {
-  transform: translateY(0);
-}
-
-.packagesGrid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
-}
-
-.balanceLoading {
-  padding: 24px;
-  background-color: var(--color-bg-card);
-  border-radius: 16px;
-  color: var(--color-text-secondary);
-  text-align: center;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background-color: var(--color-bg-page);
 }
 ```
 
-**Step 3: Create StorePage component (copy from SettingsPage with renamed class)**
+**Step 3: Verify build passes**
 
-Create `src/pages/StorePage/StorePage.tsx`:
-```tsx
-import { useState, useEffect, useMemo } from 'react';
-import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
-import { Address } from '@ton/core';
-import { Header, Section, CoinBalance, BuyCoinsCard, CoinPackage } from '../../components';
-import { useAuth } from '../../contexts/AuthContext';
-import { useConfig } from '../../contexts/ConfigContext';
-import { api } from '../../services/api';
-import styles from './StorePage.module.css';
-
-// Convert raw TON address to user-friendly format
-const toUserFriendlyAddress = (rawAddress: string, isTestnet: boolean): string => {
-  try {
-    return Address.parse(rawAddress).toString({
-      bounceable: false,
-      testOnly: isTestnet,
-    });
-  } catch {
-    return rawAddress;
-  }
-};
-
-export const StorePage = () => {
-  const [tonConnectUI] = useTonConnectUI();
-  const wallet = useTonWallet();
-  const { user, isLoading, refreshUser, updateWallet } = useAuth();
-  const { config, loading: configLoading } = useConfig();
-  const [isPurchasing, setIsPurchasing] = useState(false);
-
-  // Convert wallet address to user-friendly format
-  const isTestnet = config?.ton.network === 'testnet';
-  const userFriendlyAddress = useMemo(() => {
-    if (!wallet?.account.address) return null;
-    return toUserFriendlyAddress(wallet.account.address, isTestnet);
-  }, [wallet?.account.address, isTestnet]);
-
-  // Sync wallet address to backend when connected
-  useEffect(() => {
-    const syncWallet = async () => {
-      if (userFriendlyAddress && user && userFriendlyAddress !== user.walletAddress) {
-        try {
-          await updateWallet(userFriendlyAddress);
-        } catch (err) {
-          console.error('Failed to sync wallet:', err);
-        }
-      }
-    };
-    syncWallet();
-  }, [userFriendlyAddress, user, updateWallet]);
-
-  const handleConnectWallet = () => {
-    tonConnectUI.openModal();
-  };
-
-  const handleDisconnectWallet = () => {
-    tonConnectUI.disconnect();
-  };
-
-  const handleBuyCoins = async (pkg: CoinPackage) => {
-    if (!wallet || !config?.ton.receiverAddress) {
-      if (!config?.ton.receiverAddress) {
-        alert('Payment not configured. Please try again later.');
-        return;
-      }
-      tonConnectUI.openModal();
-      return;
-    }
-
-    if (isPurchasing) return;
-
-    setIsPurchasing(true);
-
-    try {
-      // Calculate total coins including bonus
-      const totalCoins = pkg.amount + (pkg.bonus || 0);
-
-      // Convert TON price to nanoTON (1 TON = 10^9 nanoTON)
-      const amountInNanoTon = (pkg.price * 1_000_000_000).toString();
-
-      // Parse and normalize receiver address for TonConnect
-      let receiverAddress: string;
-      try {
-        // TonConnect expects user-friendly bounceable format
-        const parsed = Address.parse(config.ton.receiverAddress);
-        receiverAddress = parsed.toString({ bounceable: true, testOnly: isTestnet });
-      } catch (e) {
-        console.error('Failed to parse receiver address:', config.ton.receiverAddress, e);
-        alert('Invalid payment address configuration. Please contact support.');
-        return;
-      }
-
-      // Create transaction request
-      const transaction = {
-        validUntil: Math.floor(Date.now() / 1000) + 600, // 10 minutes from now
-        messages: [
-          {
-            address: receiverAddress,
-            amount: amountInNanoTon,
-          },
-        ],
-      };
-
-      // Send transaction - this will open wallet for user confirmation
-      const result = await tonConnectUI.sendTransaction(transaction);
-
-      // Transaction successful - add coins to user balance
-      await api.addCoins(totalCoins, {
-        transactionHash: result.boc,
-        tonAmount: amountInNanoTon,
-      });
-
-      // Refresh user data to get updated balance
-      await refreshUser();
-
-      alert(`Successfully purchased ${totalCoins} coins!`);
-    } catch (error) {
-      console.error('Failed to purchase coins:', error);
-
-      if (error instanceof Error && error.message.includes('cancelled')) {
-        alert('Transaction cancelled.');
-      } else {
-        alert('Failed to purchase coins. Please try again.');
-      }
-    } finally {
-      setIsPurchasing(false);
-    }
-  };
-
-  const truncateAddress = (address: string) => {
-    if (address.length <= 12) return address;
-    return `${address.slice(0, 6)}...${address.slice(-4)}`;
-  };
-
-  return (
-    <div className={styles.page}>
-      <Header />
-      <main className={styles.main}>
-        <Section title="TON Wallet">
-          {wallet ? (
-            <div className={styles.walletConnected}>
-              <div className={styles.walletInfo}>
-                <div>
-                  <div className={styles.walletLabel}>Connected Wallet</div>
-                  <div className={styles.walletAddress}>
-                    {truncateAddress(userFriendlyAddress || wallet.account.address)}
-                  </div>
-                </div>
-                <button
-                  className={styles.disconnectButton}
-                  onClick={handleDisconnectWallet}
-                >
-                  Disconnect
-                </button>
-              </div>
-            </div>
-          ) : user?.walletAddress ? (
-            <div className={styles.walletConnected}>
-              <div className={styles.walletInfo}>
-                <div>
-                  <div className={styles.walletLabel}>Saved Wallet</div>
-                  <div className={styles.walletAddress}>
-                    {truncateAddress(user.walletAddress)}
-                  </div>
-                </div>
-                <button
-                  className={styles.connectButton}
-                  onClick={handleConnectWallet}
-                >
-                  Reconnect
-                </button>
-              </div>
-            </div>
-          ) : (
-            <button className={styles.connectButton} onClick={handleConnectWallet}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M21 18V19C21 20.1046 20.1046 21 19 21H5C3.89543 21 3 20.1046 3 19V5C3 3.89543 3.89543 3 5 3H19C20.1046 3 21 3.89543 21 5V6M16 12H22M22 12L19 9M22 12L19 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              <span>Connect TON Wallet</span>
-            </button>
-          )}
-        </Section>
-
-        <Section title="Game Coins">
-          {isLoading ? (
-            <div className={styles.balanceLoading}>Loading balance...</div>
-          ) : (
-            <CoinBalance balance={user?.coinBalance ?? 0} symbol="COINS" />
-          )}
-        </Section>
-
-        <Section title="Buy Coins">
-          {configLoading ? (
-            <div className={styles.balanceLoading}>Loading packages...</div>
-          ) : !config?.coinPackages || config.coinPackages.length === 0 ? (
-            <div className={styles.balanceLoading}>No packages available</div>
-          ) : (
-            <div className={styles.packagesGrid}>
-              {config.coinPackages.map((pkg) => (
-                <BuyCoinsCard
-                  key={pkg.id}
-                  package={{
-                    id: pkg.id,
-                    amount: pkg.coins,
-                    price: pkg.price,
-                    bonus: pkg.bonus,
-                  }}
-                  onBuy={handleBuyCoins}
-                />
-              ))}
-            </div>
-          )}
-        </Section>
-      </main>
-    </div>
-  );
-};
-```
+Run: `npm run build`
+Expected: Build succeeds
 
 **Step 4: Commit**
 
 ```bash
-git add src/pages/StorePage/
-git commit -m "feat(pages): create StorePage component (copy from SettingsPage)"
+git add src/styles/variables.css src/styles/global.css
+git commit -m "style: update CSS variables to new design system"
 ```
 
 ---
 
-## Task 2: Update Router and Delete SettingsPage
+### Task 2: Update GameCard Component with New Design
 
 **Files:**
-- Modify: `src/router.tsx`
-- Delete: `src/pages/SettingsPage/` directory
+- Modify: `src/components/GameCard/GameCard.tsx`
+- Modify: `src/components/GameCard/GameCard.module.css`
 
-**Step 1: Update router to use StorePage and /store route**
+**Step 1: Update GameCard.tsx to support badges**
 
-Modify `src/router.tsx`:
-```typescript
-import { createBrowserRouter } from 'react-router-dom';
-import { HomePage } from './pages/HomePage';
-import { StorePage } from './pages/StorePage';
-import { GamePage } from './pages/GamePage';
+Replace `src/components/GameCard/GameCard.tsx`:
 
-export const router = createBrowserRouter([
-  {
-    path: '/',
-    element: <HomePage />,
-  },
-  {
-    path: '/store',
-    element: <StorePage />,
-  },
-  {
-    path: '/game/:gameId',
-    element: <GamePage />,
-  },
-]);
-```
-
-**Step 2: Delete SettingsPage directory**
-
-```bash
-rm -rf src/pages/SettingsPage
-```
-
-**Step 3: Commit**
-
-```bash
-git add -A
-git commit -m "refactor(router): rename /settings to /store and remove SettingsPage"
-```
-
----
-
-## Task 3: Update Header with Store Icon
-
-**Files:**
-- Modify: `src/components/Header/Header.tsx`
-
-**Step 1: Replace settings icon with store bag icon**
-
-Modify `src/components/Header/Header.tsx`:
 ```tsx
-import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
-import { Link, useLocation } from 'react-router-dom';
-import styles from './Header.module.css';
+import React from 'react';
+import styles from './GameCard.module.css';
 
-export const Header = () => {
-  const [tonConnectUI] = useTonConnectUI();
-  const wallet = useTonWallet();
-  const location = useLocation();
+export interface Game {
+  id: string;
+  slug: string;
+  title: string;
+  thumbnail: string;
+  category: string;
+  featured?: boolean;
+  topPromoted?: boolean;
+}
 
-  const handleWalletAction = () => {
-    if (wallet) {
-      tonConnectUI.disconnect();
-    } else {
-      tonConnectUI.openModal();
-    }
+interface GameCardProps {
+  game: Game;
+  onClick?: (game: Game) => void;
+}
+
+export const GameCard: React.FC<GameCardProps> = ({ game, onClick }) => {
+  const handleClick = () => {
+    onClick?.(game);
   };
 
   return (
-    <header className={styles.header}>
-      <Link to="/" className={styles.logo}>
-        <div className={styles.logoIcon}>G</div>
-        <span className={styles.logoText}>Games</span>
-      </Link>
+    <button className={styles.card} onClick={handleClick}>
+      {/* Ribbon Badge */}
+      {game.featured && (
+        <div className={styles.ribbonContainer}>
+          <div className={`${styles.ribbon} ${styles.ribbonFeatured}`}>
+            Featured
+          </div>
+        </div>
+      )}
+      {game.topPromoted && !game.featured && (
+        <div className={styles.ribbonContainer}>
+          <div className={`${styles.ribbon} ${styles.ribbonHot}`}>
+            Hot
+          </div>
+        </div>
+      )}
 
-      <div className={styles.actions}>
-        <Link
-          to="/"
-          className={`${styles.navLink} ${location.pathname === '/' ? styles.navLinkActive : ''}`}
-          aria-label="Home"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            <polyline points="9,22 9,12 15,12 15,22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </Link>
-
-        <Link
-          to="/store"
-          className={`${styles.navLink} ${location.pathname === '/store' ? styles.navLinkActive : ''}`}
-          aria-label="Store"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M6 2L3 6V20C3 20.5304 3.21071 21.0391 3.58579 21.4142C3.96086 21.7893 4.46957 22 5 22H19C19.5304 22 20.0391 21.7893 20.4142 21.4142C20.7893 21.0391 21 20.5304 21 20V6L18 2H6Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M3 6H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M16 10C16 11.0609 15.5786 12.0783 14.8284 12.8284C14.0783 13.5786 13.0609 14 12 14C10.9391 14 9.92172 13.5786 9.17157 12.8284C8.42143 12.0783 8 11.0609 8 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </Link>
-
-        <button
-          className={styles.walletButton}
-          onClick={handleWalletAction}
-          aria-label={wallet ? "Disconnect wallet" : "Connect wallet"}
-        >
-          {wallet ? 'Connected' : 'Connect'}
-        </button>
+      <div className={styles.thumbnailWrapper}>
+        <img
+          src={game.thumbnail}
+          alt={game.title}
+          className={styles.thumbnail}
+        />
       </div>
-    </header>
+      <div className={styles.titleArea}>
+        <span className={styles.title}>{game.title}</span>
+      </div>
+    </button>
   );
 };
 ```
 
-**Step 2: Commit**
+**Step 2: Update GameCard.module.css with new styles**
+
+Replace `src/components/GameCard/GameCard.module.css`:
+
+```css
+.card {
+  background-color: var(--color-bg-card);
+  border: none;
+  border-radius: var(--radius-xl);
+  cursor: pointer;
+  padding: 0;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  position: relative;
+  box-shadow: var(--shadow-card);
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+}
+
+.card:hover {
+  transform: scale(1.02);
+  box-shadow: var(--shadow-card-hover);
+}
+
+.card:active {
+  transform: scale(0.98);
+}
+
+/* Ribbon Badge Container */
+.ribbonContainer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 80px;
+  height: 80px;
+  overflow: hidden;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.ribbon {
+  position: absolute;
+  top: 16px;
+  left: -24px;
+  width: 100px;
+  transform: rotate(-45deg);
+  padding: 4px 0;
+  text-align: center;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-text-primary);
+}
+
+.ribbonFeatured {
+  background: var(--color-badge-featured);
+  box-shadow: var(--shadow-badge-featured);
+}
+
+.ribbonHot {
+  background: var(--color-badge-hot);
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
+}
+
+.thumbnailWrapper {
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  width: 100%;
+  position: relative;
+  background-color: var(--color-bg-card);
+}
+
+.thumbnail {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.titleArea {
+  background: var(--color-bg-card-title);
+  padding: 12px 8px;
+  text-align: center;
+}
+
+.title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
+}
+```
+
+**Step 3: Verify build passes**
+
+Run: `npm run build`
+Expected: Build succeeds
+
+**Step 4: Commit**
 
 ```bash
-git add src/components/Header/Header.tsx
-git commit -m "feat(header): replace settings icon with store bag icon"
+git add src/components/GameCard/GameCard.tsx src/components/GameCard/GameCard.module.css
+git commit -m "style(GameCard): apply new design system with ribbon badges"
 ```
 
 ---
 
-## Task 4: Create CategoryFilter Component
+### Task 3: Update GameGrid Component
 
 **Files:**
-- Create: `src/components/CategoryFilter/CategoryFilter.tsx`
-- Create: `src/components/CategoryFilter/CategoryFilter.module.css`
-- Create: `src/components/CategoryFilter/index.ts`
-- Modify: `src/components/index.ts`
+- Modify: `src/components/GameGrid/GameGrid.module.css`
 
-**Step 1: Create CategoryFilter barrel export**
+**Step 1: Update GameGrid styles for 2-column layout**
 
-Create `src/components/CategoryFilter/index.ts`:
-```typescript
-export { CategoryFilter } from './CategoryFilter';
+Replace `src/components/GameGrid/GameGrid.module.css`:
+
+```css
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-sm);
+  width: 100%;
+  overflow: hidden;
+  padding: 0;
+}
+
+@media (min-width: 480px) {
+  .grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 768px) {
+  .grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
 ```
 
-**Step 2: Create CategoryFilter CSS**
+**Step 2: Verify build passes**
 
-Create `src/components/CategoryFilter/CategoryFilter.module.css`:
+Run: `npm run build`
+Expected: Build succeeds
+
+**Step 3: Commit**
+
+```bash
+git add src/components/GameGrid/GameGrid.module.css
+git commit -m "style(GameGrid): update to 2-column mobile layout"
+```
+
+---
+
+### Task 4: Update FeaturedCarousel with New Design
+
+**Files:**
+- Modify: `src/components/FeaturedCarousel/FeaturedCarousel.module.css`
+
+**Step 1: Update FeaturedCarousel styles**
+
+Replace `src/components/FeaturedCarousel/FeaturedCarousel.module.css`:
+
+```css
+.container {
+  position: relative;
+}
+
+.carousel {
+  display: flex;
+  gap: var(--spacing-md);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 4px 0;
+}
+
+.carousel::-webkit-scrollbar {
+  display: none;
+}
+
+.slide {
+  flex: 0 0 100%;
+  scroll-snap-align: start;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  position: relative;
+  aspect-ratio: 16 / 9;
+  cursor: pointer;
+  box-shadow: var(--shadow-card);
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+}
+
+.slide:hover {
+  transform: scale(1.01);
+  box-shadow: var(--shadow-card-hover);
+}
+
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 40px 20px 20px;
+  background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.8) 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.category {
+  font-size: 11px;
+  color: var(--color-text-label);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 600;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.description {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.playButton {
+  background: var(--color-accent-orange);
+  color: var(--color-text-primary);
+  border: none;
+  border-radius: var(--radius-button);
+  padding: 14px 48px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  align-self: flex-start;
+  margin-top: 8px;
+  box-shadow: var(--shadow-cta);
+  letter-spacing: 0.02em;
+}
+
+.playButton:hover {
+  background: var(--color-accent-orange-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-cta-hover);
+}
+
+.playButton:active {
+  background: var(--color-accent-orange-active);
+  transform: translateY(0);
+  box-shadow: var(--shadow-cta);
+}
+
+.indicators {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-bg-tertiary);
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  padding: 0;
+}
+
+.indicatorActive {
+  background: var(--color-accent-orange);
+  width: 24px;
+  border-radius: var(--radius-full);
+}
+```
+
+**Step 2: Verify build passes**
+
+Run: `npm run build`
+Expected: Build succeeds
+
+**Step 3: Commit**
+
+```bash
+git add src/components/FeaturedCarousel/FeaturedCarousel.module.css
+git commit -m "style(FeaturedCarousel): apply orange CTA and new design system"
+```
+
+---
+
+### Task 5: Update CategoryFilter with New Design
+
+**Files:**
+- Modify: `src/components/CategoryFilter/CategoryFilter.module.css`
+
+**Step 1: Update CategoryFilter styles**
+
+Replace `src/components/CategoryFilter/CategoryFilter.module.css`:
+
 ```css
 .container {
   display: flex;
-  gap: 12px;
+  gap: var(--spacing-sm);
   overflow-x: auto;
   padding: 4px 0;
   -webkit-overflow-scrolling: touch;
@@ -520,22 +597,23 @@ Create `src/components/CategoryFilter/CategoryFilter.module.css`:
   align-items: center;
   gap: 6px;
   padding: 12px 16px;
-  background: var(--color-bg-secondary);
+  background: var(--color-bg-card);
   border: 1px solid transparent;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all var(--transition-normal);
   min-width: 72px;
   flex-shrink: 0;
 }
 
 .category:hover {
-  background: var(--color-bg-tertiary);
+  background: var(--color-bg-elevated);
+  border-color: var(--color-border-subtle);
 }
 
 .categoryActive {
-  background: var(--color-bg-tertiary);
-  border-color: var(--color-accent-primary);
+  background: var(--color-bg-elevated);
+  border-color: var(--color-accent-orange);
 }
 
 .categoryIcon {
@@ -554,658 +632,98 @@ Create `src/components/CategoryFilter/CategoryFilter.module.css`:
 }
 ```
 
-**Step 3: Create CategoryFilter component**
+**Step 2: Verify build passes**
 
-Create `src/components/CategoryFilter/CategoryFilter.tsx`:
-```tsx
-import styles from './CategoryFilter.module.css';
+Run: `npm run build`
+Expected: Build succeeds
 
-// Mock categories - can be fetched from API later
-const MOCK_CATEGORIES = [
-  { id: 'all', label: 'All', icon: '🎮' },
-  { id: 'puzzle', label: 'Puzzle', icon: '🧩' },
-  { id: 'cards', label: 'Cards', icon: '🃏' },
-  { id: 'board', label: 'Board', icon: '♟️' },
-  { id: 'sports', label: 'Sports', icon: '⚽' },
-  { id: 'arcade', label: 'Arcade', icon: '👾' },
-  { id: 'casino', label: 'Casino', icon: '🎰' },
-];
-
-interface CategoryFilterProps {
-  selectedCategory: string | null;
-  onCategoryChange: (category: string | null) => void;
-}
-
-export const CategoryFilter = ({ selectedCategory, onCategoryChange }: CategoryFilterProps) => {
-  const handleCategoryClick = (categoryId: string) => {
-    if (categoryId === 'all') {
-      onCategoryChange(null);
-    } else {
-      onCategoryChange(categoryId === selectedCategory ? null : categoryId);
-    }
-  };
-
-  return (
-    <div className={styles.container}>
-      {MOCK_CATEGORIES.map((category) => (
-        <button
-          key={category.id}
-          className={`${styles.category} ${
-            (category.id === 'all' && !selectedCategory) || category.id === selectedCategory
-              ? styles.categoryActive
-              : ''
-          }`}
-          onClick={() => handleCategoryClick(category.id)}
-        >
-          <span className={styles.categoryIcon}>{category.icon}</span>
-          <span className={styles.categoryLabel}>{category.label}</span>
-        </button>
-      ))}
-    </div>
-  );
-};
-```
-
-**Step 4: Export from components index**
-
-Add to `src/components/index.ts`:
-```typescript
-export { CategoryFilter } from './CategoryFilter';
-```
-
-**Step 5: Commit**
+**Step 3: Commit**
 
 ```bash
-git add src/components/CategoryFilter/ src/components/index.ts
-git commit -m "feat(components): add CategoryFilter with mock categories"
+git add src/components/CategoryFilter/CategoryFilter.module.css
+git commit -m "style(CategoryFilter): apply new design system colors"
 ```
 
 ---
 
-## Task 5: Create BottomWalletBar Component
+### Task 6: Update Section Component with New Design
 
 **Files:**
-- Create: `src/components/BottomWalletBar/BottomWalletBar.tsx`
-- Create: `src/components/BottomWalletBar/BottomWalletBar.module.css`
-- Create: `src/components/BottomWalletBar/index.ts`
-- Modify: `src/components/index.ts`
+- Modify: `src/components/Section/Section.module.css`
 
-**Step 1: Create BottomWalletBar barrel export**
+**Step 1: Update Section styles**
 
-Create `src/components/BottomWalletBar/index.ts`:
-```typescript
-export { BottomWalletBar } from './BottomWalletBar';
-```
+Replace `src/components/Section/Section.module.css`:
 
-**Step 2: Create BottomWalletBar CSS**
-
-Create `src/components/BottomWalletBar/BottomWalletBar.module.css`:
 ```css
-.container {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: var(--color-bg-secondary);
-  border-top: 1px solid var(--color-border-subtle);
-  padding: 12px 16px;
+.section {
+  padding: var(--spacing-lg) 0;
+}
+
+.header {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  z-index: 100;
-}
-
-.balanceSection {
-  display: flex;
   align-items: center;
-  gap: 12px;
-}
-
-.coinIcon {
-  width: 32px;
-  height: 32px;
-  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
-}
-
-.balanceInfo {
-  display: flex;
-  flex-direction: column;
-}
-
-.balanceLabel {
-  font-size: 11px;
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.balanceAmount {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--color-text-primary);
-}
-
-.connectButton {
-  background: var(--gradient-primary-button);
-  color: var(--color-text-primary);
-  border: none;
-  border-radius: 9999px;
-  padding: 10px 20px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.connectButton:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-accent);
-}
-
-.connectButton:active {
-  transform: translateY(0);
-}
-```
-
-**Step 3: Create BottomWalletBar component**
-
-Create `src/components/BottomWalletBar/BottomWalletBar.tsx`:
-```tsx
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
-import styles from './BottomWalletBar.module.css';
-
-export const BottomWalletBar = () => {
-  const navigate = useNavigate();
-  const { user } = useAuth();
-
-  const handleConnectClick = () => {
-    navigate('/store');
-  };
-
-  const formatBalance = (amount: number) => {
-    return amount.toLocaleString();
-  };
-
-  return (
-    <div className={styles.container}>
-      <div className={styles.balanceSection}>
-        <div className={styles.coinIcon}>💰</div>
-        <div className={styles.balanceInfo}>
-          <span className={styles.balanceLabel}>Balance</span>
-          <span className={styles.balanceAmount}>{formatBalance(user?.coinBalance ?? 0)}</span>
-        </div>
-      </div>
-      <button className={styles.connectButton} onClick={handleConnectClick}>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M21 18V19C21 20.1046 20.1046 21 19 21H5C3.89543 21 3 20.1046 3 19V5C3 3.89543 3.89543 3 5 3H19C20.1046 3 21 3.89543 21 5V6M16 12H22M22 12L19 9M22 12L19 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-        Connect Wallet
-      </button>
-    </div>
-  );
-};
-```
-
-**Step 4: Export from components index**
-
-Add to `src/components/index.ts`:
-```typescript
-export { BottomWalletBar } from './BottomWalletBar';
-```
-
-**Step 5: Commit**
-
-```bash
-git add src/components/BottomWalletBar/ src/components/index.ts
-git commit -m "feat(components): add BottomWalletBar sticky component"
-```
-
----
-
-## Task 6: Create FeaturedCarousel Component
-
-**Files:**
-- Create: `src/components/FeaturedCarousel/FeaturedCarousel.tsx`
-- Create: `src/components/FeaturedCarousel/FeaturedCarousel.module.css`
-- Create: `src/components/FeaturedCarousel/index.ts`
-- Modify: `src/components/index.ts`
-
-**Step 1: Create FeaturedCarousel barrel export**
-
-Create `src/components/FeaturedCarousel/index.ts`:
-```typescript
-export { FeaturedCarousel } from './FeaturedCarousel';
-```
-
-**Step 2: Create FeaturedCarousel CSS**
-
-Create `src/components/FeaturedCarousel/FeaturedCarousel.module.css`:
-```css
-.container {
-  position: relative;
-}
-
-.carousel {
-  display: flex;
-  gap: 16px;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  padding: 4px 0;
-}
-
-.carousel::-webkit-scrollbar {
-  display: none;
-}
-
-.slide {
-  flex: 0 0 100%;
-  scroll-snap-align: start;
-  border-radius: 16px;
-  overflow: hidden;
-  position: relative;
-  aspect-ratio: 16 / 9;
-  cursor: pointer;
-}
-
-.image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.overlay {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 24px 16px;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.5) 50%, transparent 100%);
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.category {
-  font-size: 12px;
-  color: var(--color-accent-light);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  font-weight: 600;
+  margin-bottom: var(--spacing-md);
 }
 
 .title {
+  color: var(--color-text-primary);
   font-size: 20px;
   font-weight: 700;
-  color: var(--color-text-primary);
+  line-height: 1.3;
   margin: 0;
 }
 
-.description {
-  font-size: 14px;
+.action {
   color: var(--color-text-secondary);
-  margin: 0;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.playButton {
-  background: var(--gradient-primary-button);
-  color: var(--color-text-primary);
-  border: none;
-  border-radius: 9999px;
-  padding: 10px 24px;
   font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  align-self: flex-start;
-  margin-top: 4px;
-}
-
-.playButton:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-accent);
-}
-
-.indicators {
-  display: flex;
-  justify-content: center;
-  gap: 6px;
-  margin-top: 12px;
-}
-
-.indicator {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--color-bg-tertiary);
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  padding: 0;
-}
-
-.indicatorActive {
-  background: var(--color-accent-primary);
-  width: 24px;
-  border-radius: 9999px;
 }
 ```
 
-**Step 3: Create FeaturedCarousel component**
+**Step 2: Verify build passes**
 
-Create `src/components/FeaturedCarousel/FeaturedCarousel.tsx`:
-```tsx
-import { useState, useRef, useEffect } from 'react';
-import { Game } from '../GameCard';
-import styles from './FeaturedCarousel.module.css';
+Run: `npm run build`
+Expected: Build succeeds
 
-interface FeaturedCarouselProps {
-  games: Game[];
-  onGameClick: (game: Game) => void;
-}
-
-export const FeaturedCarousel = ({ games, onGameClick }: FeaturedCarouselProps) => {
-  const [activeIndex, setActiveIndex] = useState(0);
-  const carouselRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const carousel = carouselRef.current;
-    if (!carousel) return;
-
-    const handleScroll = () => {
-      const scrollLeft = carousel.scrollLeft;
-      const slideWidth = carousel.clientWidth;
-      const newIndex = Math.round(scrollLeft / slideWidth);
-      setActiveIndex(newIndex);
-    };
-
-    carousel.addEventListener('scroll', handleScroll);
-    return () => carousel.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  const scrollToIndex = (index: number) => {
-    const carousel = carouselRef.current;
-    if (!carousel) return;
-
-    const slideWidth = carousel.clientWidth;
-    carousel.scrollTo({
-      left: slideWidth * index,
-      behavior: 'smooth',
-    });
-  };
-
-  if (games.length === 0) {
-    return null;
-  }
-
-  return (
-    <div className={styles.container}>
-      <div className={styles.carousel} ref={carouselRef}>
-        {games.map((game) => (
-          <div
-            key={game.id}
-            className={styles.slide}
-            onClick={() => onGameClick(game)}
-          >
-            <img
-              src={game.thumbnail}
-              alt={game.title}
-              className={styles.image}
-            />
-            <div className={styles.overlay}>
-              <span className={styles.category}>{game.category}</span>
-              <h3 className={styles.title}>{game.title}</h3>
-              {game.description && (
-                <p className={styles.description}>{game.description}</p>
-              )}
-              <button
-                className={styles.playButton}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onGameClick(game);
-                }}
-              >
-                Play Now
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-      {games.length > 1 && (
-        <div className={styles.indicators}>
-          {games.map((_, index) => (
-            <button
-              key={index}
-              className={`${styles.indicator} ${index === activeIndex ? styles.indicatorActive : ''}`}
-              onClick={() => scrollToIndex(index)}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-```
-
-**Step 4: Export from components index**
-
-Add to `src/components/index.ts`:
-```typescript
-export { FeaturedCarousel } from './FeaturedCarousel';
-```
-
-**Step 5: Commit**
+**Step 3: Commit**
 
 ```bash
-git add src/components/FeaturedCarousel/ src/components/index.ts
-git commit -m "feat(components): add FeaturedCarousel with scroll indicators"
+git add src/components/Section/Section.module.css
+git commit -m "style(Section): update padding and typography"
 ```
 
 ---
 
-## Task 7: Update useGames Hook to Return Featured Games Array
+### Task 7: Update HomePage Layout
 
 **Files:**
-- Modify: `src/hooks/useGames.ts`
-
-**Step 1: Update useGames to filter featured games from list**
-
-Modify `src/hooks/useGames.ts`:
-```typescript
-import { useState, useEffect } from 'react';
-import { api, Game } from '../services/api';
-
-export interface UseGamesResult {
-  games: Game[];
-  featuredGames: Game[];
-  isLoading: boolean;
-  error: string | null;
-  refetch: () => void;
-}
-
-export function useGames(): UseGamesResult {
-  const [allGames, setAllGames] = useState<Game[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchGames = async () => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const gamesResponse = await api.getGames();
-      setAllGames(gamesResponse.games);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch games');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchGames();
-  }, []);
-
-  // Filter featured games (games with featured=true)
-  const featuredGames = allGames.filter((game) => game.featured === true);
-
-  // Regular games exclude featured ones to avoid duplication
-  const games = allGames.filter((game) => game.featured !== true);
-
-  return {
-    games,
-    featuredGames,
-    isLoading,
-    error,
-    refetch: fetchGames,
-  };
-}
-```
-
-**Step 2: Commit**
-
-```bash
-git add src/hooks/useGames.ts
-git commit -m "refactor(hooks): update useGames to return featuredGames array"
-```
-
----
-
-## Task 8: Update HomePage with New Layout
-
-**Files:**
-- Modify: `src/pages/HomePage/HomePage.tsx`
 - Modify: `src/pages/HomePage/HomePage.module.css`
 
-**Step 1: Update HomePage component**
+**Step 1: Update HomePage styles**
 
-Modify `src/pages/HomePage/HomePage.tsx`:
-```tsx
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useTonWallet } from '@tonconnect/ui-react';
-import {
-  Header,
-  FeaturedCarousel,
-  CategoryFilter,
-  GameGrid,
-  Section,
-  BottomWalletBar,
-  Game,
-} from '../../components';
-import { useGames } from '../../hooks/useGames';
-import styles from './HomePage.module.css';
+Replace `src/pages/HomePage/HomePage.module.css`:
 
-export const HomePage = () => {
-  const { games, featuredGames, isLoading, error, refetch } = useGames();
-  const navigate = useNavigate();
-  const wallet = useTonWallet();
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-
-  const handleGameClick = (game: Game) => {
-    navigate(`/game/${game.slug}`);
-  };
-
-  if (error) {
-    return (
-      <div className={styles.page}>
-        <Header />
-        <main className={styles.main}>
-          <div className={styles.error}>
-            <p>Error: {error}</p>
-            <button onClick={refetch}>Retry</button>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <div className={styles.page}>
-        <Header />
-        <main className={styles.main}>
-          <div className={styles.loading}>Loading games...</div>
-        </main>
-      </div>
-    );
-  }
-
-  // Filter games by selected category
-  const filteredGames = selectedCategory
-    ? games.filter((game) => game.category.toLowerCase() === selectedCategory.toLowerCase())
-    : games;
-
-  return (
-    <div className={styles.page}>
-      <Header />
-
-      <main className={styles.main}>
-        {/* Featured Games Carousel */}
-        {featuredGames.length > 0 && (
-          <section className={styles.featuredSection}>
-            <FeaturedCarousel games={featuredGames} onGameClick={handleGameClick} />
-          </section>
-        )}
-
-        {/* Category Filter */}
-        <section className={styles.categoriesSection}>
-          <CategoryFilter
-            selectedCategory={selectedCategory}
-            onCategoryChange={setSelectedCategory}
-          />
-        </section>
-
-        {/* Games Grid */}
-        <Section
-          title={selectedCategory ? `${selectedCategory} Games` : 'Most Popular Games'}
-        >
-          <GameGrid games={filteredGames} onGameClick={handleGameClick} />
-        </Section>
-      </main>
-
-      {/* Bottom Wallet Bar - only shows when wallet not connected */}
-      {!wallet && <BottomWalletBar />}
-    </div>
-  );
-};
-```
-
-**Step 2: Update HomePage CSS**
-
-Modify `src/pages/HomePage/HomePage.module.css`:
 ```css
 .page {
   min-height: 100vh;
-  background-color: var(--color-bg-primary);
+  background-color: var(--color-bg-page);
+  overflow-x: hidden;
+  max-width: 100vw;
 }
 
 .main {
-  padding: 16px;
-  padding-bottom: 80px; /* Space for bottom wallet bar */
+  padding: var(--spacing-sm);
+  padding-bottom: 100px; /* Space for bottom nav bar */
+  overflow-x: hidden;
 }
 
 .featuredSection {
-  margin-bottom: 24px;
+  margin-bottom: var(--spacing-lg);
 }
 
 .categoriesSection {
-  margin-bottom: 24px;
+  margin-bottom: var(--spacing-lg);
 }
 
 .error {
@@ -1214,17 +732,26 @@ Modify `src/pages/HomePage/HomePage.module.css`:
   align-items: center;
   justify-content: center;
   min-height: 50vh;
-  gap: 16px;
+  gap: var(--spacing-md);
 }
 
 .error button {
-  background-color: var(--color-purple);
+  background: var(--color-accent-orange);
   color: var(--color-text-primary);
   border: none;
-  border-radius: 9999px;
-  padding: 12px 24px;
+  border-radius: var(--radius-button);
+  padding: 14px 32px;
   cursor: pointer;
   font-size: 16px;
+  font-weight: 700;
+  box-shadow: var(--shadow-cta);
+  transition: all var(--transition-normal);
+}
+
+.error button:hover {
+  background: var(--color-accent-orange-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-cta-hover);
 }
 
 .loading {
@@ -1236,52 +763,128 @@ Modify `src/pages/HomePage/HomePage.module.css`:
 }
 ```
 
+**Step 2: Verify build passes**
+
+Run: `npm run build`
+Expected: Build succeeds
+
 **Step 3: Commit**
 
 ```bash
-git add src/pages/HomePage/
-git commit -m "feat(home): redesign HomePage with carousel, categories, and wallet bar"
+git add src/pages/HomePage/HomePage.module.css
+git commit -m "style(HomePage): apply pure black background and new layout"
 ```
 
 ---
 
-## Task 9: Build Verification
+### Task 8: Update Header Background for New Design
 
-**Step 1: Run TypeScript compilation**
+**Files:**
+- Modify: `src/components/Header/Header.module.css`
 
-```bash
-npx tsc --noEmit
+**Step 1: Update Header background color**
+
+In `src/components/Header/Header.module.css`, change the `.header` class background from `var(--color-bg-secondary)` to `var(--color-bg-hero)`:
+
+```css
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  height: calc(56px + var(--tg-header-safe-area, 0px));
+  padding: var(--tg-header-safe-area, 0px) 16px 0 16px;
+  background: var(--color-bg-hero);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
 ```
 
-Expected: No errors
+**Step 2: Verify build passes**
 
-**Step 2: Run production build**
-
-```bash
-npm run build
-```
-
+Run: `npm run build`
 Expected: Build succeeds
 
-**Step 3: Commit build info file updates if any**
+**Step 3: Commit**
+
+```bash
+git add src/components/Header/Header.module.css
+git commit -m "style(Header): update to hero background color"
+```
+
+---
+
+### Task 9: Update BottomNavBar for New Design
+
+**Files:**
+- Modify: `src/components/BottomNavBar/BottomNavBar.module.css`
+
+**Step 1: Update BottomNavBar background**
+
+In `src/components/BottomNavBar/BottomNavBar.module.css`, change the `.container` class background from `var(--color-bg-secondary)` to `var(--color-bg-hero)`:
+
+Find and replace `background: var(--color-bg-secondary);` with `background: var(--color-bg-hero);`
+
+**Step 2: Verify build passes**
+
+Run: `npm run build`
+Expected: Build succeeds
+
+**Step 3: Commit**
+
+```bash
+git add src/components/BottomNavBar/BottomNavBar.module.css
+git commit -m "style(BottomNavBar): update to hero background color"
+```
+
+---
+
+### Task 10: Final Verification and Cleanup
+
+**Step 1: Run full build**
+
+Run: `npm run build`
+Expected: Build succeeds with no errors
+
+**Step 2: Visual verification checklist**
+
+- [ ] Page background is pure black (#000000)
+- [ ] Game cards have 20px border-radius
+- [ ] Game card titles are in black area below thumbnail
+- [ ] Featured games show red "Featured" ribbon badge
+- [ ] Hot games show orange "Hot" ribbon badge
+- [ ] Play Now button is orange (#FF6B35)
+- [ ] Orange button has glow shadow
+- [ ] 2-column grid on mobile
+- [ ] Category filter uses new card colors
+- [ ] Header and bottom nav use hero color (#0D1117)
+
+**Step 3: Final commit if any cleanup needed**
 
 ```bash
 git add -A
-git commit -m "chore: update build artifacts" || echo "No changes to commit"
+git commit -m "style: complete main screen design system update"
 ```
 
 ---
 
 ## Summary
 
-This implementation plan redesigns the main screen with:
+This implementation updates the main screen to match the gaming-platform-main-screen-design-system.json:
 
-1. **StorePage** - Renamed from SettingsPage, accessible via /store route
-2. **Header Store Icon** - Shopping bag icon replacing settings gear, links to /store
-3. **CategoryFilter** - Horizontal scrollable category tags (mock data: All, Puzzle, Cards, Board, Sports, Arcade, Casino)
-4. **BottomWalletBar** - Sticky bottom bar showing balance + "Connect Wallet" button that redirects to /store (only visible when wallet not connected)
-5. **FeaturedCarousel** - Full-width carousel for games with `featured=true`, includes slide indicators
-6. **Updated useGames** - Returns `featuredGames` array and `games` array separately
-7. **Updated HomePage** - New layout with carousel at top, categories, and filtered game grid
+1. **CSS Variables** - New color palette with pure black background, orange accents, design system spacing and shadows
+2. **GameCard** - 20px border-radius, black title area, ribbon badges for featured/hot games
+3. **GameGrid** - 2-column mobile layout, 12px gaps showing black background
+4. **FeaturedCarousel** - Orange "Play Now" CTA button with glow shadow
+5. **CategoryFilter** - Updated card colors and orange active border
+6. **Section** - Updated typography and spacing
+7. **HomePage** - Pure black background, updated padding
+8. **Header/BottomNavBar** - Hero background color (#0D1117)
 
-The design follows the Skillz reference screenshot with categories, featured carousel, and game grid layout.
+**Key design rules followed:**
+- Orange (#FF6B35) only for CTA buttons
+- Pure black (#000000) for page background
+- 20px border-radius for all cards
+- Ribbon badges for corner overlays
+- Title below thumbnail (not overlapping)
