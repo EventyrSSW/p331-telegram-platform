@@ -3,7 +3,7 @@
 
 html,
 body {
-  background-color: var(--color-bg-primary);
+  background-color: var(--color-bg-page);
   color: var(--color-text-primary);
   font-family: var(--font-family-primary);
   overflow-x: hidden;
@@ -13,4 +13,5 @@ body {
   width: 100%;
   min-height: 100vh;
   overflow-x: hidden;
+  background-color: var(--color-bg-page);
 }
