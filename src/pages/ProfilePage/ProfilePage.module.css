@@ -133,3 +133,48 @@
   margin: 8px 0 0 0;
   opacity: 0.7;
 }
+
+.connectButton {
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: var(--radius-md);
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: transform 0.2s ease;
+  margin-top: 12px;
+}
+
+.connectButton:hover {
+  transform: translateY(-1px);
+}
+
+.connectButton:active {
+  transform: translateY(0);
+}
+
+.disconnectButton {
+  width: 100%;
+  padding: 12px 16px;
+  background-color: transparent;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--color-text-primary);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 12px;
+}
+
+.disconnectButton:hover {
+  border-color: #ef4444;
+  color: #ef4444;
+}
