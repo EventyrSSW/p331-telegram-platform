@@ -70,6 +70,13 @@ model Game {
   category        String
   featured        Boolean   @default(false)
   active          Boolean   @default(true)
+  mainUrl         String?
+  screen1Url      String?
+  screen2Url      String?
+  screen3Url      String?
+  screen4Url      String?
+  rating          Float?
+  reviewCount     Int?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
