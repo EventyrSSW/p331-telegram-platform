@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { UnityGame } from '../../components/UnityGame';
 
 // Map game IDs to their Unity build slugs
@@ -9,9 +9,12 @@ const GAME_SLUGS: Record<string, string> = {
 
 export const GamePage = () => {
   const { gameId } = useParams<{ gameId: string }>();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
   const gameSlug = gameId ? GAME_SLUGS[gameId] : null;
+  const levelParam = searchParams.get('level');
+  const levelData = levelParam ? parseInt(levelParam, 10) : undefined;
 
   if (!gameSlug) {
     return (
@@ -22,5 +25,5 @@ export const GamePage = () => {
     );
   }
 
-  return <UnityGame gameSlug={gameSlug} onBack={() => navigate('/')} />;
+  return <UnityGame gameSlug={gameSlug} levelData={levelData} onBack={() => navigate('/')} />;
 };

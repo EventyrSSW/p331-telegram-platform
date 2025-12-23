@@ -97,6 +97,12 @@ export const UnityGame: React.FC<UnityGameProps> = ({ gameSlug, levelData, onLev
     updateCanvasSize();
     window.addEventListener('resize', updateCanvasSize);
 
+    // Set level data BEFORE Unity loads so it can read it during initialization
+    if (levelData !== undefined) {
+      (window as any).urlLevelData = levelData.toString();
+      console.log('Set urlLevelData for Unity:', levelData);
+    }
+
     const script = document.createElement('script');
     script.src = loaderUrl;
     script.onload = () => {
@@ -127,13 +133,6 @@ export const UnityGame: React.FC<UnityGameProps> = ({ gameSlug, levelData, onLev
               console.log('Level completed:', data);
               onLevelCompleteRef.current?.(data);
             };
-
-            // If levelData prop provided, send it to Unity after short delay
-            if (levelData !== undefined) {
-              setTimeout(() => {
-                instance.SendMessage('WebGLBridge', 'ReceiveLevelData', levelData.toString());
-              }, 1000);
-            }
           })
           .catch((err: Error) => {
             setError(err.message);
@@ -154,6 +153,7 @@ export const UnityGame: React.FC<UnityGameProps> = ({ gameSlug, levelData, onLev
       (window as any).unityInstance = null;
       (window as any).setLevelData = null;
       (window as any).onLevelComplete = null;
+      (window as any).urlLevelData = null;
 
       // Close all tracked audio contexts
       audioContextsRef.current.forEach(ctx => {
