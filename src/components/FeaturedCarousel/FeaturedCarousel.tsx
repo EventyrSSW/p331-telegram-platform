@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Game } from '../GameCard';
+import { haptic } from '../../providers/TelegramProvider';
 import styles from './FeaturedCarousel.module.css';
 
 interface FeaturedCarouselProps {
@@ -51,7 +52,10 @@ const VideoSlide = ({ game, onGameClick }: { game: Game; onGameClick: (game: Gam
   return (
     <div
       className={styles.slide}
-      onClick={() => onGameClick(game)}
+      onClick={() => {
+        haptic.light();
+        onGameClick(game);
+      }}
     >
       {showVideo && (
         <video
@@ -79,6 +83,7 @@ const VideoSlide = ({ game, onGameClick }: { game: Game; onGameClick: (game: Gam
           className={styles.playButton}
           onClick={(e) => {
             e.stopPropagation();
+            haptic.light();
             onGameClick(game);
           }}
         >

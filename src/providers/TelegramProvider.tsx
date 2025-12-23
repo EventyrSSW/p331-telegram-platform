@@ -7,6 +7,15 @@ interface SafeAreaInset {
   right: number
 }
 
+type ImpactStyle = 'light' | 'medium' | 'heavy' | 'rigid' | 'soft'
+type NotificationType = 'error' | 'success' | 'warning'
+
+interface HapticFeedback {
+  impactOccurred: (style: ImpactStyle) => void
+  notificationOccurred: (type: NotificationType) => void
+  selectionChanged: () => void
+}
+
 interface WebApp {
   ready: () => void
   expand: () => void
@@ -26,6 +35,7 @@ interface WebApp {
   contentSafeAreaInset?: SafeAreaInset
   onEvent: (event: string, callback: () => void) => void
   offEvent: (event: string, callback: () => void) => void
+  HapticFeedback?: HapticFeedback
   MainButton: {
     text: string
     show: () => void
@@ -162,6 +172,59 @@ export function TelegramProvider({ children }: TelegramProviderProps) {
   )
 }
 
+// Haptic feedback helper - can be used anywhere
+export const haptic = {
+  light: () => {
+    try {
+      window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light')
+    } catch {
+      // Haptic not supported
+    }
+  },
+  medium: () => {
+    try {
+      window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('medium')
+    } catch {
+      // Haptic not supported
+    }
+  },
+  heavy: () => {
+    try {
+      window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('heavy')
+    } catch {
+      // Haptic not supported
+    }
+  },
+  success: () => {
+    try {
+      window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred('success')
+    } catch {
+      // Haptic not supported
+    }
+  },
+  error: () => {
+    try {
+      window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred('error')
+    } catch {
+      // Haptic not supported
+    }
+  },
+  warning: () => {
+    try {
+      window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred('warning')
+    } catch {
+      // Haptic not supported
+    }
+  },
+  selection: () => {
+    try {
+      window.Telegram?.WebApp?.HapticFeedback?.selectionChanged()
+    } catch {
+      // Haptic not supported
+    }
+  },
+}
+
 declare global {
   interface Window {
     Telegram?: {
@@ -190,6 +253,11 @@ declare global {
         contentSafeAreaInset?: SafeAreaInset
         onEvent: (event: string, callback: () => void) => void
         offEvent: (event: string, callback: () => void) => void
+        HapticFeedback?: {
+          impactOccurred: (style: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft') => void
+          notificationOccurred: (type: 'error' | 'success' | 'warning') => void
+          selectionChanged: () => void
+        }
         MainButton: {
           text: string
           show: () => void

@@ -1,4 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
+import { haptic } from '../../providers/TelegramProvider';
 import styles from './GameCard.module.css';
 
 export interface Game {
@@ -22,6 +23,7 @@ export const GameCard: React.FC<GameCardProps> = ({ game, onClick }) => {
   const [videoFailed, setVideoFailed] = useState(false);
 
   const handleClick = () => {
+    haptic.light();
     onClick?.(game);
   };
 
