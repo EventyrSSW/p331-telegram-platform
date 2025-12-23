@@ -445,9 +445,19 @@
   <script type="module">
     import { Client } from '@heroiclabs/nakama-js';
 
-    const SERVER_KEY = 'defaultkey';
-    const HOST = '136.243.136.206';
-    const PORT = 7350;
+    // ========== CONFIGURATION ==========
+    const NAKAMA_CONFIG = {
+      host: 'nakama-server.eventyr.cloud',
+      port: 443,
+      serverKey: 'defaultkey',
+      useSSL: true
+    };
+    // ====================================
+
+    const SERVER_KEY = NAKAMA_CONFIG.serverKey;
+    const HOST = NAKAMA_CONFIG.host;
+    const PORT = NAKAMA_CONFIG.port;
+    const USE_SSL = NAKAMA_CONFIG.useSSL;
 
     let client, session, socket;
     let currentMatch = null;
@@ -563,8 +573,8 @@
 
     async function connect() {
       try {
-        log('Connecting to Nakama server...');
-        client = new Client(SERVER_KEY, HOST, PORT, false);
+        log(`Connecting to Nakama server at ${HOST}:${PORT} (SSL: ${USE_SSL})...`);
+        client = new Client(SERVER_KEY, HOST, PORT, USE_SSL);
 
         // Determine device ID based on login mode
         const loginMode = document.querySelector('input[name="loginMode"]:checked').value;
