@@ -78,22 +78,32 @@ export function GameDetailPage() {
 
   if (loading) {
     return (
-      <div className={styles.loading}>
-        Loading game details...
+      <div className={styles.page}>
+        <Header />
+        <main className={styles.main}>
+          <div className={styles.loading}>Loading game details...</div>
+        </main>
+        <BottomNavBar />
       </div>
     );
   }
 
   if (error || !game) {
     return (
-      <div className={styles.error}>
-        <div className={styles.errorTitle}>Oops!</div>
-        <div className={styles.errorMessage}>
-          {error || 'Game not found'}
-        </div>
-        <button className={styles.errorButton} onClick={handleRetry}>
-          Try Again
-        </button>
+      <div className={styles.page}>
+        <Header />
+        <main className={styles.main}>
+          <div className={styles.error}>
+            <div className={styles.errorTitle}>Oops!</div>
+            <div className={styles.errorMessage}>
+              {error || 'Game not found'}
+            </div>
+            <button className={styles.errorButton} onClick={handleRetry}>
+              Try Again
+            </button>
+          </div>
+        </main>
+        <BottomNavBar />
       </div>
     );
   }
