@@ -1,22 +1,22 @@
 .page {
   min-height: 100vh;
-  background-color: var(--color-bg-primary);
+  background-color: var(--color-bg-page);
   overflow-x: hidden;
   max-width: 100vw;
 }
 
 .main {
-  padding: 16px;
-  padding-bottom: 80px; /* Space for bottom wallet bar */
+  padding: var(--spacing-sm);
+  padding-bottom: 100px; /* Space for bottom nav bar */
   overflow-x: hidden;
 }
 
 .featuredSection {
-  margin-bottom: 24px;
+  margin-bottom: var(--spacing-lg);
 }
 
 .categoriesSection {
-  margin-bottom: 24px;
+  margin-bottom: var(--spacing-lg);
 }
 
 .error {
@@ -25,17 +25,26 @@
   align-items: center;
   justify-content: center;
   min-height: 50vh;
-  gap: 16px;
+  gap: var(--spacing-md);
 }
 
 .error button {
-  background-color: var(--color-purple);
+  background: var(--color-accent-orange);
   color: var(--color-text-primary);
   border: none;
-  border-radius: 9999px;
-  padding: 12px 24px;
+  border-radius: var(--radius-button);
+  padding: 14px 32px;
   cursor: pointer;
   font-size: 16px;
+  font-weight: 700;
+  box-shadow: var(--shadow-cta);
+  transition: all var(--transition-normal);
+}
+
+.error button:hover {
+  background: var(--color-accent-orange-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-cta-hover);
 }
 
 .loading {
