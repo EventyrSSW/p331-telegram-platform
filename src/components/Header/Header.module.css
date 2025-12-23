@@ -47,6 +47,31 @@
   color: var(--color-text-primary);
 }
 
+/* Crystal Section - Center */
+.crystalSection {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: var(--color-bg-tertiary);
+  border-radius: var(--radius-full);
+}
+
+.crystalIcon {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #00D4FF;
+}
+
+.crystalValue {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
 /* Balance Section - Right side */
 .balanceSection {
   display: flex;
