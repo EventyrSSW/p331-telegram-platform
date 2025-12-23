@@ -1,0 +1,175 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #000000;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  padding-top: var(--tg-header-safe-area);
+  padding-bottom: var(--tg-safe-area-bottom);
+}
+
+.closeButton {
+  position: absolute;
+  top: calc(var(--tg-header-safe-area) + 16px);
+  right: 16px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #3D3D3D;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: white;
+}
+
+.closeButton svg {
+  width: 20px;
+  height: 20px;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px;
+  flex: 1;
+  justify-content: center;
+}
+
+.balanceContainer {
+  background-color: rgba(61, 61, 61, 0.5);
+  border-radius: 24px;
+  padding: 12px 24px;
+  margin-bottom: 32px;
+  font-size: 16px;
+  color: white;
+}
+
+.amountDisplay {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 32px;
+}
+
+.amountValue {
+  font-size: 72px;
+  font-weight: bold;
+  color: white;
+  line-height: 1;
+}
+
+.amountUnit {
+  font-size: 32px;
+  color: white;
+  line-height: 1;
+}
+
+.presetContainer {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.presetButton {
+  background-color: #2D2D2D;
+  border: none;
+  border-radius: 24px;
+  padding: 12px 24px;
+  font-size: 16px;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.presetButton:active {
+  background-color: #3D3D3D;
+}
+
+.numpad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  gap: 12px;
+  width: 100%;
+  max-width: 320px;
+  margin-bottom: 32px;
+}
+
+.numpadKey {
+  height: 64px;
+  background-color: transparent;
+  border: none;
+  font-size: 32px;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+  border-radius: 12px;
+}
+
+.numpadKey:active {
+  background-color: rgba(61, 61, 61, 0.3);
+}
+
+.numpadKeyEmpty {
+  visibility: hidden;
+}
+
+.backspaceIcon {
+  width: 28px;
+  height: 28px;
+}
+
+.bottomSection {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.addButton {
+  background-color: #4D4D4D;
+  border: none;
+  border-radius: 28px;
+  height: 56px;
+  width: 100%;
+  max-width: 320px;
+  font-size: 18px;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.addButton:not(:disabled):active {
+  background-color: #5D5D5D;
+}
+
+.addButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.termsText {
+  font-size: 12px;
+  color: #808080;
+  text-align: center;
+}
+
+.termsText a {
+  color: #808080;
+  text-decoration: underline;
+}
