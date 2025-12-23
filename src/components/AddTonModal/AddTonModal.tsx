@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import styles from './AddTonModal.module.css';
-import { haptic } from '@telegram-apps/sdk-react';
+import { haptic } from '../../providers/TelegramProvider';
 
 interface AddTonModalProps {
   isOpen: boolean;
@@ -18,18 +18,18 @@ export function AddTonModal({ isOpen, onClose, currentBalance, onAdd }: AddTonMo
   if (!isOpen) return null;
 
   const handleClose = () => {
-    haptic.impactOccurred('light');
+    haptic.light();
     setAmount('0');
     onClose();
   };
 
   const handlePresetClick = (presetAmount: number) => {
-    haptic.impactOccurred('light');
+    haptic.light();
     setAmount(presetAmount.toString());
   };
 
   const handleNumpadClick = (value: string) => {
-    haptic.impactOccurred('light');
+    haptic.light();
 
     if (value === 'backspace') {
       setAmount(prev => {
@@ -50,7 +50,7 @@ export function AddTonModal({ isOpen, onClose, currentBalance, onAdd }: AddTonMo
   const handleAdd = () => {
     const numericAmount = Number(amount);
     if (numericAmount > 0) {
-      haptic.impactOccurred('medium');
+      haptic.medium();
       onAdd(numericAmount);
       setAmount('0');
       onClose();

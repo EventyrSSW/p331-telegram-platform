@@ -1,9 +1,18 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { AddTonModal } from '../AddTonModal/AddTonModal';
 import styles from './Header.module.css';
 
 export const Header = () => {
   const { user } = useAuth();
+  const [isAddTonModalOpen, setIsAddTonModalOpen] = useState(false);
+
+  const handleAddTon = (amount: number) => {
+    console.log('Adding TON:', amount);
+    // TODO: Implement actual TON addition logic
+    setIsAddTonModalOpen(false);
+  };
 
   const formatBalance = (balance: number): string => {
     if (balance >= 1000000) {
@@ -43,8 +52,11 @@ export const Header = () => {
         <span className={styles.crystalValue}>{formatBalance(user?.coinBalance ?? 0)}</span>
       </div>
 
-      {/* TON Balance Section - Links to Store */}
-      <Link to="/store" className={styles.balanceSection}>
+      {/* TON Balance Section - Opens Add TON Modal */}
+      <button
+        className={styles.balanceSection}
+        onClick={() => setIsAddTonModalOpen(true)}
+      >
         <div className={styles.tonIcon}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20Z" fill="currentColor"/>
@@ -57,7 +69,15 @@ export const Header = () => {
             <path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
           </svg>
         </div>
-      </Link>
+      </button>
+
+      {/* Add TON Modal */}
+      <AddTonModal
+        isOpen={isAddTonModalOpen}
+        onClose={() => setIsAddTonModalOpen(false)}
+        currentBalance={0}
+        onAdd={handleAddTon}
+      />
     </header>
   );
 };

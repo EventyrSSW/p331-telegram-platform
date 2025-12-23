@@ -80,7 +80,9 @@
   padding: 8px 12px;
   background: var(--color-bg-tertiary);
   border-radius: var(--radius-full);
-  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
   transition: all var(--transition-fast);
 }
 
