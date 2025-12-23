@@ -2,6 +2,7 @@ import { createBrowserRouter } from 'react-router-dom';
 import { HomePage } from './pages/HomePage';
 import { StorePage } from './pages/StorePage';
 import { GamePage } from './pages/GamePage';
+import { GameDetailPage } from './pages/GameDetailPage';
 import { LeaderboardPage } from './pages/LeaderboardPage';
 import { ProfilePage } from './pages/ProfilePage';
 
@@ -13,6 +14,10 @@ export const router = createBrowserRouter([
   {
     path: '/store',
     element: <StorePage />,
+  },
+  {
+    path: '/game/:gameId/details',
+    element: <GameDetailPage />,
   },
   {
     path: '/game/:gameId',
