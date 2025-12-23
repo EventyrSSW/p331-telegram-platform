@@ -4,9 +4,11 @@ import { useNakama } from '../contexts/NakamaContext';
 
 export function NakamaConnector() {
   const { user, isAuthenticated } = useAuth();
-  const { connect, isConnected, isConnecting } = useNakama();
+  const { connect, isConnected, isConnecting, error } = useNakama();
 
   useEffect(() => {
+    console.log('[NakamaConnector] State:', { isAuthenticated, hasUser: !!user, isConnected, isConnecting, error });
+
     // Connect to Nakama when user is authenticated but not connected
     if (isAuthenticated && user && !isConnected && !isConnecting) {
       console.log('[NakamaConnector] User authenticated, connecting to Nakama...');
