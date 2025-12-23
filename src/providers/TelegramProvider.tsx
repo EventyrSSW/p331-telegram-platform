@@ -83,6 +83,21 @@ export function TelegramProvider({ children }: TelegramProviderProps) {
         tg.ready()
         tg.expand()
 
+        // Lock to portrait orientation
+        if (tg.lockOrientation) {
+          tg.lockOrientation()
+        }
+
+        // Disable swipe-to-close gesture
+        if (tg.disableVerticalSwipes) {
+          tg.disableVerticalSwipes()
+        }
+
+        // Request fullscreen mode
+        if (tg.requestFullscreen) {
+          tg.requestFullscreen()
+        }
+
         setWebApp(tg)
         setIsTelegram(true)
         setColorScheme(tg.colorScheme || 'dark')
@@ -148,6 +163,12 @@ declare global {
         ready: () => void
         expand: () => void
         close: () => void
+        lockOrientation?: () => void
+        unlockOrientation?: () => void
+        disableVerticalSwipes?: () => void
+        enableVerticalSwipes?: () => void
+        requestFullscreen?: () => void
+        exitFullscreen?: () => void
         colorScheme: 'dark' | 'light'
         themeParams: Record<string, string>
         initData: string
