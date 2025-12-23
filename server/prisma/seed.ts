@@ -17,6 +17,8 @@ const games = [
     screen4Url: 'https://play-lh.googleusercontent.com/ZatixCG0ETaB5pWzKXfgYvl1doZ7NDFLSENCCMvh9POibV4ej1dfO6QWzpu1t2hXyRFbKHauDSpCuRz_e0xzoQ=w5120-h2880-rw',
     rating: 4.9,
     reviewCount: 7,
+    videoUrl: null,
+    topPromoted: true,
   },
   {
     slug: 'puzzle-master',
@@ -32,6 +34,8 @@ const games = [
     screen4Url: 'https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/f0/35/27/f03527ed-b6ca-e277-913a-34aa24ab1a7e/mzl.gpplewke.jpg/392x696bb.jpg',
     rating: 4.52,
     reviewCount: 4746,
+    videoUrl: null,
+    topPromoted: true,
   },
   {
     slug: 'bubble-shooter-arena',
@@ -47,6 +51,8 @@ const games = [
     screen4Url: 'https://is1-ssl.mzstatic.com/image/thumb/Purple115/v4/85/e1/b8/85e1b851-f26d-dcef-6314-489f659c61e4/pr_source.png/392x696bb.png',
     rating: 4.42,
     reviewCount: 4597,
+    videoUrl: null,
+    topPromoted: false,
   },
   {
     slug: 'bubble-shooter-tournaments',
@@ -62,6 +68,8 @@ const games = [
     screen4Url: 'https://is1-ssl.mzstatic.com/image/thumb/Purple114/v4/93/e9/5b/93e95bdb-cde9-f9b1-29dc-a25d73e73992/pr_source.png/392x696bb.png',
     rating: 4.42,
     reviewCount: 6374,
+    videoUrl: null,
+    topPromoted: false,
   },
   {
     slug: 'onet-cash',
@@ -77,6 +85,8 @@ const games = [
     screen4Url: 'https://is1-ssl.mzstatic.com/image/thumb/Purple122/v4/33/32/9b/33329bbc-552d-5ec5-886b-68478858a8f7/f4bb073a-d498-45ca-86b3-0c4a00898157_7.jpg/392x696bb.jpg',
     rating: 4.61,
     reviewCount: 181,
+    videoUrl: null,
+    topPromoted: false,
   },
   {
     slug: 'jewel-blitz',
@@ -92,6 +102,8 @@ const games = [
     screen4Url: 'https://is1-ssl.mzstatic.com/image/thumb/Purple126/v4/ad/5d/4c/ad5d4c93-0b4b-77b7-38ca-c204d137da80/pr_source.png/392x696bb.png',
     rating: 4.65,
     reviewCount: 2812,
+    videoUrl: null,
+    topPromoted: false,
   },
   {
     slug: 'sushi-drop-tournament',
@@ -107,6 +119,8 @@ const games = [
     screen4Url: 'https://is1-ssl.mzstatic.com/image/thumb/PurpleSource221/v4/68/bd/25/68bd2599-bf65-9985-4588-ef86b9fa4866/SDT_1242x2208_7.png/392x696bb.png',
     rating: 4.53,
     reviewCount: 98,
+    videoUrl: null,
+    topPromoted: false,
   },
   {
     slug: 'candyprize',
@@ -122,6 +136,8 @@ const games = [
     screen4Url: 'https://is1-ssl.mzstatic.com/image/thumb/Purple113/v4/76/d0/4e/76d04e10-4900-7243-4ef3-ebfb2e861660/pr_source.png/392x696bb.png',
     rating: 4.63,
     reviewCount: 1038,
+    videoUrl: null,
+    topPromoted: false,
   },
   {
     slug: 'number-shoot-tournament',
@@ -137,6 +153,8 @@ const games = [
     screen4Url: 'https://is1-ssl.mzstatic.com/image/thumb/PurpleSource126/v4/3e/23/5d/3e235d49-bdd9-b27b-2a27-d51db87cd708/d86a3b93-23a5-4420-833f-1e703876147b_NumberShoot_Skillz_iphone_S003.png/392x696bb.png',
     rating: 4.75,
     reviewCount: 49,
+    videoUrl: null,
+    topPromoted: false,
   },
   {
     slug: 'diamond-blitz-2',
@@ -152,6 +170,8 @@ const games = [
     screen4Url: 'https://is1-ssl.mzstatic.com/image/thumb/Purple124/v4/a1/13/26/a11326cb-b8c8-959e-dd9c-f74c110a1abc/mzl.gtzvbyqb.jpg/392x696bb.jpg',
     rating: 4.46,
     reviewCount: 1426,
+    videoUrl: null,
+    topPromoted: false,
   },
   {
     slug: 'block-puzzle',
@@ -167,6 +187,8 @@ const games = [
     screen4Url: 'https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/97/0e/3e/970e3eb5-4c3e-0094-28ea-5af16df8c29f/4ad6f5ce-445d-4cfa-81f2-fb82f6b436e3_4.png/392x696bb.png',
     rating: 4.60,
     reviewCount: 1667,
+    videoUrl: null,
+    topPromoted: false,
   },
 ];
 
