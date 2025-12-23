@@ -612,7 +612,7 @@
         document.getElementById('currentDeviceId').style.display = 'block';
         saveUser(deviceId, session.username, session.user_id);
 
-        socket = client.createSocket();
+        socket = client.createSocket(USE_SSL);
 
         socket.ondisconnect = () => {
           log('Socket disconnected', 'error');

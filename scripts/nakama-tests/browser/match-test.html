@@ -188,7 +188,7 @@
         log('Authenticated as: ' + session.user_id, 'success');
         document.getElementById('userInfo').textContent = ' User: ' + session.username;
 
-        socket = client.createSocket();
+        socket = client.createSocket(USE_SSL);
 
         socket.ondisconnect = () => {
           log('Socket disconnected', 'error');

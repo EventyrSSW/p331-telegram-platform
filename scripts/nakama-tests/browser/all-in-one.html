@@ -241,7 +241,7 @@
 
         document.getElementById('userInfo').textContent = session.username;
 
-        socket = client.createSocket();
+        socket = client.createSocket(USE_SSL);
 
         // Chat events
         socket.onchannelmessage = (m) => {
