@@ -30,6 +30,35 @@ export const usersController = {
     }
   },
 
+  async getProfile(req: Request, res: Response, next: NextFunction) {
+    try {
+      const telegramUser = req.telegramUser!;
+
+      // Ensure user exists in database
+      await userService.findOrCreateByTelegramId(telegramUser.id, {
+        username: telegramUser.username,
+        firstName: telegramUser.first_name,
+        lastName: telegramUser.last_name,
+      });
+
+      const user = await userService.getProfile(telegramUser.id);
+
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      // Convert BigInt to string for JSON serialization
+      res.json({
+        user: {
+          ...user,
+          telegramId: user.telegramId.toString(),
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
   async addCoins(req: Request, res: Response, next: NextFunction) {
     try {
       const telegramUser = req.telegramUser!;

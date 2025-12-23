@@ -67,6 +67,28 @@ export class UserService {
   }
 
   /**
+   * Get full user profile by Telegram ID
+   */
+  async getProfile(telegramId: number) {
+    const user = await prisma.user.findUnique({
+      where: { telegramId: BigInt(telegramId) },
+      select: {
+        id: true,
+        telegramId: true,
+        username: true,
+        firstName: true,
+        lastName: true,
+        photoUrl: true,
+        isPremium: true,
+        walletAddress: true,
+        coinBalance: true,
+        createdAt: true,
+      },
+    });
+    return user;
+  }
+
+  /**
    * Add coins to user balance with transaction record
    * Uses Prisma transaction for consistency
    */
