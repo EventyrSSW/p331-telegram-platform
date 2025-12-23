@@ -4,6 +4,7 @@ import { UnityGame } from '../../components/UnityGame';
 // Map game IDs to their Unity build slugs
 const GAME_SLUGS: Record<string, string> = {
   'mahjong-dash': 'mahjong3',
+  'puzzle-master': 'mahjong-dash',
 };
 
 export const GamePage = () => {
