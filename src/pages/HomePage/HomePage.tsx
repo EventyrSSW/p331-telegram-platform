@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { haptic } from '../../providers/TelegramProvider';
 import {
   Header,
   FeaturedCarousel,
@@ -16,6 +17,13 @@ export const HomePage = () => {
   const { games, featuredGames, isLoading, error, refetch } = useGames();
   const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  // Haptic feedback when page loads
+  useEffect(() => {
+    if (!isLoading && !error) {
+      haptic.medium();
+    }
+  }, [isLoading, error]);
 
   const handleGameClick = (game: Game) => {
     navigate(`/game/${game.slug}`);
