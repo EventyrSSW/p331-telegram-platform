@@ -4,7 +4,7 @@
 
 .carousel {
   display: flex;
-  gap: 16px;
+  gap: var(--spacing-md);
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
@@ -19,11 +19,18 @@
 .slide {
   flex: 0 0 100%;
   scroll-snap-align: start;
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   overflow: hidden;
   position: relative;
   aspect-ratio: 16 / 9;
   cursor: pointer;
+  box-shadow: var(--shadow-card);
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+}
+
+.slide:hover {
+  transform: scale(1.01);
+  box-shadow: var(--shadow-card-hover);
 }
 
 .image {
@@ -37,26 +44,27 @@
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 24px 16px;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.5) 50%, transparent 100%);
+  padding: 40px 20px 20px;
+  background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.8) 100%);
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
 .category {
-  font-size: 12px;
-  color: var(--color-accent-light);
+  font-size: 11px;
+  color: var(--color-text-label);
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.1em;
   font-weight: 600;
 }
 
 .title {
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 700;
   color: var(--color-text-primary);
   margin: 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 .description {
@@ -70,22 +78,31 @@
 }
 
 .playButton {
-  background: var(--gradient-primary-button);
+  background: var(--color-accent-orange);
   color: var(--color-text-primary);
   border: none;
-  border-radius: 9999px;
-  padding: 10px 24px;
-  font-size: 14px;
-  font-weight: 600;
+  border-radius: var(--radius-button);
+  padding: 14px 48px;
+  font-size: 16px;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all var(--transition-normal);
   align-self: flex-start;
-  margin-top: 4px;
+  margin-top: 8px;
+  box-shadow: var(--shadow-cta);
+  letter-spacing: 0.02em;
 }
 
 .playButton:hover {
+  background: var(--color-accent-orange-hover);
   transform: translateY(-2px);
-  box-shadow: var(--shadow-accent);
+  box-shadow: var(--shadow-cta-hover);
+}
+
+.playButton:active {
+  background: var(--color-accent-orange-active);
+  transform: translateY(0);
+  box-shadow: var(--shadow-cta);
 }
 
 .indicators {
@@ -102,12 +119,12 @@
   background: var(--color-bg-tertiary);
   border: none;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all var(--transition-normal);
   padding: 0;
 }
 
 .indicatorActive {
-  background: var(--color-accent-primary);
+  background: var(--color-accent-orange);
   width: 24px;
-  border-radius: 9999px;
+  border-radius: var(--radius-full);
 }
