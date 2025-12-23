@@ -138,7 +138,7 @@ export const Header = () => {
       <AddTonModal
         isOpen={isAddTonModalOpen}
         onClose={() => setIsAddTonModalOpen(false)}
-        currentBalance={0}
+        currentBalance={user?.coinBalance ?? 0}
         isWalletConnected={!!wallet}
         onConnectWallet={handleConnectWallet}
         onSendTransaction={handleSendTransaction}

@@ -13,7 +13,7 @@ interface AddTonModalProps {
   isProcessing?: boolean;
 }
 
-const PRESET_AMOUNTS = [10, 20, 50, 100];
+const PRESET_AMOUNTS = [10, 20, 50];
 const MAX_AMOUNT = 10000;
 
 export function AddTonModal({
