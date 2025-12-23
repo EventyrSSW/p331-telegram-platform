@@ -3,15 +3,14 @@ import { api, Game } from '../services/api';
 
 export interface UseGamesResult {
   games: Game[];
-  featuredGame: Game | null;
+  featuredGames: Game[];
   isLoading: boolean;
   error: string | null;
   refetch: () => void;
 }
 
 export function useGames(): UseGamesResult {
-  const [games, setGames] = useState<Game[]>([]);
-  const [featuredGame, setFeaturedGame] = useState<Game | null>(null);
+  const [allGames, setAllGames] = useState<Game[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -20,19 +19,8 @@ export function useGames(): UseGamesResult {
     setError(null);
 
     try {
-      const [gamesResponse, featuredResponse] = await Promise.all([
-        api.getGames(),
-        api.getFeaturedGame(),
-      ]);
-
-      const featured = featuredResponse.game;
-      setFeaturedGame(featured);
-
-      // Filter out featured game from games list
-      const filteredGames = gamesResponse.games.filter(
-        (game) => game.id !== featured.id
-      );
-      setGames(filteredGames);
+      const gamesResponse = await api.getGames();
+      setAllGames(gamesResponse.games);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch games');
     } finally {
@@ -44,9 +32,15 @@ export function useGames(): UseGamesResult {
     fetchGames();
   }, []);
 
+  // Filter featured games (games with featured=true)
+  const featuredGames = allGames.filter((game) => game.featured === true);
+
+  // Regular games exclude featured ones to avoid duplication
+  const games = allGames.filter((game) => game.featured !== true);
+
   return {
     games,
-    featuredGame,
+    featuredGames,
     isLoading,
     error,
     refetch: fetchGames,
