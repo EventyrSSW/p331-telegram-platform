@@ -9,6 +9,7 @@ export interface Game {
   category: string;
   featured?: boolean;
   topPromoted?: boolean;
+  videoUrl?: string;
 }
 
 interface GameCardProps {
