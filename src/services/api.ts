@@ -133,6 +133,10 @@ class ApiService {
     return this.fetch<{ user: User }>('/auth/me');
   }
 
+  async getProfile(): Promise<{ user: User }> {
+    return this.fetch<{ user: User }>('/users/me/profile');
+  }
+
   async getGames(): Promise<{ games: Game[] }> {
     return this.fetch<{ games: Game[] }>('/games');
   }
