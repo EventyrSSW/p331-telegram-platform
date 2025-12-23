@@ -3,7 +3,6 @@
   background-color: var(--color-bg-page);
   overflow-x: hidden;
   max-width: 100vw;
-  padding-top: var(--tg-header-safe-area, 0px);
 }
 
 .main {
