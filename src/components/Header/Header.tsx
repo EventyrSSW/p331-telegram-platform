@@ -1,19 +1,8 @@
-import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
 import { Link, useLocation } from 'react-router-dom';
 import styles from './Header.module.css';
 
 export const Header = () => {
-  const [tonConnectUI] = useTonConnectUI();
-  const wallet = useTonWallet();
   const location = useLocation();
-
-  const handleWalletAction = () => {
-    if (wallet) {
-      tonConnectUI.disconnect();
-    } else {
-      tonConnectUI.openModal();
-    }
-  };
 
   return (
     <header className={styles.header}>
@@ -35,13 +24,17 @@ export const Header = () => {
           </svg>
         </Link>
 
-        <button
-          className={styles.walletButton}
-          onClick={handleWalletAction}
-          aria-label={wallet ? "Disconnect wallet" : "Connect wallet"}
+        <Link
+          to="/leaderboard"
+          className={`${styles.navLink} ${location.pathname === '/leaderboard' ? styles.navLinkActive : ''}`}
+          aria-label="Leaderboard"
         >
-          {wallet ? 'Connected' : 'Connect'}
-        </button>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M8 21V11H4C3.44772 11 3 11.4477 3 12V20C3 20.5523 3.44772 21 4 21H8Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M14 21V5C14 4.44772 14.4477 4 15 4H19C19.5523 4 20 4.44772 20 5V20C20 20.5523 19.5523 21 19 21H14Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M8 21V8C8 7.44772 8.44772 7 9 7H13C13.5523 7 14 7.44772 14 8V21H8Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </Link>
       </div>
     </header>
   );
