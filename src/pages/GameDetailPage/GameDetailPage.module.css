@@ -1,0 +1,198 @@
+.page {
+  min-height: 100vh;
+  background-color: var(--color-bg-page);
+  padding-top: 60px;
+}
+
+.main {
+  padding-bottom: 100px;
+}
+
+.heroSection {
+  height: 30vh;
+  position: relative;
+  overflow: hidden;
+}
+
+.heroImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.heroOverlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.8) 100%);
+  padding: var(--spacing-xl) var(--spacing-md);
+}
+
+.gameTitle {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+  margin: 0;
+}
+
+.screenshotsSection {
+  padding: var(--spacing-xl) 0;
+}
+
+.sectionTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-md) var(--spacing-md);
+}
+
+.screenshotCarousel {
+  display: flex;
+  overflow-x: auto;
+  gap: var(--spacing-sm);
+  padding: 0 var(--spacing-md);
+  padding-right: 25%;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.screenshotCarousel::-webkit-scrollbar {
+  display: none;
+}
+
+.screenshotItem {
+  flex: 0 0 30%;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  scroll-snap-align: start;
+}
+
+.screenshotImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.reviewsSection {
+  padding: var(--spacing-xl) var(--spacing-md);
+}
+
+.reviewsCard {
+  background-color: var(--color-bg-card);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.ratingValue {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.stars {
+  display: flex;
+  gap: var(--spacing-xxs);
+}
+
+.star {
+  color: var(--color-accent-gold);
+  font-size: 20px;
+}
+
+.starEmpty {
+  color: var(--color-text-muted);
+  font-size: 20px;
+}
+
+.reviewCount {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+.ctaSection {
+  padding: var(--spacing-md);
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(180deg, transparent 0%, var(--color-bg-page) 20%);
+  padding-bottom: calc(var(--spacing-md) + var(--tg-safe-area-bottom));
+}
+
+.playButton {
+  width: 100%;
+  padding: var(--spacing-md) var(--spacing-xl);
+  background: var(--gradient-cta-button);
+  border: none;
+  border-radius: var(--radius-button);
+  color: var(--color-text-on-accent);
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: var(--shadow-cta);
+  transition: all var(--transition-normal);
+}
+
+.playButton:hover {
+  box-shadow: var(--shadow-cta-hover);
+  transform: translateY(-2px);
+}
+
+.playButton:active {
+  transform: translateY(0);
+}
+
+.loading {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-bg-page);
+  color: var(--color-text-secondary);
+  font-size: 16px;
+}
+
+.error {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-bg-page);
+  padding: var(--spacing-xl);
+  text-align: center;
+}
+
+.errorTitle {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.errorMessage {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-xl);
+}
+
+.errorButton {
+  padding: var(--spacing-sm) var(--spacing-xl);
+  background: var(--gradient-cta-button);
+  border: none;
+  border-radius: var(--radius-button);
+  color: var(--color-text-on-accent);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
