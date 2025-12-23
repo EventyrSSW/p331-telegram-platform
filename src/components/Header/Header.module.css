@@ -2,161 +2,96 @@
   position: sticky;
   top: 0;
   z-index: 100;
-  height: 64px;
+  height: 56px;
   padding: 0 16px;
   background: var(--color-bg-secondary);
   display: flex;
   align-items: center;
   justify-content: space-between;
-}
-
-.leftSection {
-  display: flex;
-  align-items: center;
   gap: 12px;
 }
 
-.profileLink {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--color-text-primary);
-  opacity: 0.8;
-  transition: all 0.2s ease;
-  text-decoration: none;
-}
-
-.profileLink:hover {
-  opacity: 1;
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.profileLinkActive {
-  opacity: 1;
-  color: var(--color-accent-primary);
-}
-
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  text-decoration: none;
-}
-
-.logoIcon {
-  width: 40px;
-  height: 40px;
-  background: var(--color-accent-primary);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--color-text-primary);
-}
-
-.logoText {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--color-text-primary);
-}
-
-.actions {
+/* Rank Section - Left side */
+.rankSection {
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-.iconButton {
-  position: relative;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: transparent;
-  border: none;
-  color: var(--color-text-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  opacity: 0.9;
-  transition: all 0.2s ease;
-}
-
-.iconButton:hover {
-  background: rgba(255, 255, 255, 0.1);
-  opacity: 1;
-}
-
-.iconButton:active {
-  background: rgba(255, 255, 255, 0.15);
-}
-
-.badge {
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
-  background: #FF4757;
-  color: #FFFFFF;
-  font-size: 10px;
-  font-weight: 700;
-  border-radius: 9px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.walletButton {
-  background: var(--color-accent-primary);
-  color: var(--color-text-primary);
-  border: none;
+  padding: 8px 12px;
+  background: var(--color-bg-tertiary);
   border-radius: var(--radius-full);
-  padding: 8px 16px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  text-decoration: none;
+  transition: all var(--transition-fast);
 }
 
-.walletButton:hover {
-  background: var(--color-accent-light);
+.rankSection:hover {
+  background: var(--color-bg-elevated);
   transform: translateY(-1px);
-  box-shadow: var(--shadow-accent);
 }
 
-.walletButton:active {
-  background: var(--color-accent-dark);
+.rankSection:active {
   transform: translateY(0);
 }
 
-.navLink {
-  color: var(--color-text-primary);
+.rankIcon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFD700;
+}
+
+.rankValue {
   font-size: 14px;
-  font-weight: 600;
-  text-decoration: none;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+/* Balance Section - Right side */
+.balanceSection {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   padding: 8px 12px;
-  border-radius: var(--radius-md);
-  transition: all 0.2s ease;
-  opacity: 0.8;
+  background: var(--color-bg-tertiary);
+  border-radius: var(--radius-full);
+  text-decoration: none;
+  transition: all var(--transition-fast);
 }
 
-.navLink:hover {
-  opacity: 1;
-  background: rgba(255, 255, 255, 0.1);
+.balanceSection:hover {
+  background: var(--color-bg-elevated);
+  transform: translateY(-1px);
 }
 
-.navLink:active {
-  background: rgba(255, 255, 255, 0.15);
+.balanceSection:active {
+  transform: translateY(0);
 }
 
-.navLinkActive {
-  color: var(--color-accent-primary);
-  opacity: 1;
+.tonIcon {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0088CC;
+}
+
+.balanceValue {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  min-width: 40px;
+}
+
+.addIcon {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-accent-primary);
+  border-radius: 50%;
+  color: var(--color-text-primary);
+  margin-left: 4px;
 }
