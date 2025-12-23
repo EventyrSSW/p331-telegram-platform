@@ -1,0 +1,89 @@
+.container {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--color-bg-secondary);
+  border-top: 1px solid var(--color-border-subtle);
+  padding: 8px 0;
+  padding-bottom: calc(8px + env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  z-index: 100;
+}
+
+.navItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 16px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all var(--transition-fast);
+  border-radius: var(--radius-md);
+  min-width: 64px;
+}
+
+.navItem:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.navItem:active {
+  transform: scale(0.95);
+}
+
+.navIcon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+  transition: color var(--transition-fast);
+}
+
+.navLabel {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  transition: color var(--transition-fast);
+}
+
+.navItemActive .navIcon {
+  color: var(--color-accent-primary);
+}
+
+.navItemActive .navLabel {
+  color: var(--color-accent-primary);
+}
+
+/* Special styling for the center Play button */
+.playButton {
+  background: var(--gradient-primary-button);
+  border-radius: var(--radius-full);
+  padding: 12px 24px;
+  box-shadow: var(--shadow-accent);
+}
+
+.playButton .navIcon {
+  color: var(--color-text-primary);
+}
+
+.playButton .navLabel {
+  color: var(--color-text-primary);
+}
+
+.playButton:hover {
+  background: var(--gradient-primary-button);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-accent-strong);
+}
+
+.playButton:active {
+  transform: scale(0.95) translateY(0);
+}
