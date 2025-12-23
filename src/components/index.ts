@@ -11,4 +11,5 @@ export { UnityGame } from './UnityGame';
 export { SplashScreen } from './SplashScreen';
 export { CategoryFilter } from './CategoryFilter';
 export { BottomWalletBar } from './BottomWalletBar';
+export { BottomNavBar } from './BottomNavBar';
 export { FeaturedCarousel } from './FeaturedCarousel';
