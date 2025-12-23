@@ -15,16 +15,26 @@ const VideoSlide = ({ game, onGameClick }: { game: Game; onGameClick: (game: Gam
     const video = videoRef.current;
     if (!video || !game.videoUrl) return;
 
-    // Try to play video when it's ready
-    const handleCanPlay = () => {
+    const tryPlay = () => {
       video.play().catch(() => {
         // Autoplay failed, show thumbnail
         setVideoFailed(true);
       });
     };
 
-    video.addEventListener('canplay', handleCanPlay);
-    return () => video.removeEventListener('canplay', handleCanPlay);
+    // If video is already ready, play immediately
+    if (video.readyState >= 3) {
+      tryPlay();
+    }
+
+    // Also listen for events in case video isn't ready yet
+    video.addEventListener('canplay', tryPlay);
+    video.addEventListener('loadeddata', tryPlay);
+
+    return () => {
+      video.removeEventListener('canplay', tryPlay);
+      video.removeEventListener('loadeddata', tryPlay);
+    };
   }, [game.videoUrl]);
 
   const handleVideoError = () => {
