@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
 import { Address } from '@ton/core';
-import { Header, Section, CoinBalance, BuyCoinsCard, CoinPackage } from '../../components';
+import { Header, Section, CoinBalance, BuyCoinsCard, CoinPackage, BottomNavBar } from '../../components';
 import { useAuth } from '../../contexts/AuthContext';
 import { useConfig } from '../../contexts/ConfigContext';
 import { api } from '../../services/api';
@@ -210,6 +210,7 @@ export const StorePage = () => {
           )}
         </Section>
       </main>
+      <BottomNavBar />
     </div>
   );
 };
