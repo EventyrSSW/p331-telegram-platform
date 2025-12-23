@@ -4,13 +4,14 @@ import { TonConnectProvider } from './providers/TonConnectProvider'
 import { ConfigProvider } from './contexts/ConfigContext'
 import { AuthProvider } from './contexts/AuthContext'
 import { ErrorBoundary } from './components/ErrorBoundary'
+import { SplashScreen } from './components/SplashScreen'
 import { router } from './router'
 
 function AppContent() {
   const { isReady } = useTelegram()
 
   if (!isReady) {
-    return <div>Loading...</div>
+    return <SplashScreen />
   }
 
   return <RouterProvider router={router} />
