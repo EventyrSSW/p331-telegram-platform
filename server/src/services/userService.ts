@@ -187,10 +187,15 @@ export class UserService {
     // const response = await fetch(`${GAME_SERVICE_URL}/users/${userId}/stats`);
     // return response.json();
 
+    // Mock data with slight user-based variation
+    // This makes it easier to spot that mock data is being used
+    const userHash = userId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const variation = userHash % 10;
+
     return {
-      gamesPlayed: 42,
-      totalWins: 18,
-      amountWon: 1250,
+      gamesPlayed: 40 + variation,
+      totalWins: 15 + Math.floor(variation / 2),
+      amountWon: 1200 + (variation * 50),
     };
   }
 }
