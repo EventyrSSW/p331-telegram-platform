@@ -22,8 +22,8 @@ function getConfig(nk) {
     waitTimeoutSec: DEFAULT_WAIT_TIMEOUT_SEC,
     playTimeoutSec: DEFAULT_PLAY_TIMEOUT_SEC,
     houseEdge: DEFAULT_HOUSE_EDGE,
-    minBet: 10,
-    maxBet: 10000,
+    minBet: 0.5,
+    maxBet: 100,
     skillTiers: [],
     games: {}
   };
@@ -257,8 +257,8 @@ function InitModule(ctx, logger, nk, initializer) {
       waitTimeoutSec: 30,
       playTimeoutSec: 86400,
       houseEdge: 0.51,
-      minBet: 10,
-      maxBet: 10000,
+      minBet: 0.5,
+      maxBet: 100,
       // Skill tiers define level ranges based on player average score
       skillTiers: [
         { name: "beginner", minScore: 0, maxScore: 1000, levelRange: [1, 20] },
@@ -447,7 +447,7 @@ logger.info("gameId type: " + typeof gameId + ", value: " + gameId);
   logger.info("betAmount type: " + typeof betAmount + ", value: " + betAmount);
   logger.info("userId type: " + typeof userId + ", value: " + userId);
 
-betAmount = parseInt(betAmount);
+betAmount = parseFloat(betAmount);
 
   logger.info("Player " + userId + " joining game " + gameId + " with bet " + betAmount);
 
