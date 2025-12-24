@@ -77,7 +77,7 @@ export function GameDetailPage() {
 
       if (level && !isNaN(level)) {
         console.log('[GameDetailPage] Starting game with level:', level);
-        navigate(`/game/${gameId}?level=${level}`);
+        navigate(`/game/${gameId}`, { state: { level } });
       } else {
         console.log('[GameDetailPage] Starting game with default level');
         navigate(`/game/${gameId}`);
