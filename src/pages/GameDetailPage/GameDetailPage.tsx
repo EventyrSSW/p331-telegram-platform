@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Header } from '../../components/Header/Header';
 import { BottomNavBar } from '../../components/BottomNavBar/BottomNavBar';
 import { api, Game } from '../../services/api';
 import { haptic } from '../../providers/TelegramProvider';
+import { GameResultModal, GameResultData } from '../../components/GameResultModal';
 import styles from './GameDetailPage.module.css';
 
 // Bet tiers configuration: entry and win amounts
@@ -17,13 +18,21 @@ const BET_TIERS = [
   { win: 20, entry: 12.00 },
 ];
 
+interface LocationState {
+  gameResult?: GameResultData;
+}
+
 export function GameDetailPage() {
   const { gameId } = useParams<{ gameId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const locationState = location.state as LocationState | null;
   const [game, setGame] = useState<Game | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [betTierIndex, setBetTierIndex] = useState(0); // Start with $1 to win
+  const [showResultModal, setShowResultModal] = useState(false);
+  const [gameResult, setGameResult] = useState<GameResultData | null>(null);
 
   useEffect(() => {
     async function fetchGame() {
@@ -48,6 +57,16 @@ export function GameDetailPage() {
 
     fetchGame();
   }, [gameId]);
+
+  useEffect(() => {
+    if (locationState?.gameResult) {
+      console.log('[GameDetailPage] Received game result:', locationState.gameResult);
+      // Clear the state to prevent showing modal on refresh
+      window.history.replaceState({}, document.title);
+      setGameResult(locationState.gameResult);
+      setShowResultModal(true);
+    }
+  }, [locationState]);
 
   const handleBack = () => {
     haptic.light();
@@ -94,6 +113,17 @@ export function GameDetailPage() {
         .catch(err => setError(err instanceof Error ? err.message : 'Failed to load game details'))
         .finally(() => setLoading(false));
     }
+  };
+
+  const handleCloseResultModal = () => {
+    setShowResultModal(false);
+    setGameResult(null);
+  };
+
+  const handlePlayAgain = () => {
+    setShowResultModal(false);
+    setGameResult(null);
+    handlePlay();
   };
 
   const currentTier = BET_TIERS[betTierIndex];
@@ -213,6 +243,13 @@ export function GameDetailPage() {
       </main>
 
       <BottomNavBar />
+
+      <GameResultModal
+        isOpen={showResultModal}
+        onClose={handleCloseResultModal}
+        result={gameResult}
+        onPlayAgain={handlePlayAgain}
+      />
     </div>
   );
 }
