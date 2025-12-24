@@ -123,7 +123,8 @@ export function GameDetailPage() {
     if (!gameId) return;
 
     const selectedTier = BET_TIERS[betTierIndex];
-    const betAmount = selectedTier.entry;
+    // Convert to cents for Nakama (wallet only accepts integers)
+    const betAmount = Math.round(selectedTier.entry * 100);
 
     if (!isConnected) {
       setError('Not connected to game server');
@@ -315,7 +316,7 @@ export function GameDetailPage() {
         onCancel={handleCancelSearch}
         status={searchStatus}
         matchType={match.matchType}
-        betAmount={currentTier.entry}
+        betAmount={Math.round(currentTier.entry * 100)}
         onOpponentFound={handleOpponentFound}
       />
 

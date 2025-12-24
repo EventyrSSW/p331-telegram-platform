@@ -5,8 +5,8 @@ var DEFAULT_WAIT_TIMEOUT_SEC = 30;
 var DEFAULT_PLAY_TIMEOUT_SEC = 86400;
 var DEFAULT_COMMISSION_RATE = 0.10;
 var DEFAULT_HOUSE_EDGE = 0.51;
-var DEFAULT_MIN_BET = 0.5;
-var DEFAULT_MAX_BET = 100;
+var DEFAULT_MIN_BET = 50;    // 50 cents = $0.50
+var DEFAULT_MAX_BET = 10000; // 10000 cents = $100
 
 function getConfig(nk) {
   // Default config
@@ -463,7 +463,7 @@ logger.info("gameId type: " + typeof gameId + ", value: " + gameId);
   logger.info("betAmount type: " + typeof betAmount + ", value: " + betAmount);
   logger.info("userId type: " + typeof userId + ", value: " + userId);
 
-betAmount = parseFloat(betAmount);
+betAmount = parseInt(betAmount);
 
   logger.info("Player " + userId + " joining game " + gameId + " with bet " + betAmount);
 
