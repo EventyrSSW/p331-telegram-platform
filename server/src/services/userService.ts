@@ -160,12 +160,33 @@ export class UserService {
 
   /**
    * Get user's game statistics
-   * TEMPORARY: Returns mock data until external game service integration
-   * TODO: Replace with actual game service API calls
+   *
+   * TEMPORARY IMPLEMENTATION - MOCK DATA
+   *
+   * Current Status:
+   * - Returns static mock data for UI development
+   * - Database queries removed (no longer using GameSession table)
+   *
+   * Future Implementation:
+   * - Integrate with external game service API
+   * - Add service configuration (API endpoint, auth)
+   * - Add error handling for external service failures
+   * - Add caching layer for performance
+   * - Consider fallback to default values if service unavailable
+   *
+   * Expected External API Contract:
+   * GET /api/v1/users/{userId}/stats
+   * Response: { gamesPlayed: number, totalWins: number, amountWon: number }
+   *
+   * @param userId - Internal user ID (may need to be mapped to external service ID)
+   * @returns Promise<{ gamesPlayed: number, totalWins: number, amountWon: number }>
    */
   async getUserGameStats(userId: string) {
-    // Mock data for UI development
-    // This will be replaced with external game service API
+    // TODO: Replace with external game service API call
+    // Example:
+    // const response = await fetch(`${GAME_SERVICE_URL}/users/${userId}/stats`);
+    // return response.json();
+
     return {
       gamesPlayed: 42,
       totalWins: 18,
