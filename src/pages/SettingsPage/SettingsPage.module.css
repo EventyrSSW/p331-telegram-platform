@@ -91,6 +91,11 @@
   color: rgba(255, 255, 255, 0.6);
 }
 
+/* Green title for Cash Out (first setting card) */
+.settingCard:first-child .settingTitle {
+  color: #2ED573;
+}
+
 .expandedContent {
   margin-top: 16px;
   padding-top: 16px;
@@ -129,11 +134,11 @@
 }
 
 .toggleActive {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #2ED573;
 }
 
 .toggleActive:hover {
-  background: linear-gradient(135deg, #7c8eef 0%, #8659b0 100%);
+  background: #26DE81;
 }
 
 .toggleThumb {
