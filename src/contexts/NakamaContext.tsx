@@ -13,9 +13,11 @@ interface NakamaContextValue {
   session: Session | null;
   isConnected: boolean;
   isConnecting: boolean;
+  isSocketConnected: boolean;
   error: string | null;
   connect: (userData: TelegramUserData) => Promise<void>;
   disconnect: () => void;
+  connectSocket: () => Promise<void>;
 }
 
 const NakamaContext = createContext<NakamaContextValue | null>(null);
@@ -35,6 +37,7 @@ interface NakamaProviderProps {
 export function NakamaProvider({ children }: NakamaProviderProps) {
   const [session, setSession] = useState<Session | null>(nakamaService.getSession());
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isSocketConnected, setIsSocketConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const connect = useCallback(async (userData: TelegramUserData) => {
@@ -57,6 +60,17 @@ export function NakamaProvider({ children }: NakamaProviderProps) {
   const disconnect = useCallback(() => {
     nakamaService.logout();
     setSession(null);
+    setIsSocketConnected(false);
+  }, []);
+
+  const connectSocket = useCallback(async () => {
+    try {
+      await nakamaService.connectSocket();
+      setIsSocketConnected(true);
+    } catch (err) {
+      console.error('[NakamaContext] Socket connection error:', err);
+      setIsSocketConnected(false);
+    }
   }, []);
 
   // Check for existing session on mount
@@ -72,9 +86,11 @@ export function NakamaProvider({ children }: NakamaProviderProps) {
     session,
     isConnected: nakamaService.isAuthenticated(),
     isConnecting,
+    isSocketConnected,
     error,
     connect,
     disconnect,
+    connectSocket,
   };
 
   return (
