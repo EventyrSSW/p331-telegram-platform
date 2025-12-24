@@ -315,9 +315,16 @@ class NakamaService {
     }
 
     // Join the match via socket
-    if (result.matchId && this.socket) {
-      const match = await this.socket.joinMatch(result.matchId);
-      console.log('[Nakama] Joined match:', result.matchId, 'presences:', match.presences);
+    if (result.matchId) {
+      if (this.socket) {
+        console.log('[Nakama] Joining match via socket:', result.matchId);
+        const match = await this.socket.joinMatch(result.matchId);
+        console.log('[Nakama] Joined match:', result.matchId, 'presences:', match.presences);
+      } else {
+        console.warn('[Nakama] Socket not connected, cannot join match');
+      }
+    } else {
+      console.warn('[Nakama] No matchId in response:', result);
     }
 
     return result;

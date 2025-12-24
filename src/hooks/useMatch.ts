@@ -116,16 +116,23 @@ export function useMatch() {
 
     try {
       // Ensure socket is connected
+      console.log('[useMatch] Connecting socket...');
       await nakamaService.connectSocket();
+      console.log('[useMatch] Socket connected');
 
       // Join game via RPC
+      console.log('[useMatch] Joining game:', gameId, 'bet:', betAmount);
       const result = await nakamaService.joinGame(gameId, betAmount);
+      console.log('[useMatch] Join result:', result);
 
-      setState(prev => ({
-        ...prev,
-        matchId: result.matchId || '',
-        status: 'waiting',
-      }));
+      setState(prev => {
+        console.log('[useMatch] Setting status to waiting, matchId:', result.matchId);
+        return {
+          ...prev,
+          matchId: result.matchId || '',
+          status: 'waiting',
+        };
+      });
 
       return result;
     } catch (error) {
