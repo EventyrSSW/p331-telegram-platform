@@ -8,6 +8,75 @@ import {
 } from 'react';
 import { api, User } from '../services/api';
 
+// Web debug mode configuration
+const WEB_DEBUG_ENABLED = import.meta.env.VITE_ALLOW_WEB_DEBUG === 'true';
+const DEBUG_STORAGE_KEY = 'debug_user_credentials';
+
+interface DebugCredentials {
+  telegramId: number;
+  username: string;
+}
+
+function getDebugCredentials(): DebugCredentials | null {
+  try {
+    const stored = localStorage.getItem(DEBUG_STORAGE_KEY);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch {
+    // Ignore parse errors
+  }
+  return null;
+}
+
+function saveDebugCredentials(credentials: DebugCredentials): void {
+  localStorage.setItem(DEBUG_STORAGE_KEY, JSON.stringify(credentials));
+}
+
+function promptDebugCredentials(): DebugCredentials | null {
+  const stored = getDebugCredentials();
+
+  const telegramIdStr = window.prompt(
+    'Enter Telegram ID for debug:',
+    stored?.telegramId?.toString() || '123456789'
+  );
+
+  if (!telegramIdStr) return null;
+
+  const username = window.prompt(
+    'Enter Username for debug:',
+    stored?.username || 'debug_user'
+  );
+
+  if (!username) return null;
+
+  const telegramId = parseInt(telegramIdStr, 10);
+  if (isNaN(telegramId)) {
+    alert('Invalid Telegram ID');
+    return null;
+  }
+
+  const credentials = { telegramId, username };
+  saveDebugCredentials(credentials);
+  return credentials;
+}
+
+function createMockUser(credentials: DebugCredentials): User {
+  return {
+    id: `debug_${credentials.telegramId}`,
+    telegramId: credentials.telegramId,
+    username: credentials.username,
+    firstName: 'Debug',
+    lastName: 'User',
+    photoUrl: null,
+    languageCode: 'en',
+    isPremium: false,
+    walletAddress: null,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+}
+
 interface AuthContextValue {
   user: User | null;
   isLoading: boolean;
@@ -47,8 +116,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.log('[Auth] Starting login, initData exists:', !!initData);
 
       if (!initData) {
-        // Not in Telegram context - development mode
-        console.warn('[Auth] Not in Telegram context, skipping auth');
+        // Not in Telegram context
+        if (WEB_DEBUG_ENABLED) {
+          console.log('[Auth] Web debug mode enabled, prompting for credentials...');
+          const credentials = promptDebugCredentials();
+
+          if (credentials) {
+            const mockUser = createMockUser(credentials);
+            console.log('[Auth] Debug login successful, user:', mockUser.telegramId);
+            setUser(mockUser);
+          } else {
+            console.warn('[Auth] Debug login cancelled by user');
+          }
+        } else {
+          console.warn('[Auth] Not in Telegram context and debug mode disabled, skipping auth');
+        }
         setIsLoading(false);
         return;
       }
