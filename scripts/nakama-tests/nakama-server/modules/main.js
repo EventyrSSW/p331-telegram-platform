@@ -5,28 +5,44 @@ var DEFAULT_WAIT_TIMEOUT_SEC = 30;
 var DEFAULT_PLAY_TIMEOUT_SEC = 86400;
 var DEFAULT_COMMISSION_RATE = 0.10;
 var DEFAULT_HOUSE_EDGE = 0.51;
+var DEFAULT_MIN_BET = 0.5;
+var DEFAULT_MAX_BET = 100;
 
 function getConfig(nk) {
+  // Default config
+  var defaults = {
+    commissionRate: DEFAULT_COMMISSION_RATE,
+    waitTimeoutSec: DEFAULT_WAIT_TIMEOUT_SEC,
+    playTimeoutSec: DEFAULT_PLAY_TIMEOUT_SEC,
+    houseEdge: DEFAULT_HOUSE_EDGE,
+    minBet: DEFAULT_MIN_BET,
+    maxBet: DEFAULT_MAX_BET,
+    skillTiers: [],
+    games: {}
+  };
+
   try {
     var configReads = nk.storageRead([
       { collection: "config", key: "game_settings" }
     ]);
     if (configReads.length > 0) {
-      return configReads[0].value;
+      var stored = configReads[0].value;
+      // Merge stored with defaults (defaults take precedence for minBet/maxBet)
+      return {
+        commissionRate: stored.commissionRate !== undefined ? stored.commissionRate : defaults.commissionRate,
+        waitTimeoutSec: stored.waitTimeoutSec !== undefined ? stored.waitTimeoutSec : defaults.waitTimeoutSec,
+        playTimeoutSec: stored.playTimeoutSec !== undefined ? stored.playTimeoutSec : defaults.playTimeoutSec,
+        houseEdge: stored.houseEdge !== undefined ? stored.houseEdge : defaults.houseEdge,
+        minBet: DEFAULT_MIN_BET,  // Always use default for bet limits
+        maxBet: DEFAULT_MAX_BET,  // Always use default for bet limits
+        skillTiers: stored.skillTiers || defaults.skillTiers,
+        games: stored.games || defaults.games
+      };
     }
   } catch (e) {
     // Fall through to defaults
   }
-  return {
-    commissionRate: DEFAULT_COMMISSION_RATE,
-    waitTimeoutSec: DEFAULT_WAIT_TIMEOUT_SEC,
-    playTimeoutSec: DEFAULT_PLAY_TIMEOUT_SEC,
-    houseEdge: DEFAULT_HOUSE_EDGE,
-    minBet: 0.5,
-    maxBet: 100,
-    skillTiers: [],
-    games: {}
-  };
+  return defaults;
 }
 
 function getGameLevels(nk, gameId) {

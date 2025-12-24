@@ -298,10 +298,20 @@ class NakamaService {
       { gameId, betAmount }
     );
 
-    const result = response.payload as JoinGameResponse;
+    // Parse payload if it's a string (Nakama returns JSON string)
+    let result: JoinGameResponse;
+    if (typeof response.payload === 'string') {
+      result = JSON.parse(response.payload);
+    } else {
+      result = response.payload as JoinGameResponse;
+    }
 
     if (result.error) {
-      throw new Error(result.error);
+      // Include error code for more specific handling
+      const errorMessage = result.code
+        ? `${result.error} (${result.code})`
+        : result.error;
+      throw new Error(errorMessage);
     }
 
     // Join the match via socket
