@@ -8,8 +8,12 @@ export const walletAddressSchema = z.string()
 export const coinAmountSchema = z.object({
   amount: z.number()
     .positive('Amount must be positive')
-    .int('Amount must be a whole number')
-    .max(1_000_000, 'Amount too large'),
+    .max(1_000_000, 'Amount too large')
+    .refine(val => {
+      // Allow up to 3 decimal places (milliCoins precision)
+      // Check if val * 1000 produces an integer (no fractional remainder)
+      return val * 1000 === Math.floor(val * 1000);
+    }, 'Maximum 3 decimal places allowed'),
 });
 
 export const addCoinsSchema = coinAmountSchema.extend({
