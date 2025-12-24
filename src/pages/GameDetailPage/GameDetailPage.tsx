@@ -71,7 +71,17 @@ export function GameDetailPage() {
   const handlePlay = () => {
     haptic.medium();
     if (gameId) {
-      navigate(`/game/${gameId}`);
+      // Debug: prompt for level number
+      const levelInput = window.prompt('Enter level number (leave empty for default):', '5');
+      const level = levelInput ? parseInt(levelInput, 10) : null;
+
+      if (level && !isNaN(level)) {
+        console.log('[GameDetailPage] Starting game with level:', level);
+        navigate(`/game/${gameId}?level=${level}`);
+      } else {
+        console.log('[GameDetailPage] Starting game with default level');
+        navigate(`/game/${gameId}`);
+      }
     }
   };
 
