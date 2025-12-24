@@ -10,7 +10,10 @@
     "dev:server": "cd server && npm run dev",
     "dev:all": "concurrently \"npm run dev\" \"npm run dev:server\"",
     "dev:ngrok": "./scripts/dev-with-ngrok.sh",
-    "build:server": "cd server && npm run build"
+    "build:server": "cd server && npm run build",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:run": "vitest run"
   },
   "repository": {
     "type": "git",
@@ -25,13 +28,19 @@
   "homepage": "https://github.com/EventyrSSW/p331-telegram-platform#readme",
   "description": "",
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.1",
+    "@testing-library/user-event": "^14.6.1",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.2",
+    "@vitest/ui": "^4.0.16",
     "concurrently": "^9.2.1",
+    "jsdom": "^27.3.0",
     "typescript": "^5.9.3",
     "vite": "^7.3.0",
-    "vite-plugin-node-polyfills": "^0.24.0"
+    "vite-plugin-node-polyfills": "^0.24.0",
+    "vitest": "^4.0.16"
   },
   "dependencies": {
     "@heroiclabs/nakama-js": "^2.8.0",
