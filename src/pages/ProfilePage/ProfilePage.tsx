@@ -1,177 +1,148 @@
 import { useEffect, useState } from 'react';
-import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
-import { Address } from '@ton/core';
-import { Header, BottomNavBar } from '../../components';
-import { api, User } from '../../services/api';
-import { useConfig } from '../../contexts/ConfigContext';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+import { api, UserStats } from '../../services/api';
+import { CashOutModal } from '../../components/CashOutModal/CashOutModal';
+import { haptic } from '../../providers/TelegramProvider';
 import styles from './ProfilePage.module.css';
 
-// Before component - add helper function
-const toUserFriendlyAddress = (rawAddress: string, isTestnet: boolean): string => {
-  try {
-    return Address.parse(rawAddress).toString({
-      bounceable: false,
-      testOnly: isTestnet,
-    });
-  } catch {
-    return rawAddress;
-  }
-};
-
-export const ProfilePage = () => {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+export function ProfilePage() {
+  const { user, refreshUser } = useAuth();
+  const [stats, setStats] = useState<UserStats | null>(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // Inside component - add these hooks after existing useState
-  const [tonConnectUI] = useTonConnectUI();
-  const wallet = useTonWallet();
-  const { config } = useConfig();
-
-  const isTestnet = config?.ton.network === 'testnet';
-
-  // Compute user-friendly address
-  const userFriendlyAddress = wallet?.account.address
-    ? toUserFriendlyAddress(wallet.account.address, isTestnet)
-    : null;
-
-  const handleConnectWallet = () => {
-    tonConnectUI.openModal();
-  };
-
-  const handleDisconnectWallet = () => {
-    tonConnectUI.disconnect();
-  };
+  const [showCashOutModal, setShowCashOutModal] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const response = await api.getProfile();
-        setUser(response.user);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load profile');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchProfile();
+    loadStats();
   }, []);
 
-  const formatWalletAddress = (address: string): string => {
-    if (address.length <= 12) return address;
-    return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  const loadStats = async () => {
+    try {
+      setLoading(true);
+      const userStats = await api.getUserStats();
+      setStats(userStats);
+    } catch (err) {
+      console.error('Failed to load stats:', err);
+      setError('Failed to load statistics');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const getDisplayName = (): string => {
-    if (!user) return '';
-    const parts = [user.firstName, user.lastName].filter(Boolean);
-    return parts.length > 0 ? parts.join(' ') : user.username || 'Anonymous';
+  const handleCashOutClick = () => {
+    haptic.medium();
+    setShowCashOutModal(true);
   };
 
-  if (isLoading) {
-    return (
-      <div className={styles.page}>
-        <Header />
-        <main className={styles.main}>
-          <div className={styles.loading}>Loading profile...</div>
-        </main>
-      </div>
-    );
-  }
+  const handleCashOutSuccess = async () => {
+    await refreshUser();
+    await loadStats();
+  };
 
-  if (error || !user) {
-    return (
-      <div className={styles.page}>
-        <Header />
-        <main className={styles.main}>
-          <div className={styles.error}>{error || 'Profile not found'}</div>
-        </main>
-      </div>
-    );
-  }
+  const handleSettingsClick = () => {
+    haptic.light();
+    navigate('/settings');
+  };
+
+  if (!user) return null;
+
+  // Use current date as fallback since createdAt is not in User interface yet
+  const joinDate = new Date(Date.now()).toLocaleDateString('en-US', {
+    month: 'short',
+    year: 'numeric',
+  });
 
   return (
-    <div className={styles.page}>
-      <Header />
-      <main className={styles.main}>
-        <div className={styles.profileHeader}>
-          <div className={styles.avatar}>
-            {user.photoUrl ? (
-              <img src={user.photoUrl} alt="Profile" className={styles.avatarImage} />
-            ) : (
-              <span className={styles.avatarPlaceholder}>
-                {(user.firstName?.[0] || user.username?.[0] || '?').toUpperCase()}
-              </span>
-            )}
-          </div>
-          <h1 className={styles.displayName}>{getDisplayName()}</h1>
-          {user.username && (
-            <span className={styles.username}>@{user.username}</span>
-          )}
-          {user.isPremium && (
-            <span className={styles.premiumBadge}>Premium</span>
-          )}
-        </div>
+    <div className={styles.container}>
+      {/* Header with Settings */}
+      <div className={styles.header}>
+        <button className={styles.settingsButton} onClick={handleSettingsClick}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M12 1v6m0 6v6m-6-6h6m6 0h-6" />
+          </svg>
+          Settings
+        </button>
+      </div>
 
-        <div className={styles.section}>
-          <h2 className={styles.sectionTitle}>Account Info</h2>
-          <div className={styles.infoCard}>
-            <div className={styles.infoRow}>
-              <span className={styles.infoLabel}>Balance</span>
-              <span className={styles.infoValue}>{user.coinBalance.toLocaleString()} coins</span>
+      {/* User Profile */}
+      <div className={styles.profileSection}>
+        <div className={styles.avatar}>
+          {user.photoUrl ? (
+            <img src={user.photoUrl} alt={user.username || 'User'} />
+          ) : (
+            <div className={styles.avatarPlaceholder}>
+              {(user.username?.[0] || user.firstName?.[0] || '?').toUpperCase()}
             </div>
+          )}
+        </div>
+        <h1 className={styles.username}>{user.username || user.firstName || 'Anonymous'}</h1>
+        <p className={styles.joinDate}>Joined {joinDate}</p>
+      </div>
+
+      {/* Stats Cards */}
+      <div className={styles.statsGrid}>
+        <div className={styles.statCard}>
+          <div className={styles.statIcon}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="8" width="18" height="12" rx="2" />
+              <path d="M8 8V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+            </svg>
           </div>
+          <div className={styles.statValue}>
+            {loading ? '...' : stats?.gamesPlayed || 0}
+          </div>
+          <div className={styles.statLabel}>Games Played</div>
         </div>
 
-        <div className={styles.section}>
-          <h2 className={styles.sectionTitle}>Wallet</h2>
-          <div className={styles.infoCard}>
-            {wallet ? (
-              <>
-                <div className={styles.infoRow}>
-                  <span className={styles.infoLabel}>Connected</span>
-                  <span className={styles.walletAddress}>
-                    {formatWalletAddress(userFriendlyAddress || wallet.account.address)}
-                  </span>
-                </div>
-                <button
-                  className={styles.disconnectButton}
-                  onClick={handleDisconnectWallet}
-                >
-                  Disconnect Wallet
-                </button>
-              </>
-            ) : user.walletAddress ? (
-              <>
-                <div className={styles.infoRow}>
-                  <span className={styles.infoLabel}>Saved Wallet</span>
-                  <span className={styles.walletAddress}>
-                    {formatWalletAddress(user.walletAddress)}
-                  </span>
-                </div>
-                <button
-                  className={styles.connectButton}
-                  onClick={handleConnectWallet}
-                >
-                  Reconnect Wallet
-                </button>
-              </>
-            ) : (
-              <button
-                className={styles.connectButton}
-                onClick={handleConnectWallet}
-              >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M21 18V19C21 20.1046 20.1046 21 19 21H5C3.89543 21 3 20.1046 3 19V5C3 3.89543 3.89543 3 5 3H19C20.1046 3 21 3.89543 21 5V6M16 12H22M22 12L19 9M22 12L19 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                Connect Wallet
-              </button>
-            )}
+        <div className={styles.statCard}>
+          <div className={styles.statIcon}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
+            </svg>
           </div>
+          <div className={styles.statValue}>
+            {loading ? '...' : stats?.totalWins || 0}
+          </div>
+          <div className={styles.statLabel}>Total Wins</div>
         </div>
-      </main>
-      <BottomNavBar />
+
+        <div className={styles.statCard}>
+          <div className={styles.statIcon}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+            </svg>
+          </div>
+          <div className={styles.statValue}>
+            ${loading ? '...' : stats?.amountWon || 0}
+          </div>
+          <div className={styles.statLabel}>Amount Won</div>
+        </div>
+      </div>
+
+      {/* Cash Out Button */}
+      <button className={styles.cashOutButton} onClick={handleCashOutClick}>
+        <div className={styles.cashOutContent}>
+          <span className={styles.cashOutText}>Cash out</span>
+          <span className={styles.cashOutSubtext}>Cash out your winnings</span>
+        </div>
+        <svg className={styles.cashOutArrow} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M5 12h14m-7-7l7 7-7 7" />
+        </svg>
+      </button>
+
+      {error && (
+        <div className={styles.error}>{error}</div>
+      )}
+
+      <CashOutModal
+        isOpen={showCashOutModal}
+        onClose={() => setShowCashOutModal(false)}
+        currentBalance={user.coinBalance}
+        onSuccess={handleCashOutSuccess}
+      />
     </div>
   );
-};
+}

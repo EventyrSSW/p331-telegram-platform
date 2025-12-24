@@ -1,25 +1,49 @@
-.page {
+/* Container */
+.container {
   min-height: 100vh;
-  background-color: var(--color-bg-primary);
-}
-
-.main {
+  background: var(--color-bg-primary);
   padding: 24px 16px;
   padding-bottom: 100px;
 }
 
-.loading,
-.error {
-  text-align: center;
-  color: var(--color-text-secondary);
-  padding: 40px 16px;
+/* Header */
+.header {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 24px;
 }
 
-.error {
-  color: #ff4757;
+.settingsButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--color-text-primary);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.profileHeader {
+.settingsButton svg {
+  width: 18px;
+  height: 18px;
+}
+
+.settingsButton:hover {
+  background: var(--color-bg-tertiary);
+  border-color: var(--color-border);
+}
+
+.settingsButton:active {
+  transform: scale(0.98);
+}
+
+/* Profile Section */
+.profileSection {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -30,151 +54,177 @@
   width: 96px;
   height: 96px;
   border-radius: 50%;
-  background: var(--color-accent-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 16px;
   overflow: hidden;
+  margin-bottom: 16px;
+  border: 3px solid var(--color-accent-primary);
 }
 
-.avatarImage {
+.avatar img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
 .avatarPlaceholder {
-  font-size: 36px;
-  font-weight: 700;
-  color: var(--color-text-primary);
-}
-
-.displayName {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--color-text-primary);
-  margin: 0 0 4px 0;
-}
-
-.username {
-  font-size: 14px;
-  color: var(--color-text-secondary);
-  margin-bottom: 8px;
-}
-
-.premiumBadge {
-  background: linear-gradient(135deg, #FFD700, #FFA500);
-  color: #000;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 4px 12px;
-  border-radius: var(--radius-full);
-}
-
-.section {
-  margin-bottom: 24px;
-}
-
-.sectionTitle {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--color-text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin: 0 0 12px 0;
-}
-
-.infoCard {
-  background: var(--color-bg-secondary);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-border-subtle);
-  padding: 16px;
-}
-
-.infoRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.infoLabel {
-  font-size: 14px;
-  color: var(--color-text-secondary);
-}
-
-.infoValue {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--color-accent-primary);
-}
-
-.walletAddress {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--color-text-primary);
-  font-family: monospace;
-  background: var(--color-bg-tertiary);
-  padding: 4px 8px;
-  border-radius: var(--radius-sm);
-}
-
-.noWallet {
-  text-align: center;
-  color: var(--color-text-secondary);
-}
-
-.noWallet span {
-  font-size: 14px;
-}
-
-.noWalletHint {
-  font-size: 12px;
-  margin: 8px 0 0 0;
-  opacity: 0.7;
-}
-
-.connectButton {
   width: 100%;
-  padding: 16px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border: none;
-  border-radius: var(--radius-md);
-  color: white;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  transition: transform 0.2s ease;
-  margin-top: 12px;
+  background: var(--color-accent-primary);
+  color: white;
+  font-size: 36px;
+  font-weight: 700;
 }
 
-.connectButton:hover {
-  transform: translateY(-1px);
+.username {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0 0 8px 0;
+  text-align: center;
 }
 
-.connectButton:active {
-  transform: translateY(0);
+.joinDate {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  margin: 0;
 }
 
-.disconnectButton {
-  width: 100%;
-  padding: 12px 16px;
-  background-color: transparent;
+/* Stats Grid */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.statCard {
+  background: var(--color-bg-secondary);
   border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-md);
-  color: var(--color-text-primary);
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
   transition: all 0.2s ease;
-  margin-top: 12px;
 }
 
-.disconnectButton:hover {
-  border-color: #ef4444;
-  color: #ef4444;
+.statCard:hover {
+  border-color: var(--color-accent-primary);
+  transform: translateY(-2px);
+}
+
+.statIcon {
+  width: 32px;
+  height: 32px;
+  color: var(--color-accent-primary);
+  margin-bottom: 8px;
+}
+
+.statIcon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.statValue {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin-bottom: 4px;
+}
+
+.statLabel {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  line-height: 1.3;
+}
+
+/* Cash Out Button */
+.cashOutButton {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px;
+  background: linear-gradient(135deg, var(--color-accent-primary) 0%, var(--color-accent-secondary) 100%);
+  border: none;
+  border-radius: var(--radius-lg);
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.cashOutButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.cashOutButton:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.cashOutContent {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.cashOutText {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.cashOutSubtext {
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+.cashOutArrow {
+  width: 24px;
+  height: 24px;
+  transition: transform 0.2s ease;
+}
+
+.cashOutButton:hover .cashOutArrow {
+  transform: translateX(4px);
+}
+
+/* Error */
+.error {
+  text-align: center;
+  color: #ff4757;
+  padding: 16px;
+  margin-top: 16px;
+  background: rgba(255, 71, 87, 0.1);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .statsGrid {
+    gap: 8px;
+  }
+
+  .statCard {
+    padding: 12px 8px;
+  }
+
+  .statValue {
+    font-size: 20px;
+  }
+
+  .statLabel {
+    font-size: 11px;
+  }
+
+  .statIcon {
+    width: 28px;
+    height: 28px;
+  }
 }
