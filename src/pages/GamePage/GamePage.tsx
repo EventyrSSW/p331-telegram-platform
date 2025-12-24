@@ -1,6 +1,7 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { UnityGame } from '../../components/UnityGame';
+import { useMatch } from '../../hooks/useMatch';
 
 // Map game IDs to their Unity build slugs
 const GAME_SLUGS: Record<string, string> = {
@@ -10,6 +11,8 @@ const GAME_SLUGS: Record<string, string> = {
 
 interface LocationState {
   level?: number;
+  matchId?: string;
+  betAmount?: number;
 }
 
 interface LevelCompleteData {
@@ -22,20 +25,32 @@ export const GamePage = () => {
   const { gameId } = useParams<{ gameId?: string }>();
   const location = useLocation();
   const navigate = useNavigate();
+  const match = useMatch();
+  const gameStartTime = useRef<number>(Date.now());
 
   const gameSlug = gameId ? GAME_SLUGS[gameId] : null;
   const state = location.state as LocationState | null;
   const levelData = state?.level;
+  const matchId = state?.matchId;
 
-  console.log('[GamePage] Received level from navigation state:', levelData);
+  console.log('[GamePage] Received state:', { levelData, matchId });
 
   const handleLevelComplete = useCallback((data: LevelCompleteData) => {
-    console.log('[GamePage] Level complete, navigating to details with result:', data);
+    console.log('[GamePage] Level complete:', data);
+
+    // If in a match, submit score to Nakama
+    if (matchId) {
+      const timeMs = Date.now() - gameStartTime.current;
+      console.log('[GamePage] Submitting score to match:', matchId, 'score:', data.score, 'time:', timeMs);
+      match.submitScore(data.score, timeMs);
+    }
+
+    // Navigate to game detail page with result
     navigate(`/game/${gameId}/details`, {
       state: { gameResult: data },
       replace: true,
     });
-  }, [gameId, navigate]);
+  }, [gameId, navigate, matchId, match]);
 
   const handleBack = useCallback(() => {
     navigate(`/game/${gameId}/details`);
