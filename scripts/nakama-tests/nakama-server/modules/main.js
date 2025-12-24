@@ -532,13 +532,14 @@ logger.info("Wallet update completed successfully");
   logger.info("Deducted " + betAmount + " coins from " + userId);
 
   var query = "label.gameId:" + gameId + " label.betAmount:" + betAmount + " label.status:waiting";
-logger.info("About to call matchList with query: " + query); 
- var matches = nk.matchList(10, true, null, null, null, query);
+logger.info("About to call matchList with query: " + query);
+  // minSize=0, maxSize=1 means find matches with 0-1 players (has room for 1 more)
+  var matches = nk.matchList(10, true, null, 0, 1, query);
 logger.info("matchList returned: " + JSON.stringify(matches));
-  
+
 if (matches.length > 0) {
     var matchId = matches[0].matchId;
-    logger.info("Found existing match: " + matchId);
+    logger.info("Found existing match with room: " + matchId);
     return JSON.stringify({ matchId: matchId, action: "join" });
   }
 
@@ -595,9 +596,16 @@ function matchInit(ctx, logger, nk, params) {
 }
 
 function matchJoinAttempt(ctx, logger, nk, dispatcher, tick, state, presence, metadata) {
+  // Allow reconnection if player is already in the match
+  if (state.players[presence.userId]) {
+    logger.info("Player " + presence.username + " reconnecting to match");
+    return { state: state, accept: true };
+  }
+
   var playerCount = Object.keys(state.players).length;
 
   if (playerCount >= 2) {
+    logger.warn("Match is full, rejecting " + presence.username + " (players: " + playerCount + ")");
     return { state: state, accept: false, rejectMessage: "Match is full" };
   }
 
