@@ -20,7 +20,7 @@ model User {
   photoUrl        String?   // Profile photo URL
   isPremium       Boolean   @default(false) // Premium status
   walletAddress   String?   @unique
-  coinBalance     Int       @default(0)
+  coinBalance     BigInt    @default(0)  // Stored as milliCoins (1 coin = 1000 milliCoins)
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
@@ -36,7 +36,7 @@ model Transaction {
   userId          String
   user            User      @relation(fields: [userId], references: [id])
   type            TransactionType
-  amount          Int
+  amount          BigInt    // Stored as milliCoins
   tonAmount       BigInt?   // In nanoTON
   tonTxHash       String?   // Blockchain transaction hash
   status          TransactionStatus @default(PENDING)
