@@ -112,6 +112,10 @@ export const Header = () => {
     if (balance >= 1000) {
       return `${(balance / 1000).toFixed(1)}K`;
     }
+    // Show decimals for small amounts
+    if (balance < 1000 && !Number.isInteger(balance)) {
+      return balance.toFixed(2);
+    }
     return balance.toLocaleString();
   };
 
