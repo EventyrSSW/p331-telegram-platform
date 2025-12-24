@@ -123,8 +123,9 @@ export function GameDetailPage() {
     if (!gameId) return;
 
     // Convert entry to coins (cents as integer)
+    // Use Math.round to avoid floating point precision issues (0.6 * 100 = 59.999...)
     const selectedTier = BET_TIERS[betTierIndex];
-    const betAmount = Math.floor(selectedTier.entry * 100);
+    const betAmount = Math.round(selectedTier.entry * 100);
 
     if (!isConnected) {
       setError('Not connected to game server');
@@ -316,7 +317,7 @@ export function GameDetailPage() {
         onCancel={handleCancelSearch}
         status={searchStatus}
         matchType={match.matchType}
-        betAmount={Math.floor(currentTier.entry * 100)}
+        betAmount={Math.round(currentTier.entry * 100)}
         onOpponentFound={handleOpponentFound}
       />
 
