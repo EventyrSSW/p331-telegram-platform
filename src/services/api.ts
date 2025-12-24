@@ -66,6 +66,12 @@ export interface AppConfig {
   coinPackages: CoinPackage[];
 }
 
+export interface UserStats {
+  gamesPlayed: number;
+  totalWins: number;
+  amountWon: number;
+}
+
 class ApiService {
   private token: string | null = null;
 
@@ -144,6 +150,10 @@ class ApiService {
 
   async getProfile(): Promise<{ user: User }> {
     return this.fetch<{ user: User }>('/users/me/profile');
+  }
+
+  async getUserStats(): Promise<UserStats> {
+    return this.fetch<UserStats>('/users/me/stats');
   }
 
   async getGames(): Promise<{ games: Game[] }> {
