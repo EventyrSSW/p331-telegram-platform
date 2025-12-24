@@ -138,6 +138,15 @@ class ApiService {
     return result;
   }
 
+  async authenticateWithDebug(telegramId: number, username: string): Promise<AuthResponse> {
+    const result = await this.fetch<AuthResponse>('/auth/debug', {
+      method: 'POST',
+      body: JSON.stringify({ telegramId, username }),
+    });
+    this.setToken(result.token);
+    return result;
+  }
+
   async getMe(): Promise<{ user: User }> {
     return this.fetch<{ user: User }>('/auth/me');
   }

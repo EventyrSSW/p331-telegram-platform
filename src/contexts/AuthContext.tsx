@@ -61,21 +61,6 @@ function promptDebugCredentials(): DebugCredentials | null {
   return credentials;
 }
 
-function createMockUser(credentials: DebugCredentials): User {
-  return {
-    id: `debug_${credentials.telegramId}`,
-    telegramId: credentials.telegramId,
-    username: credentials.username,
-    firstName: 'Debug',
-    lastName: 'User',
-    photoUrl: null,
-    languageCode: 'en',
-    isPremium: false,
-    walletAddress: null,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
-}
 
 interface AuthContextValue {
   user: User | null;
@@ -122,9 +107,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
           const credentials = promptDebugCredentials();
 
           if (credentials) {
-            const mockUser = createMockUser(credentials);
-            console.log('[Auth] Debug login successful, user:', mockUser.telegramId);
-            setUser(mockUser);
+            try {
+              console.log('[Auth] Calling debug authentication API...');
+              const result = await api.authenticateWithDebug(
+                credentials.telegramId,
+                credentials.username
+              );
+              console.log('[Auth] Debug login successful, user:', result.user?.telegramId);
+              setUser(result.user);
+            } catch (err) {
+              const message = err instanceof Error ? err.message : 'Debug authentication failed';
+              setError(message);
+              console.error('[Auth] Debug login error:', err);
+            }
           } else {
             console.warn('[Auth] Debug login cancelled by user');
           }

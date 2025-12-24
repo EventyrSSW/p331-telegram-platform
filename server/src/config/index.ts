@@ -21,6 +21,9 @@ export const config = {
     paymentReceiverAddress: process.env.PAYMENT_RECEIVER_ADDRESS || '',
   },
 
+  // Debug mode - allows authentication without Telegram verification
+  allowWebDebug: process.env.ALLOW_WEB_DEBUG === 'true',
+
   cors: {
     allowedOrigins: (process.env.ALLOWED_ORIGINS || '')
       .split(',')
