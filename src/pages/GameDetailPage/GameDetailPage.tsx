@@ -1,10 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Header } from '../../components/Header/Header';
 import { BottomNavBar } from '../../components/BottomNavBar/BottomNavBar';
 import { api, Game } from '../../services/api';
 import { haptic } from '../../providers/TelegramProvider';
 import { GameResultModal, GameResultData } from '../../components/GameResultModal';
+import { MatchResultModal } from '../../components/MatchResultModal';
+import { SearchOpponentModal } from '../../components/SearchOpponentModal';
+import { useMatch } from '../../hooks/useMatch';
+import { useNakama } from '../../contexts/NakamaContext';
 import styles from './GameDetailPage.module.css';
 
 // Bet tiers configuration: entry and win amounts
@@ -27,12 +31,16 @@ export function GameDetailPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const locationState = location.state as LocationState | null;
+  const { isConnected } = useNakama();
+  const match = useMatch();
   const [game, setGame] = useState<Game | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [betTierIndex, setBetTierIndex] = useState(0); // Start with $1 to win
   const [showResultModal, setShowResultModal] = useState(false);
   const [gameResult, setGameResult] = useState<GameResultData | null>(null);
+  const [showSearchModal, setShowSearchModal] = useState(false);
+  const [searchStatus, setSearchStatus] = useState<'searching' | 'found' | 'starting'>('searching');
 
   useEffect(() => {
     async function fetchGame() {
@@ -68,6 +76,29 @@ export function GameDetailPage() {
     }
   }, [locationState]);
 
+  // Handle match status changes
+  useEffect(() => {
+    if (match.status === 'waiting') {
+      setShowSearchModal(true);
+      setSearchStatus('searching');
+    } else if (match.status === 'ready' && match.level && gameId) {
+      setSearchStatus('found');
+      // Brief delay to show "found" animation before navigating
+      const timer = setTimeout(() => {
+        setShowSearchModal(false);
+        console.log('[GameDetailPage] Match ready, navigating to game with level:', match.level?.id);
+        navigate(`/game/${gameId}`, {
+          state: {
+            level: match.level?.id,
+            matchId: match.matchId,
+            betAmount: match.betAmount,
+          },
+        });
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [match.status, match.level, match.matchId, match.betAmount, gameId, navigate]);
+
   const handleBack = () => {
     haptic.light();
     navigate('/');
@@ -87,22 +118,38 @@ export function GameDetailPage() {
     }
   };
 
-  const handlePlay = () => {
+  const handlePlay = useCallback(async () => {
     haptic.medium();
-    if (gameId) {
-      // Debug: prompt for level number
-      const levelInput = window.prompt('Enter level number (leave empty for default):', '5');
-      const level = levelInput ? parseInt(levelInput, 10) : null;
+    if (!gameId) return;
 
-      if (level && !isNaN(level)) {
-        console.log('[GameDetailPage] Starting game with level:', level);
-        navigate(`/game/${gameId}`, { state: { level } });
-      } else {
-        console.log('[GameDetailPage] Starting game with default level');
-        navigate(`/game/${gameId}`);
-      }
+    // Convert entry to coins (cents as integer)
+    const betAmount = Math.floor(currentTier.entry * 100);
+
+    if (!isConnected) {
+      setError('Not connected to game server');
+      return;
     }
-  };
+
+    try {
+      const result = await match.joinGame(gameId, betAmount);
+      if (result?.matchId) {
+        console.log('[GameDetailPage] Joined match:', result.matchId);
+      }
+    } catch (err) {
+      console.error('[GameDetailPage] Failed to join game:', err);
+      setError(err instanceof Error ? err.message : 'Failed to join game');
+    }
+  }, [gameId, currentTier.entry, isConnected, match]);
+
+  const handleCancelSearch = useCallback(() => {
+    haptic.light();
+    setShowSearchModal(false);
+    match.leaveMatch();
+  }, [match]);
+
+  const handleOpponentFound = useCallback(() => {
+    setSearchStatus('starting');
+  }, []);
 
   const handleRetry = () => {
     if (gameId) {
@@ -234,11 +281,23 @@ export function GameDetailPage() {
         </div>
 
         {/* Play Button */}
-        <button className={styles.playButton} onClick={handlePlay}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M8 5V19L19 12L8 5Z"/>
-          </svg>
-          <span>Play</span>
+        <button
+          className={styles.playButton}
+          onClick={handlePlay}
+          disabled={match.status === 'joining' || match.status === 'waiting'}
+        >
+          {match.status === 'joining' ? (
+            <span>Joining...</span>
+          ) : match.status === 'waiting' ? (
+            <span>Searching...</span>
+          ) : (
+            <>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M8 5V19L19 12L8 5Z"/>
+              </svg>
+              <span>Play</span>
+            </>
+          )}
         </button>
       </main>
 
@@ -248,6 +307,30 @@ export function GameDetailPage() {
         isOpen={showResultModal}
         onClose={handleCloseResultModal}
         result={gameResult}
+        onPlayAgain={handlePlayAgain}
+      />
+
+      <SearchOpponentModal
+        isOpen={showSearchModal}
+        onCancel={handleCancelSearch}
+        status={searchStatus}
+        matchType={match.matchType}
+        betAmount={Math.floor(currentTier.entry * 100)}
+        onOpponentFound={handleOpponentFound}
+      />
+
+      <MatchResultModal
+        isOpen={match.status === 'submitted' || match.status === 'completed'}
+        onClose={() => match.reset()}
+        status={match.status as 'waiting' | 'playing' | 'submitted' | 'completed'}
+        matchType={match.matchType}
+        players={[
+          { username: 'You', score: match.myScore, isMe: true, isWinner: match.winner === 'You' },
+          { username: match.matchType === 'PVH' ? 'House' : 'Opponent', score: match.opponentScore, isMe: false, isWinner: match.winner !== 'You' && match.winner !== null },
+        ]}
+        myScore={match.myScore}
+        payout={match.payout}
+        isWinner={match.winner === 'You' || (match.payout !== null && match.payout > 0)}
         onPlayAgain={handlePlayAgain}
       />
     </div>
