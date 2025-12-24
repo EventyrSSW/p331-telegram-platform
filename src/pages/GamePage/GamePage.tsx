@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { UnityGame } from '../../components/UnityGame';
 
@@ -11,8 +12,14 @@ interface LocationState {
   level?: number;
 }
 
+interface LevelCompleteData {
+  level: number;
+  score: number;
+  coins: number;
+}
+
 export const GamePage = () => {
-  const { gameId } = useParams<{ gameId: string }>();
+  const { gameId } = useParams<{ gameId?: string }>();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -21,6 +28,18 @@ export const GamePage = () => {
   const levelData = state?.level;
 
   console.log('[GamePage] Received level from navigation state:', levelData);
+
+  const handleLevelComplete = useCallback((data: LevelCompleteData) => {
+    console.log('[GamePage] Level complete, navigating to details with result:', data);
+    navigate(`/game/${gameId}/details`, {
+      state: { gameResult: data },
+      replace: true,
+    });
+  }, [gameId, navigate]);
+
+  const handleBack = useCallback(() => {
+    navigate(`/game/${gameId}/details`);
+  }, [gameId, navigate]);
 
   if (!gameSlug) {
     return (
@@ -31,5 +50,12 @@ export const GamePage = () => {
     );
   }
 
-  return <UnityGame gameSlug={gameSlug} levelData={levelData} onBack={() => navigate('/')} />;
+  return (
+    <UnityGame
+      gameSlug={gameSlug}
+      levelData={levelData}
+      onBack={handleBack}
+      onLevelComplete={handleLevelComplete}
+    />
+  );
 };
