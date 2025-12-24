@@ -49,7 +49,9 @@ export function SettingsPage() {
     await refreshUser();
   };
 
-  if (!user) return null;
+  // Development mode: Still show settings page without user
+  // Settings like sound/haptics work without authentication
+  const showCashOut = !!user;
 
   return (
     <div className={styles.container}>
@@ -67,13 +69,15 @@ export function SettingsPage() {
 
       {/* Settings Sections */}
       <div className={styles.sections}>
-        {/* Cash Out */}
-        <button className={styles.settingCard} onClick={handleCashOutClick}>
-          <div className={styles.settingContent}>
-            <span className={styles.settingTitle}>Cash Out</span>
-            <span className={styles.settingDescription}>Cash out your winnings</span>
-          </div>
-        </button>
+        {/* Cash Out - only show when authenticated */}
+        {showCashOut && (
+          <button className={styles.settingCard} onClick={handleCashOutClick}>
+            <div className={styles.settingContent}>
+              <span className={styles.settingTitle}>Cash Out</span>
+              <span className={styles.settingDescription}>Cash out your winnings</span>
+            </div>
+          </button>
+        )}
 
         {/* Sound and Haptics */}
         <div className={styles.settingCard}>
@@ -144,12 +148,14 @@ export function SettingsPage() {
         Version 1.0.0
       </div>
 
-      <CashOutModal
-        isOpen={showCashOutModal}
-        onClose={() => setShowCashOutModal(false)}
-        currentBalance={user.coinBalance}
-        onSuccess={handleCashOutSuccess}
-      />
+      {user && (
+        <CashOutModal
+          isOpen={showCashOutModal}
+          onClose={() => setShowCashOutModal(false)}
+          currentBalance={user.coinBalance}
+          onSuccess={handleCashOutSuccess}
+        />
+      )}
     </div>
   );
 }

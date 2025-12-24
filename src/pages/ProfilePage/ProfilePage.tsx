@@ -49,7 +49,23 @@ export function ProfilePage() {
     navigate('/settings');
   };
 
-  if (!user) return null;
+  // Development mode fallback when not in Telegram
+  if (!user) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.profileSection}>
+          <div className={styles.avatar}>
+            <div className={styles.avatarPlaceholder}>DEV</div>
+          </div>
+          <h1 className={styles.username}>Development Mode</h1>
+          <p className={styles.joinDate}>Not authenticated (Telegram context required)</p>
+        </div>
+        <div className={styles.error}>
+          Please open this app in Telegram to see your profile
+        </div>
+      </div>
+    );
+  }
 
   // Use current date as fallback since createdAt is not in User interface yet
   const joinDate = new Date(Date.now()).toLocaleDateString('en-US', {
