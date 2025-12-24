@@ -160,26 +160,16 @@ export class UserService {
 
   /**
    * Get user's game statistics
-   * Returns total games played, wins, and total amount won
+   * TEMPORARY: Returns mock data until external game service integration
+   * TODO: Replace with actual game service API calls
    */
   async getUserGameStats(userId: string) {
-    const stats = await prisma.gameSession.aggregate({
-      where: { userId },
-      _count: { id: true },
-      _sum: { coinsWon: true },
-    });
-
-    const wins = await prisma.gameSession.count({
-      where: {
-        userId,
-        coinsWon: { gt: 0 },
-      },
-    });
-
+    // Mock data for UI development
+    // This will be replaced with external game service API
     return {
-      gamesPlayed: stats._count.id || 0,
-      totalWins: wins || 0,
-      amountWon: stats._sum.coinsWon || 0,
+      gamesPlayed: 42,
+      totalWins: 18,
+      amountWon: 1250,
     };
   }
 }
