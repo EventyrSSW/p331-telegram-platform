@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTonConnectUI } from '@tonconnect/ui-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { api, UserStats } from '../../services/api';
 import { CashOutModal } from '../../components/CashOutModal/CashOutModal';
@@ -8,6 +9,7 @@ import styles from './ProfilePage.module.css';
 
 export function ProfilePage() {
   const { user, refreshUser } = useAuth();
+  const [tonConnectUI] = useTonConnectUI();
   const [stats, setStats] = useState<UserStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -124,10 +126,7 @@ export function ProfilePage() {
 
       {/* Cash Out Button */}
       <button className={styles.cashOutButton} onClick={handleCashOutClick}>
-        <div className={styles.cashOutContent}>
-          <span className={styles.cashOutText}>Cash out</span>
-          <span className={styles.cashOutSubtext}>Cash out your winnings</span>
-        </div>
+        <span className={styles.cashOutText}>Cash out</span>
         <svg className={styles.cashOutArrow} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M5 12h14m-7-7l7 7-7 7" />
         </svg>

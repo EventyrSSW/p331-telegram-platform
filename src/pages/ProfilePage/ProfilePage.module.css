@@ -18,7 +18,7 @@
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
-  background: var(--color-bg-secondary);
+  background: transparent;
   border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-md);
   color: var(--color-text-primary);
@@ -31,11 +31,6 @@
 .settingsButton svg {
   width: 18px;
   height: 18px;
-}
-
-.settingsButton:hover {
-  background: var(--color-bg-tertiary);
-  border-color: var(--color-border);
 }
 
 .settingsButton:active {
@@ -108,12 +103,6 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
-  transition: all 0.2s ease;
-}
-
-.statCard:hover {
-  border-color: var(--color-accent-primary);
-  transform: translateY(-2px);
 }
 
 .statIcon {
@@ -148,50 +137,27 @@
   align-items: center;
   justify-content: space-between;
   padding: 20px;
-  background: linear-gradient(135deg, var(--color-accent-primary) 0%, var(--color-accent-secondary) 100%);
-  border: none;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-lg);
-  color: white;
+  color: #2ED573;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.cashOutButton:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
 }
 
 .cashOutButton:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-
-.cashOutContent {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+  transform: scale(0.98);
 }
 
 .cashOutText {
   font-size: 18px;
   font-weight: 700;
-  margin-bottom: 4px;
-}
-
-.cashOutSubtext {
-  font-size: 14px;
-  opacity: 0.9;
 }
 
 .cashOutArrow {
   width: 24px;
   height: 24px;
-  transition: transform 0.2s ease;
-}
-
-.cashOutButton:hover .cashOutArrow {
-  transform: translateX(4px);
+  color: #2ED573;
 }
 
 /* Error */
@@ -206,6 +172,12 @@
 }
 
 /* Responsive */
+@media (max-width: 600px) {
+  .statsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 480px) {
   .statsGrid {
     gap: 8px;
