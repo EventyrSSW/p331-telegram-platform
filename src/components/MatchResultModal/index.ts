@@ -1,0 +1,1 @@
+export { MatchResultModal } from './MatchResultModal';
