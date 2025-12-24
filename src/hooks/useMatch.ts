@@ -93,6 +93,10 @@ export function useMatch() {
 
     return () => {
       nakamaService.setMatchCallbacks({});
+      // Leave any active match on unmount
+      if (stateRef.current.matchId && stateRef.current.status !== 'idle') {
+        nakamaService.leaveMatch(stateRef.current.matchId);
+      }
     };
   }, [isConnected, session]);
 

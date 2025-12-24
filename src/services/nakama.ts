@@ -1,7 +1,15 @@
-import { Client, Session, Socket, MatchData, Notification } from '@heroiclabs/nakama-js';
+import { Client, Session, Socket, MatchData, Notification, MatchPresenceEvent } from '@heroiclabs/nakama-js';
 import { nakamaConfig } from '../config/nakama';
 
 const SESSION_KEY = 'nakama_session';
+
+// Op code constants for match communication
+export const MatchOpCodes = {
+  MATCH_READY: 1,
+  SCORE_SUBMIT: 2,
+  MATCH_RESULT: 3,
+  PLAYER_UPDATE: 4,
+} as const;
 
 interface MatchState {
   matchId: string;
@@ -205,6 +213,11 @@ class NakamaService {
       throw new Error('Not authenticated');
     }
 
+    // Check if session is expired
+    if (this.session.isexpired(Date.now() / 1000)) {
+      throw new Error('Session expired, please re-authenticate');
+    }
+
     if (this.socket) {
       return this.socket;
     }
@@ -215,23 +228,37 @@ class NakamaService {
     // Setup socket event handlers
     this.socket.onmatchdata = this.handleMatchData.bind(this);
     this.socket.onnotification = this.handleNotification.bind(this);
-    this.socket.ondisconnect = () => {
-      console.log('[Nakama] Socket disconnected');
+    this.socket.onmatchpresence = this.handleMatchPresence.bind(this);
+    this.socket.ondisconnect = (evt) => {
+      console.log('[Nakama] Socket disconnected', evt);
       this.socket = null;
+      // Notify UI to show reconnection status
+      this.matchCallbacks.onError?.('Connection lost. Please refresh to reconnect.');
     };
 
     console.log('[Nakama] Socket connected');
     return this.socket;
   }
 
+  private handleMatchPresence(presenceEvent: MatchPresenceEvent): void {
+    console.log('[Nakama] Match presence:', presenceEvent);
+    presenceEvent.joins?.forEach(p => {
+      console.log('[Nakama] Player joined:', p.username);
+    });
+    presenceEvent.leaves?.forEach(p => {
+      console.log('[Nakama] Player left:', p.username);
+      this.matchCallbacks.onError?.(`${p.username} disconnected`);
+    });
+  }
+
   private handleMatchData(matchData: MatchData): void {
     const data = JSON.parse(new TextDecoder().decode(matchData.data));
-    console.log('[Nakama] Match data received:', matchData.op_code, data);
+    console.log('[Nakama] Match data received:', matchData.opCode, data);
 
-    switch (matchData.op_code) {
-      case 1: // match_ready
+    switch (matchData.opCode) {
+      case MatchOpCodes.MATCH_READY:
         this.currentMatch = {
-          matchId: matchData.match_id,
+          matchId: matchData.matchId,
           gameId: data.game?.id || '',
           betAmount: data.betAmount,
           level: data.game?.level || null,
@@ -242,7 +269,7 @@ class NakamaService {
         };
         this.matchCallbacks.onMatchReady?.(this.currentMatch);
         break;
-      case 3: // match_result
+      case MatchOpCodes.MATCH_RESULT:
         if (this.currentMatch) {
           this.currentMatch.status = 'completed';
           this.currentMatch.results = data.results || {};
@@ -279,8 +306,8 @@ class NakamaService {
 
     // Join the match via socket
     if (result.matchId && this.socket) {
-      await this.socket.joinMatch(result.matchId);
-      console.log('[Nakama] Joined match:', result.matchId);
+      const match = await this.socket.joinMatch(result.matchId);
+      console.log('[Nakama] Joined match:', result.matchId, 'presences:', match.presences);
     }
 
     return result;
@@ -292,16 +319,21 @@ class NakamaService {
     }
 
     const data = JSON.stringify({ score, timeMs });
-    await this.socket.sendMatchState(matchId, 2, data);
+    await this.socket.sendMatchState(matchId, MatchOpCodes.SCORE_SUBMIT, data);
     console.log('[Nakama] Submitted score:', score);
   }
 
   async leaveMatch(matchId: string): Promise<void> {
-    if (this.socket) {
-      await this.socket.leaveMatch(matchId);
-      console.log('[Nakama] Left match:', matchId);
+    if (this.socket && matchId) {
+      try {
+        await this.socket.leaveMatch(matchId);
+        console.log('[Nakama] Left match:', matchId);
+      } catch (e) {
+        console.warn('[Nakama] Error leaving match:', e);
+      }
     }
     this.currentMatch = null;
+    this.matchCallbacks = {}; // Clear callbacks to prevent memory leaks
   }
 
   setMatchCallbacks(callbacks: MatchCallbacks): void {
