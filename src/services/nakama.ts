@@ -253,12 +253,12 @@ class NakamaService {
 
   private handleMatchData(matchData: MatchData): void {
     const data = JSON.parse(new TextDecoder().decode(matchData.data));
-    console.log('[Nakama] Match data received:', matchData.opCode, data);
+    console.log('[Nakama] Match data received:', matchData.op_code, data);
 
-    switch (matchData.opCode) {
+    switch (matchData.op_code) {
       case MatchOpCodes.MATCH_READY:
         this.currentMatch = {
-          matchId: matchData.matchId,
+          matchId: matchData.match_id,
           gameId: data.game?.id || '',
           betAmount: data.betAmount,
           level: data.game?.level || null,

@@ -27,11 +27,13 @@ export function MatchResultModal({
   status,
   matchType,
   players,
-  myScore,
+  myScore: _myScore,
   payout,
   isWinner,
   onPlayAgain,
 }: MatchResultModalProps) {
+  // myScore is available via _myScore if needed for future display enhancements
+  void _myScore;
   if (!isOpen) return null;
 
   const handleClose = () => {

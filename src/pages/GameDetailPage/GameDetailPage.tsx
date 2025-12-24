@@ -123,7 +123,8 @@ export function GameDetailPage() {
     if (!gameId) return;
 
     // Convert entry to coins (cents as integer)
-    const betAmount = Math.floor(currentTier.entry * 100);
+    const selectedTier = BET_TIERS[betTierIndex];
+    const betAmount = Math.floor(selectedTier.entry * 100);
 
     if (!isConnected) {
       setError('Not connected to game server');
@@ -139,7 +140,7 @@ export function GameDetailPage() {
       console.error('[GameDetailPage] Failed to join game:', err);
       setError(err instanceof Error ? err.message : 'Failed to join game');
     }
-  }, [gameId, currentTier.entry, isConnected, match]);
+  }, [gameId, betTierIndex, isConnected, match]);
 
   const handleCancelSearch = useCallback(() => {
     haptic.light();
