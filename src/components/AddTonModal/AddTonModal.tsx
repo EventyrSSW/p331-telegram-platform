@@ -16,6 +16,26 @@ interface AddTonModalProps {
 const PRESET_AMOUNTS = [10, 20, 50];
 const MAX_AMOUNT = 10000;
 
+/**
+ * Checks if adding a digit would create an invalid leading zero pattern
+ * Valid: "0", "0.", "0.1", "10", "100"
+ * Invalid: "00", "00.", "000", "000001"
+ */
+const wouldCreateInvalidLeadingZeros = (currentValue: string, newDigit: string): boolean => {
+  // If trying to add "0" to current "0", it's invalid (would create "00")
+  if (currentValue === '0' && newDigit === '0') {
+    return true;
+  }
+
+  // If current value starts with "0" followed by a digit (not a decimal point), it's invalid
+  // This catches cases where someone tries to build "00.1" by typing "0" then "0" then "."
+  if (currentValue.length > 1 && currentValue[0] === '0' && currentValue[1] !== '.') {
+    return true;
+  }
+
+  return false;
+};
+
 export function AddTonModal({
   isOpen,
   onClose,
@@ -64,6 +84,11 @@ export function AddTonModal({
     }
 
     setAmount(prev => {
+      // Check for invalid leading zeros BEFORE processing the digit
+      if (wouldCreateInvalidLeadingZeros(prev, value)) {
+        return prev; // Reject the input
+      }
+
       // If current is just "0", replace with new digit (unless it's another 0)
       if (prev === '0' && value !== '0') return value;
 
