@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { userService } from '../services/userService';
+import { userService, fromMilliCoins } from '../services/userService';
 import { coinAmountSchema, addCoinsSchema, linkWalletSchema } from '../schemas/users';
 
 export const usersController = {
@@ -23,7 +23,7 @@ export const usersController = {
       res.json({
         telegramId: telegramUser.id,
         walletAddress: user.walletAddress,
-        balance: user.coinBalance,
+        balance: fromMilliCoins(user.coinBalance),
       });
     } catch (error) {
       next(error);
@@ -52,6 +52,7 @@ export const usersController = {
         user: {
           ...user,
           telegramId: user.telegramId.toString(),
+          coinBalance: fromMilliCoins(user.coinBalance),
         },
       });
     } catch (error) {
@@ -84,7 +85,7 @@ export const usersController = {
 
       res.json({
         telegramId: telegramUser.id,
-        balance: user.coinBalance,
+        balance: fromMilliCoins(user.coinBalance),
       });
     } catch (error) {
       next(error);
@@ -113,7 +114,7 @@ export const usersController = {
 
       res.json({
         telegramId: telegramUser.id,
-        balance: user.coinBalance,
+        balance: fromMilliCoins(user.coinBalance),
       });
     } catch (error: any) {
       if (error.message === 'Insufficient balance') {

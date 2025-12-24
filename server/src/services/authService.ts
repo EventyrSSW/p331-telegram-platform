@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { config } from '../config';
 import { prisma } from '../db/client';
+import { fromMilliCoins } from './userService';
 
 interface TelegramUser {
   id: number;
@@ -61,7 +62,7 @@ export class AuthService {
         languageCode: user.languageCode,
         photoUrl: user.photoUrl,
         isPremium: user.isPremium,
-        coinBalance: user.coinBalance,
+        coinBalance: fromMilliCoins(user.coinBalance),
         walletAddress: user.walletAddress,
       },
     };
@@ -127,7 +128,7 @@ export class AuthService {
       languageCode: user.languageCode,
       photoUrl: user.photoUrl,
       isPremium: user.isPremium,
-      coinBalance: user.coinBalance,
+      coinBalance: fromMilliCoins(user.coinBalance),
       walletAddress: user.walletAddress,
     };
   }
