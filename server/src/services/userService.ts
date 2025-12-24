@@ -19,15 +19,10 @@ const TransactionStatus = {
 // Transaction client type for Prisma interactive transactions
 type TransactionClient = Omit<PrismaClient, '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'>;
 
-// MilliCoins conversion helpers
-const MILLICOINS_PER_COIN = 1000n;
-
-function toMilliCoins(coins: number): bigint {
-  return BigInt(Math.round(coins * 1000));
-}
-
-export function fromMilliCoins(milliCoins: bigint): number {
-  return Number(milliCoins) / 1000;
+// Helper to convert Prisma Decimal to number for API responses
+export function decimalToNumber(decimal: unknown): number {
+  if (decimal === null || decimal === undefined) return 0;
+  return Number(decimal);
 }
 
 export class UserService {
@@ -105,19 +100,17 @@ export class UserService {
    */
   async addCoins(
     telegramId: number,
-    amount: number,  // Keep as number from API
+    amount: number,
     options?: {
       tonTxHash?: string;
       tonAmount?: bigint;
     }
   ) {
-    const milliCoins = toMilliCoins(amount);
-
     return prisma.$transaction(async (tx: TransactionClient) => {
       // Update user balance
       const user = await tx.user.update({
         where: { telegramId: BigInt(telegramId) },
-        data: { coinBalance: { increment: milliCoins } },
+        data: { coinBalance: { increment: amount } },
       });
 
       // Create transaction record
@@ -125,7 +118,7 @@ export class UserService {
         data: {
           userId: user.id,
           type: TransactionType.PURCHASE,
-          amount: milliCoins,
+          amount: amount,
           tonTxHash: options?.tonTxHash,
           tonAmount: options?.tonAmount,
           status: TransactionStatus.COMPLETED,
@@ -141,22 +134,20 @@ export class UserService {
    * Checks balance before deducting, uses Prisma transaction for consistency
    */
   async deductCoins(telegramId: number, amount: number) {
-    const milliCoins = toMilliCoins(amount);
-
     return prisma.$transaction(async (tx: TransactionClient) => {
       // Check user balance first
       const user = await tx.user.findUnique({
         where: { telegramId: BigInt(telegramId) },
       });
 
-      if (!user || user.coinBalance < milliCoins) {
+      if (!user || decimalToNumber(user.coinBalance) < amount) {
         throw new Error('Insufficient balance');
       }
 
       // Deduct coins
       const updated = await tx.user.update({
         where: { telegramId: BigInt(telegramId) },
-        data: { coinBalance: { decrement: milliCoins } },
+        data: { coinBalance: { decrement: amount } },
       });
 
       // Create transaction record (negative amount for deduction)
@@ -164,7 +155,7 @@ export class UserService {
         data: {
           userId: updated.id,
           type: TransactionType.GAME_SPEND,
-          amount: -milliCoins,
+          amount: -amount,
           status: TransactionStatus.COMPLETED,
         },
       });
