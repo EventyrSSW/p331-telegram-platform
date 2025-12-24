@@ -1,7 +1,54 @@
-import { Client, Session } from '@heroiclabs/nakama-js';
+import { Client, Session, Socket, MatchData, Notification } from '@heroiclabs/nakama-js';
 import { nakamaConfig } from '../config/nakama';
 
 const SESSION_KEY = 'nakama_session';
+
+interface MatchState {
+  matchId: string;
+  gameId: string;
+  betAmount: number;
+  level: MatchLevel | null;
+  status: 'waiting' | 'ready' | 'playing' | 'completed';
+  matchType: 'PVP' | 'PVH';
+  players: { [userId: string]: PlayerInfo };
+  results: { [userId: string]: PlayerResult };
+  payout?: number;
+  winner?: string;
+}
+
+interface MatchLevel {
+  id: number;
+  name: string;
+  tier: string;
+  tiles: unknown[];
+  totalPairs: number;
+  timeBonus: number;
+}
+
+interface PlayerInfo {
+  odredacted: string;
+  username: string;
+  isHouse: boolean;
+}
+
+interface PlayerResult {
+  score: number;
+  timeMs: number;
+}
+
+interface JoinGameResponse {
+  matchId?: string;
+  action?: string;
+  error?: string;
+  code?: string;
+}
+
+interface MatchCallbacks {
+  onMatchReady?: (data: MatchState) => void;
+  onMatchResult?: (data: MatchState) => void;
+  onOpponentScore?: (userId: string, score: number) => void;
+  onError?: (error: string) => void;
+}
 
 interface TelegramUserData {
   telegramId: number;
@@ -16,6 +63,9 @@ interface TelegramUserData {
 class NakamaService {
   private client: Client;
   private session: Session | null = null;
+  private socket: Socket | null = null;
+  private currentMatch: MatchState | null = null;
+  private matchCallbacks: MatchCallbacks = {};
 
   constructor() {
     this.client = new Client(
@@ -148,7 +198,144 @@ class NakamaService {
     this.session = null;
     localStorage.removeItem(SESSION_KEY);
   }
+
+  // Socket connection methods
+  async connectSocket(): Promise<Socket> {
+    if (!this.session) {
+      throw new Error('Not authenticated');
+    }
+
+    if (this.socket) {
+      return this.socket;
+    }
+
+    this.socket = this.client.createSocket(nakamaConfig.useSSL, false);
+    await this.socket.connect(this.session, true);
+
+    // Setup socket event handlers
+    this.socket.onmatchdata = this.handleMatchData.bind(this);
+    this.socket.onnotification = this.handleNotification.bind(this);
+    this.socket.ondisconnect = () => {
+      console.log('[Nakama] Socket disconnected');
+      this.socket = null;
+    };
+
+    console.log('[Nakama] Socket connected');
+    return this.socket;
+  }
+
+  private handleMatchData(matchData: MatchData): void {
+    const data = JSON.parse(new TextDecoder().decode(matchData.data));
+    console.log('[Nakama] Match data received:', matchData.op_code, data);
+
+    switch (matchData.op_code) {
+      case 1: // match_ready
+        this.currentMatch = {
+          matchId: matchData.match_id,
+          gameId: data.game?.id || '',
+          betAmount: data.betAmount,
+          level: data.game?.level || null,
+          status: 'ready',
+          matchType: data.matchType,
+          players: {},
+          results: {},
+        };
+        this.matchCallbacks.onMatchReady?.(this.currentMatch);
+        break;
+      case 3: // match_result
+        if (this.currentMatch) {
+          this.currentMatch.status = 'completed';
+          this.currentMatch.results = data.results || {};
+          this.currentMatch.winner = data.winner;
+          this.currentMatch.payout = data.payout;
+          this.matchCallbacks.onMatchResult?.(this.currentMatch);
+        }
+        break;
+    }
+  }
+
+  private handleNotification(notification: Notification): void {
+    console.log('[Nakama] Notification:', notification.code, notification.content);
+    // Handle win/lose notifications (codes 100, 101, 102)
+  }
+
+  // Match methods
+  async joinGame(gameId: string, betAmount: number): Promise<JoinGameResponse> {
+    if (!this.session) {
+      throw new Error('Not authenticated');
+    }
+
+    const response = await this.client.rpc(
+      this.session,
+      'join_game',
+      { gameId, betAmount }
+    );
+
+    const result = response.payload as JoinGameResponse;
+
+    if (result.error) {
+      throw new Error(result.error);
+    }
+
+    // Join the match via socket
+    if (result.matchId && this.socket) {
+      await this.socket.joinMatch(result.matchId);
+      console.log('[Nakama] Joined match:', result.matchId);
+    }
+
+    return result;
+  }
+
+  async submitScore(matchId: string, score: number, timeMs: number): Promise<void> {
+    if (!this.socket) {
+      throw new Error('Socket not connected');
+    }
+
+    const data = JSON.stringify({ score, timeMs });
+    await this.socket.sendMatchState(matchId, 2, data);
+    console.log('[Nakama] Submitted score:', score);
+  }
+
+  async leaveMatch(matchId: string): Promise<void> {
+    if (this.socket) {
+      await this.socket.leaveMatch(matchId);
+      console.log('[Nakama] Left match:', matchId);
+    }
+    this.currentMatch = null;
+  }
+
+  setMatchCallbacks(callbacks: MatchCallbacks): void {
+    this.matchCallbacks = callbacks;
+  }
+
+  getCurrentMatch(): MatchState | null {
+    return this.currentMatch;
+  }
+
+  getSocket(): Socket | null {
+    return this.socket;
+  }
+
+  // Wallet methods
+  async getWallet(): Promise<{ coins: number }> {
+    if (!this.session) {
+      throw new Error('Not authenticated');
+    }
+
+    const account = await this.client.getAccount(this.session);
+    const wallet = account.wallet ? JSON.parse(account.wallet) : { coins: 0 };
+    return wallet;
+  }
+
+  async addTestCoins(amount: number = 1000): Promise<void> {
+    if (!this.session) {
+      throw new Error('Not authenticated');
+    }
+
+    await this.client.rpc(this.session, 'add_test_coins', { amount });
+    console.log('[Nakama] Added', amount, 'test coins');
+  }
 }
 
 export const nakamaService = new NakamaService();
-export type { TelegramUserData };
+export type { TelegramUserData, MatchState, MatchLevel, MatchCallbacks };
