@@ -157,6 +157,31 @@ export class UserService {
       return updated;
     });
   }
+
+  /**
+   * Get user's game statistics
+   * Returns total games played, wins, and total amount won
+   */
+  async getUserGameStats(userId: string) {
+    const stats = await prisma.gameSession.aggregate({
+      where: { userId },
+      _count: { id: true },
+      _sum: { coinsWon: true },
+    });
+
+    const wins = await prisma.gameSession.count({
+      where: {
+        userId,
+        coinsWon: { gt: 0 },
+      },
+    });
+
+    return {
+      gamesPlayed: stats._count.id || 0,
+      totalWins: wins || 0,
+      amountWon: stats._sum.coinsWon || 0,
+    };
+  }
 }
 
 export const userService = new UserService();

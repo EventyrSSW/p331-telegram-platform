@@ -24,3 +24,7 @@ export const addCoinsSchema = coinAmountSchema.extend({
 export const linkWalletSchema = z.object({
   walletAddress: z.string().min(1, 'Wallet address is required'),
 });
+
+export const getUserStatsSchema = z.object({
+  // No body/query params needed - uses authenticated user ID
+});
