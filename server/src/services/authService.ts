@@ -69,6 +69,57 @@ export class AuthService {
   }
 
   /**
+   * Debug authentication - preserves existing user data
+   * Only creates user if doesn't exist, never overwrites profile data
+   */
+  async authenticateDebug(telegramId: number, username: string) {
+    // Check if user exists
+    const existingUser = await prisma.user.findUnique({
+      where: { telegramId: BigInt(telegramId) },
+    });
+
+    let user;
+    if (existingUser) {
+      // User exists - just return them without updating profile
+      user = existingUser;
+    } else {
+      // Create new user with debug defaults
+      user = await prisma.user.create({
+        data: {
+          telegramId: BigInt(telegramId),
+          username: username,
+          firstName: 'Debug',
+          lastName: 'User',
+          languageCode: 'en',
+          isPremium: false,
+        },
+      });
+    }
+
+    // Generate JWT token
+    const token = this.generateToken({
+      userId: user.id,
+      telegramId: telegramId,
+    });
+
+    return {
+      token,
+      user: {
+        id: user.id,
+        telegramId: Number(user.telegramId),
+        username: user.username,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        languageCode: user.languageCode,
+        photoUrl: user.photoUrl,
+        isPremium: user.isPremium,
+        coinBalance: decimalToNumber(user.coinBalance),
+        walletAddress: user.walletAddress,
+      },
+    };
+  }
+
+  /**
    * Generate JWT token
    */
   private generateToken(payload: AuthPayload): string {

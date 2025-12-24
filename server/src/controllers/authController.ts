@@ -54,14 +54,8 @@ export const authController = {
 
       const { telegramId, username } = parsed.data;
 
-      // Authenticate with mock Telegram user data
-      const result = await authService.authenticateFromTelegram({
-        id: telegramId,
-        first_name: 'Debug',
-        last_name: 'User',
-        username: username,
-        language_code: 'en',
-      });
+      // Use debug-specific auth that preserves existing user data
+      const result = await authService.authenticateDebug(telegramId, username);
 
       console.log('[Auth] Debug authentication for telegramId:', telegramId);
       res.json(result);
