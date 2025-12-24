@@ -22,7 +22,6 @@ describe('AddTonModal - Leading Zeros Validation', () => {
   };
 
   it('should allow entering single zero', async () => {
-    const user = userEvent.setup();
     render(<AddTonModal {...defaultProps} />);
 
     // Initial state should be "0"
