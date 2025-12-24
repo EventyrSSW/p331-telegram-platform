@@ -16,3 +16,4 @@ export { FeaturedCarousel } from './FeaturedCarousel';
 export { AddTonModal } from './AddTonModal';
 export { GameResultModal, type GameResultData } from './GameResultModal';
 export { MatchResultModal } from './MatchResultModal';
+export { SearchOpponentModal } from './SearchOpponentModal';

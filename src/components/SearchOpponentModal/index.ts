@@ -1,0 +1,1 @@
+export { SearchOpponentModal } from './SearchOpponentModal';
