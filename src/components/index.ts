@@ -14,3 +14,4 @@ export { BottomWalletBar } from './BottomWalletBar';
 export { BottomNavBar } from './BottomNavBar';
 export { FeaturedCarousel } from './FeaturedCarousel';
 export { AddTonModal } from './AddTonModal';
+export { GameResultModal, type GameResultData } from './GameResultModal';
