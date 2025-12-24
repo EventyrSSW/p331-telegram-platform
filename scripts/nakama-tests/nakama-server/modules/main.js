@@ -27,14 +27,14 @@ function getConfig(nk) {
     ]);
     if (configReads.length > 0) {
       var stored = configReads[0].value;
-      // Merge stored with defaults (defaults take precedence for minBet/maxBet)
+      // Merge stored with defaults (stored values take precedence)
       return {
         commissionRate: stored.commissionRate !== undefined ? stored.commissionRate : defaults.commissionRate,
         waitTimeoutSec: stored.waitTimeoutSec !== undefined ? stored.waitTimeoutSec : defaults.waitTimeoutSec,
         playTimeoutSec: stored.playTimeoutSec !== undefined ? stored.playTimeoutSec : defaults.playTimeoutSec,
         houseEdge: stored.houseEdge !== undefined ? stored.houseEdge : defaults.houseEdge,
-        minBet: DEFAULT_MIN_BET,  // Always use default for bet limits
-        maxBet: DEFAULT_MAX_BET,  // Always use default for bet limits
+        minBet: stored.minBet !== undefined ? stored.minBet : defaults.minBet,
+        maxBet: stored.maxBet !== undefined ? stored.maxBet : defaults.maxBet,
         skillTiers: stored.skillTiers || defaults.skillTiers,
         games: stored.games || defaults.games
       };
