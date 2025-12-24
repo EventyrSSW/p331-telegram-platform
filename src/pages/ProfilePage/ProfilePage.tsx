@@ -10,7 +10,7 @@ import styles from './ProfilePage.module.css';
 export function ProfilePage() {
   const { user, refreshUser } = useAuth();
   // TON Connect UI hook - reserved for future wallet integration features
-  const [tonConnectUI] = useTonConnectUI(); // eslint-disable-line @typescript-eslint/no-unused-vars
+  const [_tonConnectUI] = useTonConnectUI();
   const [stats, setStats] = useState<UserStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
