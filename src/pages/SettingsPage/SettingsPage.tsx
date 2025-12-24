@@ -22,12 +22,12 @@ export function SettingsPage() {
   });
 
   const handleBack = () => {
-    haptic.light();
+    if (hapticsEnabled) haptic.light();
     navigate(-1);
   };
 
   const handleCashOutClick = () => {
-    haptic.medium();
+    if (hapticsEnabled) haptic.medium();
     setShowCashOutModal(true);
   };
 
