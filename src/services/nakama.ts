@@ -403,6 +403,21 @@ class NakamaService {
           console.log('[Nakama] Joining match via socket:', result.matchId);
           const match = await this.socket.joinMatch(result.matchId);
           console.log('[Nakama] Joined match:', result.matchId, 'presences:', match.presences);
+
+          // Process initial presences from joinMatch response
+          if (match.presences && match.presences.length > 0) {
+            match.presences.forEach(p => {
+              this.matchPresences[p.user_id] = {
+                userId: p.user_id,
+                username: p.username,
+                avatarUrl: undefined,
+                isOnline: true,
+              };
+            });
+            console.log('[Nakama] Populated initial presences:', this.matchPresences);
+            // Notify context about initial presences
+            this.matchCallbacks.onPresenceChange?.({ ...this.matchPresences });
+          }
         } catch (e) {
           console.error('[Nakama] Failed to join match via socket:', e);
           // Don't throw - RPC succeeded, socket join is secondary
