@@ -5,6 +5,9 @@ import { Address } from '@ton/core';
 import styles from './CashOutModal.module.css';
 import { haptic } from '../../providers/TelegramProvider';
 import { api } from '../../services/api';
+import ArrowLeftIcon from '../../assets/icons/arrow-left.svg?react';
+import CashIcon from '../../assets/icons/cash.svg?react';
+import ArrowRightIcon from '../../assets/icons/arrow-right.svg?react';
 
 interface CashOutModalProps {
   isOpen: boolean;
@@ -19,7 +22,6 @@ export function CashOutModal({
   currentBalance,
   onSuccess,
 }: CashOutModalProps) {
-  const [amount, setAmount] = useState('');
   const [walletAddress, setWalletAddress] = useState('');
   const [error, setError] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -30,27 +32,9 @@ export function CashOutModal({
   const handleClose = () => {
     if (isProcessing) return;
     haptic.light();
-    setAmount('');
     setWalletAddress('');
     setError('');
     onClose();
-  };
-
-  const handlePercentageClick = (percentage: number) => {
-    if (isProcessing) return;
-    haptic.light();
-    const calculatedAmount = (currentBalance * percentage) / 100;
-    setAmount(calculatedAmount.toFixed(2));
-    setError('');
-  };
-
-  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    // Allow only numbers and one decimal point
-    if (/^\d*\.?\d*$/.test(value)) {
-      setAmount(value);
-      setError('');
-    }
   };
 
   const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -78,19 +62,7 @@ export function CashOutModal({
   const handleCashOut = async () => {
     if (isProcessing) return;
 
-    const numericAmount = Number(amount);
-
-    // Validation
-    if (!amount || numericAmount <= 0) {
-      setError('Please enter a valid amount');
-      return;
-    }
-
-    if (numericAmount > currentBalance) {
-      setError('Insufficient balance');
-      return;
-    }
-
+    // Simple validation - just check if wallet address is not empty
     if (!walletAddress.trim()) {
       setError('Please enter a wallet address');
       return;
@@ -101,16 +73,18 @@ export function CashOutModal({
       return;
     }
 
+    // Minimum withdraw validation
+    if (currentBalance < 6) {
+      setError('Minimum withdraw is $6');
+      return;
+    }
+
     setIsProcessing(true);
     haptic.medium();
 
     try {
-      // Deduct coins from user balance
-      await api.deductCoins(numericAmount);
-
-      // TODO: Actually send TON transaction to user's wallet
-      // This would require backend integration with TON blockchain
-      // For now, we just deduct the balance
+      // Deduct all balance (simplified - no amount selection)
+      await api.deductCoins(currentBalance);
 
       haptic.success();
       onSuccess();
@@ -124,107 +98,67 @@ export function CashOutModal({
     }
   };
 
-  const numericAmount = Number(amount);
   const isButtonDisabled =
-    !amount ||
-    numericAmount <= 0 ||
-    numericAmount > currentBalance ||
     !walletAddress.trim() ||
+    currentBalance < 6 ||
     isProcessing;
 
   const modalContent = (
     <div className={styles.overlay}>
-      <button
-        className={styles.closeButton}
-        onClick={handleClose}
-        disabled={isProcessing}
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M18 6L6 18M6 6l12 12" />
-        </svg>
-      </button>
+      {/* Back Button */}
+      <div className={styles.backButtonRow}>
+        <button className={styles.backButton} onClick={handleClose} disabled={isProcessing}>
+          <ArrowLeftIcon className={styles.backIcon} />
+          <span>BACK</span>
+        </button>
+      </div>
 
       <div className={styles.content}>
-        <h2 className={styles.title}>Cash Out</h2>
-        <p className={styles.subtitle}>Withdraw your winnings to TON wallet</p>
-
-        <div className={styles.balanceInfo}>
-          <span className={styles.balanceLabel}>Available Balance</span>
-          <span className={styles.balanceValue}>{currentBalance} coins</span>
-        </div>
-
-        <div className={styles.inputSection}>
-          <label className={styles.label}>Amount (coins)</label>
-          <input
-            type="text"
-            inputMode="decimal"
-            className={styles.input}
-            value={amount}
-            onChange={handleAmountChange}
-            placeholder="0.00"
-            disabled={isProcessing}
-          />
-
-          <div className={styles.percentageContainer}>
-            {[25, 50, 75, 100].map(percentage => (
-              <button
-                key={percentage}
-                className={styles.percentageButton}
-                onClick={() => handlePercentageClick(percentage)}
-                disabled={isProcessing}
-              >
-                {percentage}%
-              </button>
-            ))}
+        {/* Balance Display */}
+        <div className={styles.balanceSection}>
+          <div className={styles.balanceDisplay}>
+            <CashIcon className={styles.cashIcon} />
+            <span className={styles.balanceAmount}>{currentBalance}</span>
           </div>
+          <p className={styles.balanceLabel}>Current balance</p>
         </div>
 
+        {/* Info Section */}
+        <div className={styles.infoSection}>
+          <h2 className={styles.infoTitle}>Cash Out</h2>
+          <p className={styles.infoText}>Only winnings can be withdraw</p>
+          <p className={styles.infoText}>Bonus cash is forfeited upon withdraw</p>
+          <p className={styles.infoText}>$6 minimum withdraw</p>
+        </div>
+
+        {/* Wallet Input */}
         <div className={styles.inputSection}>
-          <label className={styles.label}>TON Wallet Address</label>
+          <label className={styles.inputLabel}>Enter TON wallet address</label>
           <input
             type="text"
-            className={styles.input}
+            className={styles.walletInput}
             value={walletAddress}
             onChange={handleAddressChange}
-            placeholder="UQAa..."
+            placeholder="Some numbers & letters..."
             disabled={isProcessing}
           />
-
-          {wallet && (
-            <button
-              className={styles.useWalletButton}
-              onClick={handleUseConnectedWallet}
-              disabled={isProcessing}
-            >
-              Use Connected Wallet
-            </button>
-          )}
         </div>
 
-        {error && (
-          <div className={styles.errorMessage}>
-            {error}
-          </div>
-        )}
-
+        {/* Cash Out Button */}
         <div className={styles.bottomSection}>
           <button
             className={styles.cashOutButton}
             onClick={handleCashOut}
             disabled={isButtonDisabled}
           >
-            {isProcessing ? (
-              'Processing...'
-            ) : numericAmount > 0 ? (
-              `Cash Out ${amount} coins`
-            ) : (
-              'Cash Out'
-            )}
+            <span>Cash Out</span>
+            <ArrowRightIcon className={styles.arrowIcon} />
           </button>
-          <p className={styles.infoText}>
-            Withdrawal will be processed to your TON wallet
-          </p>
         </div>
+
+        {error && (
+          <div className={styles.errorMessage}>{error}</div>
+        )}
       </div>
     </div>
   );
