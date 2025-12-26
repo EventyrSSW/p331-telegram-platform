@@ -2,88 +2,59 @@
   position: fixed;
   bottom: 0;
   left: 0;
-  right: 0;
-  background: var(--color-bg-hero);
-  border-top: 1px solid var(--color-border-subtle);
-  padding: 8px 0;
-  padding-bottom: calc(8px + var(--tg-safe-area-bottom, env(safe-area-inset-bottom, 0px)));
+  width: 100%;
+  height: 68px;
+  padding: 10px 14px;
+  background: rgba(23, 23, 23, 0.80);
+  backdrop-filter: blur(4px);
   display: flex;
+  justify-content: center;
   align-items: center;
-  justify-content: space-around;
-  z-index: 100;
+  gap: 0;
+  z-index: 1000;
 }
 
 .navItem {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: center;
   justify-content: center;
-  gap: 4px;
-  padding: 8px 16px;
-  border: none;
-  background: transparent;
-  cursor: pointer;
+  align-items: center;
+  gap: 2px;
   text-decoration: none;
-  transition: all var(--transition-fast);
-  border-radius: var(--radius-md);
-  min-width: 64px;
+  color: #9F9F9F;
+  transition: color 0.2s ease;
+  padding: 8px;
 }
 
 .navItem:hover {
-  background: rgba(255, 255, 255, 0.05);
+  color: #CCCCCC;
 }
 
-.navItem:active {
-  transform: scale(0.95);
+.navItemActive {
+  color: white;
 }
 
 .navIcon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.navIcon svg {
   width: 24px;
   height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--color-text-muted);
-  transition: color var(--transition-fast);
 }
 
 .navLabel {
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--color-text-muted);
-  transition: color var(--transition-fast);
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.24px;
+  text-align: center;
 }
 
-.navItemActive .navIcon {
-  color: var(--color-accent-primary);
-}
-
-.navItemActive .navLabel {
-  color: var(--color-accent-primary);
-}
-
-/* Special styling for the center Play button */
 .playButton {
-  background: var(--gradient-primary-button);
-  border-radius: var(--radius-full);
-  padding: 12px 24px;
-  box-shadow: var(--shadow-accent);
-}
-
-.playButton .navIcon {
-  color: var(--color-text-primary);
-}
-
-.playButton .navLabel {
-  color: var(--color-text-primary);
-}
-
-.playButton:hover {
-  background: var(--gradient-primary-button);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-accent-strong);
-}
-
-.playButton:active {
-  transform: scale(0.95) translateY(0);
+  /* Center play button styling - same as other nav items */
 }
