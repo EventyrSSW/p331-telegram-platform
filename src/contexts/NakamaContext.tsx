@@ -265,15 +265,22 @@ export function NakamaProvider({ children }: NakamaProviderProps) {
     try {
       await nakamaService.submitScore(matchRef.current.matchId, score, timeMs);
     } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to submit score';
       console.error('[NakamaContext] Failed to submit score:', error);
+      setMatch(prev => ({ ...prev, error: message }));
     }
   }, []);
 
   const leaveMatch = useCallback(async () => {
-    if (matchRef.current.matchId) {
-      await nakamaService.leaveMatch(matchRef.current.matchId);
+    try {
+      if (matchRef.current.matchId) {
+        await nakamaService.leaveMatch(matchRef.current.matchId);
+      }
+    } catch (error) {
+      console.warn('[NakamaContext] Error leaving match:', error);
+    } finally {
+      setMatch(initialMatchState);
     }
-    setMatch(initialMatchState);
   }, []);
 
   const resetMatch = useCallback(() => {
