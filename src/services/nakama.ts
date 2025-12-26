@@ -56,6 +56,18 @@ interface MatchCallbacks {
   onMatchResult?: (data: MatchState) => void;
   onOpponentScore?: (userId: string, score: number) => void;
   onError?: (error: string) => void;
+  onPresenceChange?: (presences: MatchPresence) => void;
+}
+
+interface PresenceInfo {
+  userId: string;
+  username: string;
+  avatarUrl?: string;
+  isOnline: boolean;
+}
+
+interface MatchPresence {
+  [userId: string]: PresenceInfo;
 }
 
 interface TelegramUserData {
@@ -74,6 +86,11 @@ class NakamaService {
   private socket: Socket | null = null;
   private currentMatch: MatchState | null = null;
   private matchCallbacks: MatchCallbacks = {};
+  private matchPresences: MatchPresence = {};
+  private isSocketConnecting = false;
+  private reconnectAttempts = 0;
+  private maxReconnectAttempts = 5;
+  private reconnectTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
     this.client = new Client(
@@ -196,6 +213,10 @@ class NakamaService {
   }
 
   logout(): void {
+    if (this.reconnectTimeoutId) {
+      clearTimeout(this.reconnectTimeoutId);
+      this.reconnectTimeoutId = null;
+    }
     if (this.session) {
       this.client.sessionLogout(
         this.session,
@@ -213,7 +234,6 @@ class NakamaService {
       throw new Error('Not authenticated');
     }
 
-    // Check if session is expired
     if (this.session.isexpired(Date.now() / 1000)) {
       throw new Error('Session expired, please re-authenticate');
     }
@@ -222,33 +242,95 @@ class NakamaService {
       return this.socket;
     }
 
-    this.socket = this.client.createSocket(nakamaConfig.useSSL, false);
-    await this.socket.connect(this.session, true);
+    if (this.isSocketConnecting) {
+      return new Promise((resolve, reject) => {
+        const startTime = Date.now();
+        const maxWaitTime = 10000; // 10 seconds
+        const checkInterval = setInterval(() => {
+          if (this.socket) {
+            clearInterval(checkInterval);
+            resolve(this.socket);
+          } else if (!this.isSocketConnecting) {
+            clearInterval(checkInterval);
+            reject(new Error('Socket connection failed'));
+          } else if (Date.now() - startTime > maxWaitTime) {
+            clearInterval(checkInterval);
+            reject(new Error('Socket connection timeout'));
+          }
+        }, 100);
+      });
+    }
 
-    // Setup socket event handlers
-    this.socket.onmatchdata = this.handleMatchData.bind(this);
-    this.socket.onnotification = this.handleNotification.bind(this);
-    this.socket.onmatchpresence = this.handleMatchPresence.bind(this);
-    this.socket.ondisconnect = (evt) => {
-      console.log('[Nakama] Socket disconnected', evt);
-      this.socket = null;
-      // Notify UI to show reconnection status
+    this.isSocketConnecting = true;
+
+    try {
+      this.socket = this.client.createSocket(nakamaConfig.useSSL, false);
+      await this.socket.connect(this.session, true);
+
+      this.socket.onmatchdata = this.handleMatchData.bind(this);
+      this.socket.onnotification = this.handleNotification.bind(this);
+      this.socket.onmatchpresence = this.handleMatchPresence.bind(this);
+      this.socket.ondisconnect = (evt) => {
+        console.log('[Nakama] Socket disconnected', evt);
+        this.socket = null;
+        this.attemptReconnect();
+      };
+
+      console.log('[Nakama] Socket connected');
+      this.reconnectAttempts = 0;
+      return this.socket;
+    } finally {
+      this.isSocketConnecting = false;
+    }
+  }
+
+  private attemptReconnect(): void {
+    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+      console.error('[Nakama] Max reconnection attempts reached');
       this.matchCallbacks.onError?.('Connection lost. Please refresh to reconnect.');
-    };
+      return;
+    }
 
-    console.log('[Nakama] Socket connected');
-    return this.socket;
+    const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
+    console.log(`[Nakama] Attempting reconnect in ${delay}ms (attempt ${this.reconnectAttempts + 1})`);
+
+    this.reconnectTimeoutId = setTimeout(async () => {
+      this.reconnectAttempts++;
+      try {
+        await this.connectSocket();
+        if (this.currentMatch?.matchId && this.socket) {
+          console.log('[Nakama] Rejoining match after reconnect:', this.currentMatch.matchId);
+          await this.socket.joinMatch(this.currentMatch.matchId);
+        }
+      } catch (error) {
+        console.error('[Nakama] Reconnection failed:', error);
+        this.attemptReconnect();
+      }
+    }, delay);
   }
 
   private handleMatchPresence(presenceEvent: MatchPresenceEvent): void {
     console.log('[Nakama] Match presence:', presenceEvent);
+
     presenceEvent.joins?.forEach(p => {
       console.log('[Nakama] Player joined:', p.username);
+      this.matchPresences[p.user_id] = {
+        userId: p.user_id,
+        username: p.username,
+        avatarUrl: undefined,
+        isOnline: true,
+      };
     });
+
     presenceEvent.leaves?.forEach(p => {
       console.log('[Nakama] Player left:', p.username);
+      if (this.matchPresences[p.user_id]) {
+        this.matchPresences[p.user_id].isOnline = false;
+      }
       this.matchCallbacks.onError?.(`${p.username} disconnected`);
     });
+
+    this.matchCallbacks.onPresenceChange?.({ ...this.matchPresences });
   }
 
   private handleMatchData(matchData: MatchData): void {
@@ -347,6 +429,10 @@ class NakamaService {
   }
 
   async leaveMatch(matchId: string): Promise<void> {
+    if (this.reconnectTimeoutId) {
+      clearTimeout(this.reconnectTimeoutId);
+      this.reconnectTimeoutId = null;
+    }
     if (this.socket && matchId) {
       try {
         await this.socket.leaveMatch(matchId);
@@ -356,7 +442,7 @@ class NakamaService {
       }
     }
     this.currentMatch = null;
-    this.matchCallbacks = {}; // Clear callbacks to prevent memory leaks
+    this.matchPresences = {};
   }
 
   setMatchCallbacks(callbacks: MatchCallbacks): void {
@@ -369,6 +455,18 @@ class NakamaService {
 
   getSocket(): Socket | null {
     return this.socket;
+  }
+
+  getMatchPresences(): MatchPresence {
+    return { ...this.matchPresences };
+  }
+
+  isSocketConnectingState(): boolean {
+    return this.isSocketConnecting;
+  }
+
+  clearMatchPresences(): void {
+    this.matchPresences = {};
   }
 
   // Wallet methods
@@ -393,4 +491,4 @@ class NakamaService {
 }
 
 export const nakamaService = new NakamaService();
-export type { TelegramUserData, MatchState, MatchLevel, MatchCallbacks };
+export type { TelegramUserData, MatchState, MatchLevel, MatchCallbacks, PresenceInfo, MatchPresence };
