@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useTonWallet } from '@tonconnect/ui-react';
 import { Address } from '@ton/core';
 import styles from './CashOutModal.module.css';
 import { haptic } from '../../providers/TelegramProvider';
@@ -25,7 +24,6 @@ export function CashOutModal({
   const [walletAddress, setWalletAddress] = useState('');
   const [error, setError] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-  const wallet = useTonWallet();
 
   if (!isOpen) return null;
 
@@ -39,14 +37,6 @@ export function CashOutModal({
 
   const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setWalletAddress(e.target.value);
-    setError('');
-  };
-
-  const handleUseConnectedWallet = () => {
-    if (isProcessing || !wallet) return;
-    haptic.light();
-    const address = Address.parse(wallet.account.address).toString();
-    setWalletAddress(address);
     setError('');
   };
 
