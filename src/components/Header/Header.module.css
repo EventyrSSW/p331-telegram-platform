@@ -2,123 +2,143 @@
   position: sticky;
   top: 0;
   z-index: 100;
-  height: calc(56px + var(--tg-header-safe-area, 0px));
-  padding: var(--tg-header-safe-area, 0px) 16px 0 16px;
-  background: var(--color-bg-hero);
+  width: 100%;
+  height: auto;
+  padding: 12px 16px;
+  background: rgba(5, 5, 5, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
 }
 
-/* Rank Section - Left side */
-.rankSection {
+/* Left Section - Rank Badge */
+.leftSection {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px;
-  background: var(--color-bg-tertiary);
-  border-radius: var(--radius-full);
+  padding: 8px 16px 8px 48px;
+  background: rgba(23, 23, 23, 0.90);
+  border-radius: 40px;
   text-decoration: none;
-  transition: all var(--transition-fast);
+  transition: all 0.2s ease;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  min-height: 40px;
 }
 
-.rankSection:hover {
-  background: var(--color-bg-elevated);
+.leftSection:hover {
+  background: rgba(35, 35, 35, 0.90);
   transform: translateY(-1px);
 }
 
-.rankSection:active {
+.leftSection:active {
   transform: translateY(0);
 }
 
-.rankIcon {
+.avatar {
+  position: absolute;
+  left: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 3px solid rgba(5, 5, 5, 0.95);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.starIcon {
   width: 24px;
   height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #FFD700;
+  flex-shrink: 0;
 }
 
 .rankValue {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
-  color: var(--color-text-primary);
+  color: white;
+  letter-spacing: 0.32px;
 }
 
-/* Crystal Section - Center */
-.crystalSection {
+/* Right Section */
+.rightSection {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
-  background: var(--color-bg-tertiary);
-  border-radius: var(--radius-full);
+  gap: 12px;
 }
 
-.crystalIcon {
-  width: 20px;
-  height: 20px;
+/* Gems Section */
+.gemSection {
   display: flex;
   align-items: center;
-  justify-content: center;
-  color: #00D4FF;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(23, 23, 23, 0.90);
+  border-radius: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.crystalValue {
-  font-size: 14px;
+.gemIcon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.gemValue {
+  font-size: 16px;
   font-weight: 700;
-  color: var(--color-text-primary);
+  color: white;
+  letter-spacing: 0.32px;
 }
 
-/* Balance Section - Right side */
-.balanceSection {
+/* TON Section */
+.tonSection {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
-  background: var(--color-bg-tertiary);
-  border-radius: var(--radius-full);
-  border: none;
+  gap: 8px;
+  padding: 8px 12px 8px 16px;
+  background: rgba(23, 23, 23, 0.90);
+  border-radius: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
   cursor: pointer;
   font-family: inherit;
-  transition: all var(--transition-fast);
+  transition: all 0.2s ease;
 }
 
-.balanceSection:hover {
-  background: var(--color-bg-elevated);
+.tonSection:hover {
+  background: rgba(35, 35, 35, 0.90);
   transform: translateY(-1px);
 }
 
-.balanceSection:active {
+.tonSection:active {
   transform: translateY(0);
 }
 
 .tonIcon {
-  width: 22px;
-  height: 22px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #0088CC;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: #0098EA;
 }
 
-.balanceValue {
-  font-size: 14px;
+.tonValue {
+  font-size: 16px;
   font-weight: 700;
-  color: var(--color-text-primary);
-  min-width: 40px;
+  color: white;
+  letter-spacing: 0.32px;
 }
 
-.addIcon {
+.plusIcon {
   width: 20px;
   height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--color-accent-primary);
+  flex-shrink: 0;
+  color: #0098EA;
+  background: rgba(0, 152, 234, 0.15);
   border-radius: 50%;
-  color: var(--color-text-primary);
-  margin-left: 4px;
+  padding: 2px;
 }

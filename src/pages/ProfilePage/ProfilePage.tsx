@@ -4,17 +4,15 @@ import { useTonConnectUI } from '@tonconnect/ui-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { api, UserStats } from '../../services/api';
 import { CashOutModal } from '../../components/CashOutModal/CashOutModal';
+import { Header, BottomNavBar } from '../../components';
 import { haptic } from '../../providers/TelegramProvider';
 import styles from './ProfilePage.module.css';
-import StarIcon from '../../assets/icons/star.svg?react';
-import GemIcon from '../../assets/icons/gem.svg?react';
-import CashIcon from '../../assets/icons/cash.svg?react';
 import GamepadIcon from '../../assets/icons/gamepad.svg?react';
 import MedalIcon from '../../assets/icons/medal.svg?react';
 import DollarIcon from '../../assets/icons/dollar.svg?react';
 import SettingsIcon from '../../assets/icons/settings.svg?react';
 import ArrowRightIcon from '../../assets/icons/arrow-right.svg?react';
-import { MOCK_USER, MOCK_STATS, MOCK_RANK, MOCK_GEMS, shouldUseMockData } from '../../utils/mockData';
+import { MOCK_USER, MOCK_STATS, shouldUseMockData } from '../../utils/mockData';
 
 export function ProfilePage() {
   const { user, refreshUser } = useAuth();
@@ -81,43 +79,9 @@ export function ProfilePage() {
     );
   }
 
-  // Use current date as fallback since createdAt is not in User interface yet
-  const joinDate = new Date(Date.now()).toLocaleDateString('en-US', {
-    month: 'short',
-    year: 'numeric',
-  });
-
   return (
     <div className={styles.container}>
-      {/* Top Header with Resource Badges */}
-      <div className={styles.topHeader}>
-        {/* Rank Badge with Avatar */}
-        <div className={styles.resourceBadge}>
-          <div className={styles.badgeAvatar}>
-            {displayUser?.photoUrl ? (
-              <img src={displayUser.photoUrl} alt="avatar" />
-            ) : (
-              <div className={styles.badgePlaceholder}>
-                {(displayUser?.username?.[0] || 'U').toUpperCase()}
-              </div>
-            )}
-          </div>
-          <StarIcon className={styles.badgeIcon} />
-          <span className={styles.badgeValue}>{MOCK_RANK}</span>
-        </div>
-
-        {/* Gems Badge */}
-        <div className={styles.resourceBadge}>
-          <GemIcon className={styles.badgeIcon} />
-          <span className={styles.badgeValue}>{MOCK_GEMS}</span>
-        </div>
-
-        {/* Cash Badge */}
-        <div className={styles.resourceBadge}>
-          <CashIcon className={styles.badgeIcon} />
-          <span className={styles.badgeValue}>${displayUser?.coinBalance || 0}</span>
-        </div>
-      </div>
+      <Header />
 
       {/* Settings Button Row */}
       <div className={styles.settingsRow}>
@@ -185,10 +149,8 @@ export function ProfilePage() {
 
       {/* Cash Out Button */}
       <button className={styles.cashOutButton} onClick={handleCashOutClick}>
-        <span className={styles.cashOutText}>Cash out</span>
-        <svg className={styles.cashOutArrow} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M5 12h14m-7-7l7 7-7 7" />
-        </svg>
+        <span className={styles.cashOutText}>Cash out Your Winnings</span>
+        <ArrowRightIcon className={styles.cashOutArrow} />
       </button>
 
       {error && (
@@ -201,6 +163,8 @@ export function ProfilePage() {
         currentBalance={user.coinBalance}
         onSuccess={handleCashOutSuccess}
       />
+
+      <BottomNavBar />
     </div>
   );
 }

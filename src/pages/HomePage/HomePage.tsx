@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { haptic } from '../../providers/TelegramProvider';
 
@@ -7,19 +7,18 @@ let initialHapticTriggered = false;
 import {
   Header,
   FeaturedCarousel,
-  CategoryFilter,
   GameGrid,
   Section,
   BottomNavBar,
   Game,
 } from '../../components';
+import { WelcomeBonusBanner } from '../../components/WelcomeBonusBanner/WelcomeBonusBanner';
 import { useGames } from '../../hooks/useGames';
 import styles from './HomePage.module.css';
 
 export const HomePage = () => {
   const { games, featuredGames, isLoading, error, refetch } = useGames();
   const navigate = useNavigate();
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   // Haptic feedback only on first app load
   useEffect(() => {
@@ -58,11 +57,6 @@ export const HomePage = () => {
     );
   }
 
-  // Filter games by selected category
-  const filteredGames = selectedCategory
-    ? games.filter((game) => game.category.toLowerCase() === selectedCategory.toLowerCase())
-    : games;
-
   return (
     <div className={styles.page}>
       <Header />
@@ -75,19 +69,14 @@ export const HomePage = () => {
           </section>
         )}
 
-        {/* Category Filter */}
-        <section className={styles.categoriesSection}>
-          <CategoryFilter
-            selectedCategory={selectedCategory}
-            onCategoryChange={setSelectedCategory}
-          />
+        {/* Welcome Bonus Banner */}
+        <section className={styles.bonusSection}>
+          <WelcomeBonusBanner variant="blue" />
         </section>
 
         {/* Games Grid */}
-        <Section
-          title={selectedCategory ? `${selectedCategory} Games` : 'Most Popular Games'}
-        >
-          <GameGrid games={filteredGames} onGameClick={handleGameClick} />
+        <Section title="Most Popular Games">
+          <GameGrid games={games} onGameClick={handleGameClick} />
         </Section>
       </main>
 

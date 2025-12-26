@@ -39,6 +39,18 @@
   gap: 2px;
 }
 
+.rankBadge {
+  padding-left: 20px;
+  padding-right: 10px;
+}
+
+.cashBadge {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding-right: 4px;
+}
+
 .badgeIcon {
   width: 20px;
   height: 20px;
@@ -81,6 +93,25 @@
   color: white;
   font-size: 12px;
   font-weight: 700;
+}
+
+.plusButton {
+  width: 20px;
+  height: 20px;
+  background: transparent;
+  border: none;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.plusIcon {
+  width: 14px;
+  height: 14px;
+  color: #0098EA;
 }
 
 /* Settings Row */
