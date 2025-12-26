@@ -1,7 +1,8 @@
 .overlay {
   position: absolute;
-  top: 12px;
-  left: 12px;
+  /* Account for Telegram safe areas (notch, system buttons) */
+  top: calc(12px + var(--tg-header-safe-area, 0px));
+  left: calc(12px + var(--tg-safe-area-left, 0px));
   z-index: 100;
   background: rgba(0, 0, 0, 0.75);
   backdrop-filter: blur(8px);

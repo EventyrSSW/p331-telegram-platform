@@ -1,0 +1,44 @@
+.gameContainer {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  /* Ensure the container respects safe areas */
+  padding-top: var(--tg-safe-area-top, 0px);
+  padding-bottom: var(--tg-safe-area-bottom, 0px);
+  padding-left: var(--tg-safe-area-left, 0px);
+  padding-right: var(--tg-safe-area-right, 0px);
+  box-sizing: border-box;
+  background: #000;
+}
+
+.gameWrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.notFoundContainer {
+  padding: 20px;
+  padding-top: calc(20px + var(--tg-header-safe-area, 0px));
+  color: white;
+  text-align: center;
+}
+
+.notFoundTitle {
+  margin: 0 0 16px 0;
+  font-size: 24px;
+}
+
+.backButton {
+  padding: 12px 24px;
+  background: var(--color-accent-primary, #FF6B35);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.backButton:hover {
+  opacity: 0.9;
+}

@@ -3,6 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { UnityGame } from '../../components/UnityGame';
 import { MatchPresenceOverlay } from '../../components/MatchPresenceOverlay/MatchPresenceOverlay';
 import { useNakama } from '../../contexts/NakamaContext';
+import styles from './GamePage.module.css';
 
 // Map game IDs to their Unity build slugs
 const GAME_SLUGS: Record<string, string> = {
@@ -72,22 +73,26 @@ export const GamePage = () => {
 
   if (!gameSlug) {
     return (
-      <div style={{ padding: 20, color: 'white', textAlign: 'center' }}>
-        <h1>Game not found</h1>
-        <button onClick={() => navigate('/')}>Back to Home</button>
+      <div className={styles.notFoundContainer}>
+        <h1 className={styles.notFoundTitle}>Game not found</h1>
+        <button className={styles.backButton} onClick={() => navigate('/')}>
+          Back to Home
+        </button>
       </div>
     );
   }
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-      <MatchPresenceOverlay />
-      <UnityGame
-        gameSlug={gameSlug}
-        levelData={levelData}
-        onBack={handleBack}
-        onLevelComplete={handleLevelComplete}
-      />
+    <div className={styles.gameContainer}>
+      <div className={styles.gameWrapper}>
+        <MatchPresenceOverlay />
+        <UnityGame
+          gameSlug={gameSlug}
+          levelData={levelData}
+          onBack={handleBack}
+          onLevelComplete={handleLevelComplete}
+        />
+      </div>
     </div>
   );
 };
