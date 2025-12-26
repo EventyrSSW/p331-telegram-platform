@@ -1,9 +1,11 @@
 .overlay {
-  position: absolute;
+  position: fixed;
   /* Account for Telegram safe areas (notch, system buttons) */
   top: calc(12px + var(--tg-header-safe-area, 0px));
-  left: calc(12px + var(--tg-safe-area-left, 0px));
-  z-index: 100;
+  /* Position on right side to avoid overlapping with back button */
+  right: calc(12px + var(--tg-safe-area-right, 0px));
+  /* Must be above Unity container (z-index: 1000) */
+  z-index: 1002;
   background: rgba(0, 0, 0, 0.75);
   backdrop-filter: blur(8px);
   border-radius: 12px;
