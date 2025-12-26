@@ -119,30 +119,29 @@ export function ProfilePage() {
         </div>
       </div>
 
-      {/* Header with Settings */}
-      <div className={styles.header}>
+      {/* Settings Button Row */}
+      <div className={styles.settingsRow}>
         <button className={styles.settingsButton} onClick={handleSettingsClick}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="12" cy="12" r="3" />
-            <path d="M12 1v6m0 6v6m-6-6h6m6 0h-6" />
-          </svg>
-          Settings
+          <SettingsIcon className={styles.settingsIcon} />
+          <span>SETTINGS</span>
         </button>
       </div>
 
       {/* User Profile */}
       <div className={styles.profileSection}>
         <div className={styles.avatar}>
-          {user.photoUrl ? (
-            <img src={user.photoUrl} alt={user.username || 'User'} />
+          {displayUser?.photoUrl ? (
+            <img src={displayUser.photoUrl} alt={displayUser.username || 'User'} />
           ) : (
             <div className={styles.avatarPlaceholder}>
-              {(user.username?.[0] || user.firstName?.[0] || '?').toUpperCase()}
+              {(displayUser?.username?.[0] || displayUser?.firstName?.[0] || '?').toUpperCase()}
             </div>
           )}
         </div>
-        <h1 className={styles.username}>{user.username || user.firstName || 'Anonymous'}</h1>
-        <p className={styles.joinDate}>Joined {joinDate}</p>
+        <h1 className={styles.username}>
+          {displayUser?.username || displayUser?.firstName || 'Anonymous'}
+        </h1>
+        <p className={styles.joinDate}>Joined Dec 2025</p>
       </div>
 
       {/* Stats Cards */}
