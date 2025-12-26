@@ -4,10 +4,10 @@ import { useNakama } from '../contexts/NakamaContext';
 
 export function NakamaConnector() {
   const { user, isAuthenticated } = useAuth();
-  const { connect, isConnected, isConnecting, error } = useNakama();
+  const { connect, isConnected, isConnecting, socketError } = useNakama();
 
   useEffect(() => {
-    console.log('[NakamaConnector] State:', { isAuthenticated, hasUser: !!user, isConnected, isConnecting, error });
+    console.log('[NakamaConnector] State:', { isAuthenticated, hasUser: !!user, isConnected, isConnecting, socketError });
 
     // Connect to Nakama when user is authenticated but not connected
     if (isAuthenticated && user && !isConnected && !isConnecting) {
@@ -22,7 +22,7 @@ export function NakamaConnector() {
         isPremium: user.isPremium,
       });
     }
-  }, [isAuthenticated, user, isConnected, isConnecting, connect]);
+  }, [isAuthenticated, user, isConnected, isConnecting, connect, socketError]);
 
   return null; // This component renders nothing
 }
