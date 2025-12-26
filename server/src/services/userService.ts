@@ -163,6 +163,47 @@ export class UserService {
       return updated;
     });
   }
+
+  /**
+   * Get user's game statistics
+   *
+   * TEMPORARY IMPLEMENTATION - MOCK DATA
+   *
+   * Current Status:
+   * - Returns static mock data for UI development
+   * - Database queries removed (no longer using GameSession table)
+   *
+   * Future Implementation:
+   * - Integrate with external game service API
+   * - Add service configuration (API endpoint, auth)
+   * - Add error handling for external service failures
+   * - Add caching layer for performance
+   * - Consider fallback to default values if service unavailable
+   *
+   * Expected External API Contract:
+   * GET /api/v1/users/{userId}/stats
+   * Response: { gamesPlayed: number, totalWins: number, amountWon: number }
+   *
+   * @param userId - Internal user ID (may need to be mapped to external service ID)
+   * @returns Promise<{ gamesPlayed: number, totalWins: number, amountWon: number }>
+   */
+  async getUserGameStats(userId: string) {
+    // TODO: Replace with external game service API call
+    // Example:
+    // const response = await fetch(`${GAME_SERVICE_URL}/users/${userId}/stats`);
+    // return response.json();
+
+    // Mock data with slight user-based variation
+    // This makes it easier to spot that mock data is being used
+    const userHash = userId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const variation = userHash % 10;
+
+    return {
+      gamesPlayed: 40 + variation,
+      totalWins: 15 + Math.floor(variation / 2),
+      amountWon: 1200 + (variation * 50),
+    };
+  }
 }
 
 export const userService = new UserService();

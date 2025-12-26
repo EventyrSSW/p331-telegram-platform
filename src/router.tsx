@@ -5,6 +5,7 @@ import { GamePage } from './pages/GamePage';
 import { GameDetailPage } from './pages/GameDetailPage';
 import { LeaderboardPage } from './pages/LeaderboardPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { SettingsPage } from './pages/SettingsPage/SettingsPage';
 
 export const router = createBrowserRouter([
   {
@@ -30,5 +31,9 @@ export const router = createBrowserRouter([
   {
     path: '/profile',
     element: <ProfilePage />,
+  },
+  {
+    path: '/settings',
+    element: <SettingsPage />,
   },
 ]);

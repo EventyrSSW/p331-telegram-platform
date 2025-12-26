@@ -1,4 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
+import TrophyIcon from '../../assets/icons/trophy.svg?react';
+import GamepadIcon from '../../assets/icons/gamepad.svg?react';
+import UserIcon from '../../assets/icons/user.svg?react';
 import styles from './BottomNavBar.module.css';
 
 export const BottomNavBar = () => {
@@ -19,23 +22,18 @@ export const BottomNavBar = () => {
         className={`${styles.navItem} ${isActive('/leaderboard') ? styles.navItemActive : ''}`}
       >
         <div className={styles.navIcon}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M8 21V11M16 21V7M12 21V15M4 21H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M8 7L12 3L16 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
+          <TrophyIcon />
         </div>
-        <span className={styles.navLabel}>Result</span>
+        <span className={styles.navLabel}>Results</span>
       </Link>
 
       {/* Play Tab (Center - Primary Action) */}
       <Link
         to="/"
-        className={`${styles.navItem} ${styles.playButton}`}
+        className={`${styles.navItem} ${styles.playButton} ${isActive('/') ? styles.navItemActive : ''}`}
       >
         <div className={styles.navIcon}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M5 3L19 12L5 21V3Z" fill="currentColor"/>
-          </svg>
+          <GamepadIcon />
         </div>
         <span className={styles.navLabel}>Play</span>
       </Link>
@@ -46,10 +44,7 @@ export const BottomNavBar = () => {
         className={`${styles.navItem} ${isActive('/profile') ? styles.navItemActive : ''}`}
       >
         <div className={styles.navIcon}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-            <path d="M5 20C5 16.134 8.13401 13 12 13C15.866 13 19 16.134 19 20" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-          </svg>
+          <UserIcon />
         </div>
         <span className={styles.navLabel}>Profile</span>
       </Link>

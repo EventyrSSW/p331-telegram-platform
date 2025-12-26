@@ -1,0 +1,216 @@
+.overlay {
+  width: 100%;
+  height: 100%;
+  padding-top: 20px;
+  padding-bottom: 50px;
+  background: #171717;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.backButtonRow {
+  align-self: stretch;
+  padding-left: 14px;
+  padding-right: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.backButton {
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.20);
+  border: none;
+  border-radius: 50px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.28px;
+  transition: background 0.2s ease;
+}
+
+.backButton:hover {
+  background: rgba(255, 255, 255, 0.30);
+}
+
+.backButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.backIcon {
+  width: 24px;
+  height: 24px;
+}
+
+.content {
+  width: 300px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 40px;
+}
+
+.balanceSection {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.balanceDisplay {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.cashIcon {
+  width: 40px;
+  height: 40px;
+  color: #0098EA;
+}
+
+.balanceAmount {
+  color: white;
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: 0.60px;
+}
+
+.balanceLabel {
+  margin: 0;
+  color: #0098EA;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.36px;
+  text-align: center;
+}
+
+.infoSection {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.infoTitle {
+  margin: 0;
+  color: white;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.36px;
+}
+
+.infoText {
+  margin: 0;
+  color: #9F9F9F;
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0.28px;
+}
+
+.inputSection {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.inputLabel {
+  color: #9F9F9F;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.24px;
+}
+
+.walletInput {
+  align-self: stretch;
+  padding: 6px;
+  background: #252525;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0.28px;
+  outline: none;
+  height: 28px;
+}
+
+.walletInput::placeholder {
+  color: #3D3D3D;
+}
+
+.walletInput:focus {
+  outline: 1px solid #0098EA;
+}
+
+.bottomSection {
+  align-self: stretch;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+}
+
+.cashOutButton {
+  width: 300px;
+  height: 44px;
+  padding: 10px 20px;
+  background: #FF4D00;
+  border: none;
+  border-radius: 50px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  color: white;
+  font-size: 16px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.32px;
+  transition: background 0.2s ease;
+}
+
+.cashOutButton:hover {
+  background: #E54500;
+}
+
+.cashOutButton:active {
+  transform: scale(0.98);
+}
+
+.cashOutButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.arrowIcon {
+  width: 24px;
+  height: 24px;
+}
+
+.errorMessage {
+  padding: 12px;
+  background: rgba(255, 77, 0, 0.2);
+  border: 1px solid #FF4D00;
+  border-radius: 8px;
+  color: #FF4D00;
+  font-size: 14px;
+  text-align: center;
+}
