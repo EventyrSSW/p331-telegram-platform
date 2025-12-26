@@ -14,3 +14,7 @@ export { BottomWalletBar } from './BottomWalletBar';
 export { BottomNavBar } from './BottomNavBar';
 export { FeaturedCarousel } from './FeaturedCarousel';
 export { AddTonModal } from './AddTonModal';
+export { GameResultModal, type GameResultData } from './GameResultModal';
+export { MatchResultModal } from './MatchResultModal';
+export { SearchOpponentModal } from './SearchOpponentModal';
+export { MatchPresenceOverlay } from './MatchPresenceOverlay/MatchPresenceOverlay';

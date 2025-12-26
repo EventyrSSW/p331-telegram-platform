@@ -19,6 +19,12 @@ const TransactionStatus = {
 // Transaction client type for Prisma interactive transactions
 type TransactionClient = Omit<PrismaClient, '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'>;
 
+// Helper to convert Prisma Decimal to number for API responses
+export function decimalToNumber(decimal: unknown): number {
+  if (decimal === null || decimal === undefined) return 0;
+  return Number(decimal);
+}
+
 export class UserService {
   /**
    * Find or create a user by Telegram ID
@@ -112,7 +118,7 @@ export class UserService {
         data: {
           userId: user.id,
           type: TransactionType.PURCHASE,
-          amount,
+          amount: amount,
           tonTxHash: options?.tonTxHash,
           tonAmount: options?.tonAmount,
           status: TransactionStatus.COMPLETED,
@@ -134,7 +140,7 @@ export class UserService {
         where: { telegramId: BigInt(telegramId) },
       });
 
-      if (!user || user.coinBalance < amount) {
+      if (!user || decimalToNumber(user.coinBalance) < amount) {
         throw new Error('Insufficient balance');
       }
 
@@ -147,7 +153,7 @@ export class UserService {
       // Create transaction record (negative amount for deduction)
       await tx.transaction.create({
         data: {
-          userId: user.id,
+          userId: updated.id,
           type: TransactionType.GAME_SPEND,
           amount: -amount,
           status: TransactionStatus.COMPLETED,

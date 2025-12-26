@@ -98,10 +98,10 @@ export const UnityGame: React.FC<UnityGameProps> = ({ gameSlug, levelData, onLev
     window.addEventListener('resize', updateCanvasSize);
 
     // Set level data BEFORE Unity loads so it can read it during initialization
-    if (levelData !== undefined) {
-      (window as any).urlLevelData = levelData.toString();
-      console.log('Set urlLevelData for Unity:', levelData);
-    }
+    const levelToSet = levelData !== undefined ? levelData.toString() : "5";
+    (window as any).urlLevelData = levelToSet;
+    console.log('[UnityGame] Setting urlLevelData BEFORE Unity loads:', levelToSet);
+    console.log('[UnityGame] window.urlLevelData is now:', (window as any).urlLevelData);
 
     const script = document.createElement('script');
     script.src = loaderUrl;
@@ -111,6 +111,9 @@ export const UnityGame: React.FC<UnityGameProps> = ({ gameSlug, levelData, onLev
           setProgress(Math.round(p * 100));
         })
           .then((instance: any) => {
+            console.log('[UnityGame] Unity instance created successfully');
+            console.log('[UnityGame] window.urlLevelData at Unity ready:', (window as any).urlLevelData);
+
             unityInstanceRef.current = instance;
             setIsLoading(false);
 
@@ -120,17 +123,17 @@ export const UnityGame: React.FC<UnityGameProps> = ({ gameSlug, levelData, onLev
             // Setup setLevelData function
             (window as any).setLevelData = (levelDataString: string) => {
               if (instance) {
-                console.log('Setting level data:', levelDataString);
+                console.log('[UnityGame] setLevelData called with:', levelDataString);
                 instance.SendMessage('WebGLBridge', 'SetLevelDataString', levelDataString);
                 return true;
               }
-              console.error('Unity instance not ready yet');
+              console.error('[UnityGame] Unity instance not ready yet');
               return false;
             };
 
             // Setup level completion callback
             (window as any).onLevelComplete = (data: LevelCompleteData) => {
-              console.log('Level completed:', data);
+              console.log('[UnityGame] Level completed:', data);
               onLevelCompleteRef.current?.(data);
             };
           })

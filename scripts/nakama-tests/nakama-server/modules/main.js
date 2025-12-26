@@ -5,28 +5,44 @@ var DEFAULT_WAIT_TIMEOUT_SEC = 30;
 var DEFAULT_PLAY_TIMEOUT_SEC = 86400;
 var DEFAULT_COMMISSION_RATE = 0.10;
 var DEFAULT_HOUSE_EDGE = 0.51;
+var DEFAULT_MIN_BET = 50;    // 50 cents = $0.50
+var DEFAULT_MAX_BET = 10000; // 10000 cents = $100
 
 function getConfig(nk) {
+  // Default config
+  var defaults = {
+    commissionRate: DEFAULT_COMMISSION_RATE,
+    waitTimeoutSec: DEFAULT_WAIT_TIMEOUT_SEC,
+    playTimeoutSec: DEFAULT_PLAY_TIMEOUT_SEC,
+    houseEdge: DEFAULT_HOUSE_EDGE,
+    minBet: DEFAULT_MIN_BET,
+    maxBet: DEFAULT_MAX_BET,
+    skillTiers: [],
+    games: {}
+  };
+
   try {
     var configReads = nk.storageRead([
       { collection: "config", key: "game_settings" }
     ]);
     if (configReads.length > 0) {
-      return configReads[0].value;
+      var stored = configReads[0].value;
+      // Merge stored with defaults (stored values take precedence)
+      return {
+        commissionRate: stored.commissionRate !== undefined ? stored.commissionRate : defaults.commissionRate,
+        waitTimeoutSec: stored.waitTimeoutSec !== undefined ? stored.waitTimeoutSec : defaults.waitTimeoutSec,
+        playTimeoutSec: stored.playTimeoutSec !== undefined ? stored.playTimeoutSec : defaults.playTimeoutSec,
+        houseEdge: stored.houseEdge !== undefined ? stored.houseEdge : defaults.houseEdge,
+        minBet: stored.minBet !== undefined ? stored.minBet : defaults.minBet,
+        maxBet: stored.maxBet !== undefined ? stored.maxBet : defaults.maxBet,
+        skillTiers: stored.skillTiers || defaults.skillTiers,
+        games: stored.games || defaults.games
+      };
     }
   } catch (e) {
     // Fall through to defaults
   }
-  return {
-    commissionRate: DEFAULT_COMMISSION_RATE,
-    waitTimeoutSec: DEFAULT_WAIT_TIMEOUT_SEC,
-    playTimeoutSec: DEFAULT_PLAY_TIMEOUT_SEC,
-    houseEdge: DEFAULT_HOUSE_EDGE,
-    minBet: 10,
-    maxBet: 10000,
-    skillTiers: [],
-    games: {}
-  };
+  return defaults;
 }
 
 function getGameLevels(nk, gameId) {
@@ -257,8 +273,8 @@ function InitModule(ctx, logger, nk, initializer) {
       waitTimeoutSec: 30,
       playTimeoutSec: 86400,
       houseEdge: 0.51,
-      minBet: 10,
-      maxBet: 10000,
+      minBet: 0.5,
+      maxBet: 100,
       // Skill tiers define level ranges based on player average score
       skillTiers: [
         { name: "beginner", minScore: 0, maxScore: 1000, levelRange: [1, 20] },
@@ -516,13 +532,14 @@ logger.info("Wallet update completed successfully");
   logger.info("Deducted " + betAmount + " coins from " + userId);
 
   var query = "label.gameId:" + gameId + " label.betAmount:" + betAmount + " label.status:waiting";
-logger.info("About to call matchList with query: " + query); 
- var matches = nk.matchList(10, true, null, null, null, query);
+logger.info("About to call matchList with query: " + query);
+  // minSize=0, maxSize=1 means find matches with 0-1 players (has room for 1 more)
+  var matches = nk.matchList(10, true, null, 0, 1, query);
 logger.info("matchList returned: " + JSON.stringify(matches));
-  
+
 if (matches.length > 0) {
     var matchId = matches[0].matchId;
-    logger.info("Found existing match: " + matchId);
+    logger.info("Found existing match with room: " + matchId);
     return JSON.stringify({ matchId: matchId, action: "join" });
   }
 
@@ -579,9 +596,16 @@ function matchInit(ctx, logger, nk, params) {
 }
 
 function matchJoinAttempt(ctx, logger, nk, dispatcher, tick, state, presence, metadata) {
+  // Allow reconnection if player is already in the match
+  if (state.players[presence.userId]) {
+    logger.info("Player " + presence.username + " reconnecting to match");
+    return { state: state, accept: true };
+  }
+
   var playerCount = Object.keys(state.players).length;
 
   if (playerCount >= 2) {
+    logger.warn("Match is full, rejecting " + presence.username + " (players: " + playerCount + ")");
     return { state: state, accept: false, rejectMessage: "Match is full" };
   }
 

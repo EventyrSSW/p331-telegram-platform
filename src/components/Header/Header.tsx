@@ -82,12 +82,30 @@ export const Header = () => {
     } catch (error) {
       console.error('Failed to send TON:', error);
 
-      if (error instanceof Error && error.message.includes('cancelled')) {
-        alert('Transaction cancelled.');
-      } else {
-        alert('Failed to send TON. Please try again.');
+      let errorMessage = 'Failed to send TON. Please try again.';
+
+      if (error instanceof Error) {
+        // Log full error for debugging
+        console.error('Error details:', {
+          message: error.message,
+          name: error.name,
+          stack: error.stack,
+        });
+
+        const msg = error.message.toLowerCase();
+
+        if (msg.includes('cancel')) {
+          errorMessage = 'Transaction cancelled.';
+        } else if (msg.includes('amount')) {
+          errorMessage = error.message; // Show validation errors
+        } else if (msg.includes('network') || msg.includes('fetch') ||
+                   msg.includes('timeout') || msg.includes('connection')) {
+          errorMessage = 'Network error. Please check your connection.';
+        }
       }
-      throw error; // Re-throw to let modal know it failed
+
+      alert(errorMessage);
+      throw error;
     } finally {
       setIsProcessing(false);
     }
