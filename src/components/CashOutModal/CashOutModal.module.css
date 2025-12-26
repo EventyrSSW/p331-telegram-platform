@@ -1,218 +1,197 @@
 .overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #000000;
-  z-index: 9999;
+  width: 100%;
+  height: 100%;
+  padding-top: 20px;
+  padding-bottom: 50px;
+  background: #171717;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  padding-top: var(--tg-header-safe-area);
-  padding-bottom: var(--tg-safe-area-bottom);
+  align-items: center;
+  gap: 20px;
 }
 
-.closeButton {
-  position: absolute;
-  top: calc(var(--tg-header-safe-area) + 16px);
-  right: 16px;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background-color: #3D3D3D;
+.backButtonRow {
+  align-self: stretch;
+  padding-left: 14px;
+  padding-right: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.backButton {
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.20);
   border: none;
+  border-radius: 50px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 6px;
   cursor: pointer;
   color: white;
-  transition: background-color 0.2s;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.28px;
+  transition: background 0.2s ease;
 }
 
-.closeButton:not(:disabled):active {
-  background-color: #4D4D4D;
+.backButton:hover {
+  background: rgba(255, 255, 255, 0.30);
 }
 
-.closeButton:disabled {
+.backButton:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.closeButton svg {
-  width: 20px;
-  height: 20px;
+.backIcon {
+  width: 24px;
+  height: 24px;
 }
 
 .content {
+  width: 300px;
+  flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 24px;
-  flex: 1;
-  overflow-y: auto;
+  align-items: center;
+  gap: 40px;
 }
 
-.title {
-  font-size: 32px;
-  font-weight: bold;
-  color: white;
-  margin: 0 0 8px 0;
-  text-align: center;
-}
-
-.subtitle {
-  font-size: 14px;
-  color: #9CA3AF;
-  margin: 0 0 24px 0;
-  text-align: center;
-}
-
-.balanceInfo {
-  background-color: rgba(61, 61, 61, 0.5);
-  border-radius: 24px;
-  padding: 16px 24px;
-  margin-bottom: 32px;
+.balanceSection {
+  align-self: stretch;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
 }
 
-.balanceLabel {
-  font-size: 12px;
-  color: #9CA3AF;
-  font-weight: 500;
-}
-
-.balanceValue {
-  font-size: 24px;
-  color: white;
-  font-weight: 600;
-}
-
-.inputSection {
-  margin-bottom: 24px;
-}
-
-.label {
-  display: block;
-  font-size: 14px;
-  color: #9CA3AF;
-  margin-bottom: 8px;
-  font-weight: 500;
-}
-
-.input {
-  width: 100%;
-  background-color: #1A1A1A;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 12px;
-  padding: 16px;
-  font-size: 18px;
-  color: white;
-  transition: border-color 0.2s;
-}
-
-.input:focus {
-  outline: none;
-  border-color: rgba(255, 255, 255, 0.3);
-}
-
-.input:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.input::placeholder {
-  color: #6B7280;
-}
-
-.percentageContainer {
+.balanceDisplay {
   display: flex;
-  gap: 8px;
-  margin-top: 12px;
+  align-items: center;
+  gap: 4px;
 }
 
-.percentageButton {
-  flex: 1;
-  background-color: #2D2D2D;
-  border: none;
-  border-radius: 12px;
-  padding: 10px;
-  font-size: 14px;
-  font-weight: 600;
+.cashIcon {
+  width: 40px;
+  height: 40px;
+  color: #0098EA;
+}
+
+.balanceAmount {
   color: white;
-  cursor: pointer;
-  transition: background-color 0.2s;
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: 0.60px;
 }
 
-.percentageButton:active {
-  background-color: #3D3D3D;
-}
-
-.percentageButton:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.useWalletButton {
-  margin-top: 12px;
-  width: 100%;
-  background-color: #2D2D2D;
-  border: none;
-  border-radius: 12px;
-  padding: 12px;
-  font-size: 14px;
-  font-weight: 600;
-  color: white;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.useWalletButton:active {
-  background-color: #3D3D3D;
-}
-
-.useWalletButton:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.errorMessage {
-  background-color: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  border-radius: 12px;
-  padding: 12px 16px;
-  margin-bottom: 24px;
-  font-size: 14px;
-  color: #FCA5A5;
+.balanceLabel {
+  margin: 0;
+  color: #0098EA;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.36px;
   text-align: center;
 }
 
-.bottomSection {
-  margin-top: auto;
-  padding-top: 24px;
+.infoSection {
+  align-self: stretch;
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.infoTitle {
+  margin: 0;
+  color: white;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.36px;
+}
+
+.infoText {
+  margin: 0;
+  color: #9F9F9F;
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0.28px;
+}
+
+.inputSection {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.inputLabel {
+  color: #9F9F9F;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.24px;
+}
+
+.walletInput {
+  align-self: stretch;
+  padding: 6px;
+  background: #252525;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0.28px;
+  outline: none;
+  height: 28px;
+}
+
+.walletInput::placeholder {
+  color: #3D3D3D;
+}
+
+.walletInput:focus {
+  outline: 1px solid #0098EA;
+}
+
+.bottomSection {
+  align-self: stretch;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
   align-items: center;
-  gap: 16px;
+  gap: 10px;
 }
 
 .cashOutButton {
-  background: linear-gradient(180deg, #10B981 0%, #059669 100%);
+  width: 300px;
+  height: 44px;
+  padding: 10px 20px;
+  background: #FF4D00;
   border: none;
-  border-radius: 28px;
-  height: 56px;
-  width: 100%;
-  max-width: 400px;
-  font-size: 18px;
-  font-weight: 600;
-  color: white;
+  border-radius: 50px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   cursor: pointer;
-  transition: all 0.2s;
+  color: white;
+  font-size: 16px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.32px;
+  transition: background 0.2s ease;
 }
 
-.cashOutButton:not(:disabled):active {
-  background: linear-gradient(180deg, #059669 0%, #047857 100%);
+.cashOutButton:hover {
+  background: #E54500;
+}
+
+.cashOutButton:active {
   transform: scale(0.98);
 }
 
@@ -221,9 +200,17 @@
   cursor: not-allowed;
 }
 
-.infoText {
-  font-size: 12px;
-  color: #808080;
+.arrowIcon {
+  width: 24px;
+  height: 24px;
+}
+
+.errorMessage {
+  padding: 12px;
+  background: rgba(255, 77, 0, 0.2);
+  border: 1px solid #FF4D00;
+  border-radius: 8px;
+  color: #FF4D00;
+  font-size: 14px;
   text-align: center;
-  margin: 0;
 }
