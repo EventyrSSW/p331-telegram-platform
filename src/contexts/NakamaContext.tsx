@@ -251,19 +251,27 @@ export function NakamaProvider({ children }: NakamaProviderProps) {
   }, [session, isSocketConnected]);
 
   const submitScore = useCallback(async (score: number, timeMs: number) => {
+    console.log('[NakamaContext] submitScore called:', { score, timeMs });
+
     if (!matchRef.current.matchId) {
-      console.error('[NakamaContext] No active match');
+      console.error('[NakamaContext] No active match - cannot submit score');
       return;
     }
+
+    const matchId = matchRef.current.matchId;
+    console.log('[NakamaContext] Submitting score to match:', matchId);
 
     setMatch(prev => ({
       ...prev,
       myScore: score,
       status: 'submitted',
     }));
+    console.log('[NakamaContext] Local state updated to "submitted"');
 
     try {
-      await nakamaService.submitScore(matchRef.current.matchId, score, timeMs);
+      console.log('[NakamaContext] Calling nakamaService.submitScore...');
+      await nakamaService.submitScore(matchId, score, timeMs);
+      console.log('[NakamaContext] Score submitted successfully!');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to submit score';
       console.error('[NakamaContext] Failed to submit score:', error);

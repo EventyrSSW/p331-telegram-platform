@@ -434,13 +434,22 @@ class NakamaService {
   }
 
   async submitScore(matchId: string, score: number, timeMs: number): Promise<void> {
+    console.log('[Nakama] submitScore called:', { matchId, score, timeMs });
+
     if (!this.socket) {
+      console.error('[Nakama] Socket not connected - cannot submit score');
       throw new Error('Socket not connected');
     }
 
     const data = JSON.stringify({ score, timeMs });
+    console.log('[Nakama] Sending match state with OpCode:', MatchOpCodes.SCORE_SUBMIT, 'data:', data);
+
     await this.socket.sendMatchState(matchId, MatchOpCodes.SCORE_SUBMIT, data);
-    console.log('[Nakama] Submitted score:', score);
+
+    console.log('[Nakama] >>> SCORE SUBMITTED TO SERVER <<<');
+    console.log('[Nakama] Match:', matchId);
+    console.log('[Nakama] Score:', score);
+    console.log('[Nakama] Time:', timeMs, 'ms');
   }
 
   async leaveMatch(matchId: string): Promise<void> {

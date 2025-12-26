@@ -51,13 +51,24 @@ export const GamePage = () => {
   }, [matchId, match.status, setMatchStatus]);
 
   const handleLevelComplete = useCallback((data: LevelCompleteData) => {
-    console.log('[GamePage] Level complete:', data);
+    const timeMs = Date.now() - gameStartTime.current;
+
+    console.log('='.repeat(50));
+    console.log('[GamePage] LEVEL COMPLETE EVENT');
+    console.log('[GamePage] Data from Unity:', JSON.stringify(data));
+    console.log('[GamePage] Match ID:', matchId);
+    console.log('[GamePage] Time played:', timeMs, 'ms (', Math.round(timeMs / 1000), 's)');
+    console.log('='.repeat(50));
 
     // If in a match, submit score to Nakama
     if (matchId) {
-      const timeMs = Date.now() - gameStartTime.current;
-      console.log('[GamePage] Submitting score to match:', matchId, 'score:', data.score, 'time:', timeMs);
+      console.log('[GamePage] >>> SUBMITTING SCORE TO NAKAMA <<<');
+      console.log('[GamePage] Match:', matchId);
+      console.log('[GamePage] Score:', data.score);
+      console.log('[GamePage] Time:', timeMs, 'ms');
       submitScore(data.score, timeMs);
+    } else {
+      console.log('[GamePage] No matchId - skipping score submission');
     }
 
     // Navigate to game detail page with result
