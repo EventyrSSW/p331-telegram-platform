@@ -45,17 +45,22 @@ function getConfig(nk) {
   return defaults;
 }
 
-function getGameLevels(nk, gameId) {
+function getGameLevels(nk, logger, gameId) {
+  // Read system-owned levels (same pattern as mahjong init)
   try {
-    var levelsReads = nk.storageRead([
+    var reads = nk.storageRead([
       { collection: "levels", key: gameId }
     ]);
-    if (levelsReads.length > 0) {
-      return levelsReads[0].value.levels || [];
+    if (reads.length > 0) {
+      var levels = reads[0].value.levels || [];
+      logger.info("getGameLevels: found " + levels.length + " levels for " + gameId);
+      return levels;
     }
   } catch (e) {
-    // Fall through to empty
+    logger.error("getGameLevels error for " + gameId + ": " + e.message);
   }
+
+  logger.warn("getGameLevels: no levels found for " + gameId);
   return [];
 }
 
@@ -109,9 +114,9 @@ function updatePlayerStats(nk, userId, gameId, score, won) {
   return stats;
 }
 
-function selectLevelForPlayer(nk, userId, gameId, config) {
+function selectLevelForPlayer(nk, logger, userId, gameId, config) {
   var stats = getPlayerStats(nk, userId, gameId);
-  var levels = getGameLevels(nk, gameId);
+  var levels = getGameLevels(nk, logger, gameId);
 
   if (levels.length === 0) {
     return null;
@@ -407,6 +412,7 @@ function rpcAdminUpdateLevels(ctx, logger, nk, payload) {
     }
   }
 
+  // Store as system-owned (no userId = system owned)
   nk.storageWrite([
     {
       collection: "levels",
@@ -560,7 +566,7 @@ function matchInit(ctx, logger, nk, params) {
   var config = getConfig(nk);
 
   // Select a level for the creator based on their skill
-  var selectedLevel = selectLevelForPlayer(nk, params.creatorId, params.gameId, config);
+  var selectedLevel = selectLevelForPlayer(nk, logger, params.creatorId, params.gameId, config);
 
   var state = {
     gameId: params.gameId,
@@ -748,13 +754,29 @@ function matchLoop(ctx, logger, nk, dispatcher, tick, state, messages) {
         timeMs: data.timeMs
       };
 
-      logger.info("Player " + message.sender.username + " submitted score: " + data.score);
+      logger.info("=== SCORE SUBMISSION ===");
+      logger.info("Player: " + message.sender.username + " (" + message.sender.userId + ")");
+      logger.info("Score: " + data.score + ", Time: " + data.timeMs + "ms");
+
+      // Log all players and their submission status
+      var playerList = [];
+      for (var odredacted in state.players) {
+        var p = state.players[odredacted];
+        var hasResult = state.results[odredacted] ? "SUBMITTED" : "PENDING";
+        playerList.push(p.username + "(" + (p.isHouse ? "house" : "player") + "): " + hasResult);
+      }
+      logger.info("Players status: " + playerList.join(", "));
+      logger.info("Total results: " + Object.keys(state.results).length + "/" + Object.keys(state.players).length);
 
       if (checkAllResultsSubmitted(state)) {
+        logger.info("All players submitted - resolving match!");
         state.status = "completed";
         resolveMatch(nk, logger, dispatcher, state);
         return null;
+      } else {
+        logger.info("Waiting for other players to submit...");
       }
+      logger.info("========================");
     }
   }
 
