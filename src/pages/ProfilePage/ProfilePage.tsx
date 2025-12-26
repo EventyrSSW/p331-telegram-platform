@@ -147,40 +147,39 @@ export function ProfilePage() {
       {/* Stats Cards */}
       <div className={styles.statsGrid}>
         <div className={styles.statCard}>
-          <div className={styles.statIcon}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="3" y="8" width="18" height="12" rx="2" />
-              <path d="M8 8V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-            </svg>
+          <div className={styles.iconContainer}>
+            <GamepadIcon className={styles.statIcon} style={{ color: '#86CE11' }} />
           </div>
-          <div className={styles.statValue}>
-            {loading ? '...' : stats?.gamesPlayed || 0}
+          <div className={styles.statInfo}>
+            <div className={styles.statValue}>
+              {loading ? '...' : displayStats?.gamesPlayed || 0}
+            </div>
+            <div className={styles.statLabel}>Games played</div>
           </div>
-          <div className={styles.statLabel}>Games Played</div>
         </div>
 
         <div className={styles.statCard}>
-          <div className={styles.statIcon}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
-            </svg>
+          <div className={styles.iconContainer}>
+            <MedalIcon className={styles.statIcon} style={{ color: '#FF4D00' }} />
           </div>
-          <div className={styles.statValue}>
-            {loading ? '...' : stats?.totalWins || 0}
+          <div className={styles.statInfo}>
+            <div className={styles.statValue}>
+              {loading ? '...' : displayStats?.totalWins || 0}
+            </div>
+            <div className={styles.statLabel}>Total wins</div>
           </div>
-          <div className={styles.statLabel}>Total Wins</div>
         </div>
 
         <div className={styles.statCard}>
-          <div className={styles.statIcon}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-            </svg>
+          <div className={styles.iconContainer}>
+            <DollarIcon className={styles.statIcon} style={{ color: '#0098EA' }} />
           </div>
-          <div className={styles.statValue}>
-            ${loading ? '...' : stats?.amountWon || 0}
+          <div className={styles.statInfo}>
+            <div className={styles.statValue}>
+              ${loading ? '...' : displayStats?.amountWon || 0}
+            </div>
+            <div className={styles.statLabel}>Amount won</div>
           </div>
-          <div className={styles.statLabel}>Amount Won</div>
         </div>
       </div>
 
