@@ -27,7 +27,7 @@ export const GamePage = () => {
   const { gameId } = useParams<{ gameId?: string }>();
   const location = useLocation();
   const navigate = useNavigate();
-  const { match, submitScore, setMatchStatus } = useNakama();
+  const { match, submitScore, setMatchStatus, leaveMatch } = useNakama();
   const gameStartTime = useRef<number>(Date.now());
 
   const gameSlug = gameId ? GAME_SLUGS[gameId] : null;
@@ -67,9 +67,13 @@ export const GamePage = () => {
     });
   }, [gameId, navigate, matchId, submitScore]);
 
-  const handleBack = useCallback(() => {
+  const handleBack = useCallback(async () => {
+    if (matchId) {
+      console.log('[GamePage] Leaving match before navigating back:', matchId);
+      await leaveMatch();
+    }
     navigate(`/game/${gameId}/details`);
-  }, [gameId, navigate]);
+  }, [gameId, navigate, matchId, leaveMatch]);
 
   if (!gameSlug) {
     return (
