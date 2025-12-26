@@ -7,7 +7,6 @@ import { haptic } from '../../providers/TelegramProvider';
 import { GameResultModal, GameResultData } from '../../components/GameResultModal';
 import { MatchResultModal } from '../../components/MatchResultModal';
 import { SearchOpponentModal } from '../../components/SearchOpponentModal';
-import { useMatch } from '../../hooks/useMatch';
 import { useNakama } from '../../contexts/NakamaContext';
 import styles from './GameDetailPage.module.css';
 
@@ -31,8 +30,13 @@ export function GameDetailPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const locationState = location.state as LocationState | null;
-  const { isConnected } = useNakama();
-  const match = useMatch();
+  const {
+    match,
+    joinGame,
+    leaveMatch,
+    resetMatch,
+    isConnected
+  } = useNakama();
   const [game, setGame] = useState<Game | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -78,18 +82,20 @@ export function GameDetailPage() {
 
   // Handle match status changes
   useEffect(() => {
+    console.log('[GameDetailPage] Match status effect:', { status: match.status, level: match.level, gameId });
     if (match.status === 'waiting') {
       setShowSearchModal(true);
       setSearchStatus('searching');
-    } else if (match.status === 'ready' && match.level && gameId) {
+    } else if (match.status === 'ready' && gameId) {
+      console.log('[GameDetailPage] Match is ready, setting found status');
       setSearchStatus('found');
       // Brief delay to show "found" animation before navigating
       const timer = setTimeout(() => {
+        console.log('[GameDetailPage] Timeout fired, navigating...');
         setShowSearchModal(false);
-        console.log('[GameDetailPage] Match ready, navigating to game with level:', match.level?.id);
         navigate(`/game/${gameId}`, {
           state: {
-            level: match.level?.id,
+            level: match.level?.id || null,
             matchId: match.matchId,
             betAmount: match.betAmount,
           },
@@ -132,7 +138,7 @@ export function GameDetailPage() {
     }
 
     try {
-      const result = await match.joinGame(gameId, betAmount);
+      const result = await joinGame(gameId, betAmount);
       if (result?.matchId) {
         console.log('[GameDetailPage] Joined match:', result.matchId);
       }
@@ -140,13 +146,13 @@ export function GameDetailPage() {
       console.error('[GameDetailPage] Failed to join game:', err);
       setError(err instanceof Error ? err.message : 'Failed to join game');
     }
-  }, [gameId, betTierIndex, isConnected, match]);
+  }, [gameId, betTierIndex, isConnected, joinGame]);
 
   const handleCancelSearch = useCallback(() => {
     haptic.light();
     setShowSearchModal(false);
-    match.leaveMatch();
-  }, [match]);
+    leaveMatch();
+  }, [leaveMatch]);
 
   const handleOpponentFound = useCallback(() => {
     setSearchStatus('starting');
@@ -322,7 +328,7 @@ export function GameDetailPage() {
 
       <MatchResultModal
         isOpen={match.status === 'submitted' || match.status === 'completed'}
-        onClose={() => match.reset()}
+        onClose={() => resetMatch()}
         status={match.status as 'waiting' | 'playing' | 'submitted' | 'completed'}
         matchType={match.matchType}
         players={[
