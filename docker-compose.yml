@@ -27,8 +27,8 @@ services:
       - "/bin/sh"
       - "-ecx"
       - >
-        /nakama/nakama migrate up --database.address postgres:p331_local_dev@telegram-game-db:5432/p331 &&
-        exec /nakama/nakama --name nakama1 --database.address postgres:p331_local_dev@telegram-game-db:5432/p331 --logger.level DEBUG --session.token_expiry_sec 7200 --runtime.js_entrypoint "main.js"
+        /nakama/nakama migrate up --database.address p331:p331_local_dev@telegram-game-db:5432/p331 &&
+        exec /nakama/nakama --name nakama1 --database.address p331:p331_local_dev@telegram-game-db:5432/p331 --logger.level DEBUG --session.token_expiry_sec 7200 --runtime.js_entrypoint "main.js"
     restart: unless-stopped
     depends_on:
       telegram-game-db:

@@ -1,6 +1,15 @@
 import dotenv from 'dotenv';
+import path from 'path';
+import fs from 'fs';
 
+// Load .env first (defaults)
 dotenv.config();
+
+// Load .env.local if it exists (local overrides)
+const localEnvPath = path.resolve(process.cwd(), '.env.local');
+if (fs.existsSync(localEnvPath)) {
+  dotenv.config({ path: localEnvPath, override: true });
+}
 
 export const config = {
   port: parseInt(process.env.PORT || '3001', 10),

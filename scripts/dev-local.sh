@@ -48,11 +48,18 @@ setup_env_files() {
         fi
     fi
 
-    if [ ! -f "$PROJECT_DIR/server/.env" ]; then
+    if [ ! -f "$PROJECT_DIR/server/.env.local" ]; then
         if [ -f "$PROJECT_DIR/server/.env.local.example" ]; then
-            cp "$PROJECT_DIR/server/.env.local.example" "$PROJECT_DIR/server/.env"
-            echo -e "${GREEN}✅ Created server/.env from template${NC}"
+            cp "$PROJECT_DIR/server/.env.local.example" "$PROJECT_DIR/server/.env.local"
+            echo -e "${GREEN}✅ Created server/.env.local from template${NC}"
         fi
+    fi
+}
+
+# Load local environment variables for database
+load_local_env() {
+    if [ -f "$PROJECT_DIR/server/.env.local" ]; then
+        export $(grep -v '^#' "$PROJECT_DIR/server/.env.local" | xargs)
     fi
 }
 
@@ -106,7 +113,8 @@ wait_for_services() {
 run_migrations() {
     echo -e "${YELLOW}🔄 Running database migrations...${NC}"
     cd "$PROJECT_DIR/server"
-    npx prisma migrate deploy
+    # Use db push for local development (more forgiving with existing schemas)
+    npx prisma db push --accept-data-loss 2>/dev/null || npx prisma migrate deploy
     echo -e "${GREEN}✅ Migrations complete${NC}"
 }
 
@@ -146,6 +154,7 @@ cleanup() {
 main() {
     check_requirements
     setup_env_files
+    load_local_env
     start_docker_services
     wait_for_services
     run_migrations
