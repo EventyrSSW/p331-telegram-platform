@@ -4,6 +4,7 @@ import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
 import { Address } from '@ton/core';
 import { useAuth } from '../../contexts/AuthContext';
 import { useConfig } from '../../contexts/ConfigContext';
+import { useModal } from '../../contexts/ModalContext';
 import { api } from '../../services/api';
 import { AddTonModal } from '../AddTonModal/AddTonModal';
 import { MOCK_RANK } from '../../utils/mockData';
@@ -16,9 +17,9 @@ import styles from './Header.module.css';
 export const Header = () => {
   const { user, refreshUser } = useAuth();
   const { config } = useConfig();
+  const { isAddTonModalOpen, openAddTonModal, closeAddTonModal } = useModal();
   const [tonConnectUI] = useTonConnectUI();
   const wallet = useTonWallet();
-  const [isAddTonModalOpen, setIsAddTonModalOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
   const isTestnet = config?.ton.network === 'testnet';
@@ -124,7 +125,7 @@ export const Header = () => {
         {/* Coin Balance with Add Button */}
         <button
           className={styles.tonSection}
-          onClick={() => setIsAddTonModalOpen(true)}
+          onClick={openAddTonModal}
         >
           <TonCoinIcon className={styles.tonIcon} />
           <span className={styles.tonValue}>{user?.coinBalance ?? 0}</span>
@@ -135,7 +136,7 @@ export const Header = () => {
       {/* Add TON Modal */}
       <AddTonModal
         isOpen={isAddTonModalOpen}
-        onClose={() => setIsAddTonModalOpen(false)}
+        onClose={closeAddTonModal}
         currentBalance={user?.coinBalance ?? 0}
         isWalletConnected={!!wallet}
         onConnectWallet={handleConnectWallet}

@@ -13,6 +13,9 @@ interface CashOutModalProps {
   onClose: () => void;
   currentBalance: number;
   onSuccess: () => void;
+  connectedWalletAddress?: string;
+  isWalletConnected: boolean;
+  onConnectWallet: () => void;
 }
 
 export function CashOutModal({
@@ -20,24 +23,37 @@ export function CashOutModal({
   onClose,
   currentBalance,
   onSuccess,
+  connectedWalletAddress,
+  isWalletConnected,
+  onConnectWallet,
 }: CashOutModalProps) {
-  const [walletAddress, setWalletAddress] = useState('');
+  const [customAddress, setCustomAddress] = useState('');
   const [error, setError] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Use connected wallet address if available, otherwise use custom
+  const walletAddress = isWalletConnected && connectedWalletAddress
+    ? connectedWalletAddress
+    : customAddress;
 
   if (!isOpen) return null;
 
   const handleClose = () => {
     if (isProcessing) return;
     haptic.light();
-    setWalletAddress('');
+    setCustomAddress('');
     setError('');
     onClose();
   };
 
   const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setWalletAddress(e.target.value);
+    setCustomAddress(e.target.value);
     setError('');
+  };
+
+  const handleConnectWalletClick = () => {
+    haptic.medium();
+    onConnectWallet();
   };
 
   const validateAddress = (address: string): boolean => {
@@ -89,6 +105,7 @@ export function CashOutModal({
   };
 
   const isButtonDisabled =
+    !isWalletConnected ||
     !walletAddress.trim() ||
     currentBalance < 6 ||
     isProcessing;
@@ -121,17 +138,29 @@ export function CashOutModal({
           <p className={styles.infoText}>$6 minimum withdraw</p>
         </div>
 
-        {/* Wallet Input */}
+        {/* Wallet Input or Connect Button */}
         <div className={styles.inputSection}>
-          <label className={styles.inputLabel}>Enter TON wallet address</label>
-          <input
-            type="text"
-            className={styles.walletInput}
-            value={walletAddress}
-            onChange={handleAddressChange}
-            placeholder="Some numbers & letters..."
-            disabled={isProcessing}
-          />
+          {isWalletConnected ? (
+            <>
+              <label className={styles.inputLabel}>Cash out to connected wallet</label>
+              <div className={styles.connectedWalletDisplay}>
+                <span className={styles.walletAddressText}>
+                  {connectedWalletAddress?.slice(0, 8)}...{connectedWalletAddress?.slice(-6)}
+                </span>
+              </div>
+            </>
+          ) : (
+            <>
+              <label className={styles.inputLabel}>Connect wallet to cash out</label>
+              <button
+                className={styles.connectWalletButton}
+                onClick={handleConnectWalletClick}
+                disabled={isProcessing}
+              >
+                Connect TON Wallet
+              </button>
+            </>
+          )}
         </div>
 
         {/* Cash Out Button */}

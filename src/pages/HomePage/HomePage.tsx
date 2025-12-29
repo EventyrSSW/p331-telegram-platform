@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { haptic } from '../../providers/TelegramProvider';
+import { useModal } from '../../contexts/ModalContext';
 
 // Track if initial haptic has been triggered this session
 let initialHapticTriggered = false;
@@ -18,6 +19,7 @@ import styles from './HomePage.module.css';
 
 export const HomePage = () => {
   const { games, featuredGames, isLoading, error, refetch } = useGames();
+  const { openAddTonModal } = useModal();
   const navigate = useNavigate();
 
   // Haptic feedback only on first app load
@@ -30,6 +32,10 @@ export const HomePage = () => {
 
   const handleGameClick = (game: Game) => {
     navigate(`/game/${game.slug}/details`);
+  };
+
+  const handleBonusClick = () => {
+    openAddTonModal();
   };
 
   if (error) {
@@ -71,7 +77,7 @@ export const HomePage = () => {
 
         {/* Welcome Bonus Banner */}
         <section className={styles.bonusSection}>
-          <WelcomeBonusBanner variant="blue" />
+          <WelcomeBonusBanner variant="blue" onDepositClick={handleBonusClick} />
         </section>
 
         {/* Games Grid */}

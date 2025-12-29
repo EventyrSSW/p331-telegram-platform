@@ -160,16 +160,6 @@ export function ProfilePage() {
         </div>
       </div>
 
-      {/* Wallet Address Display - clickable to disconnect */}
-      {isWalletConnected && wallet?.account?.address && (
-        <div className={styles.walletAddressCard}>
-          <div className={styles.walletAddressLabel}>Connected Wallet</div>
-          <div className={styles.walletAddress}>
-            {wallet.account.address.slice(0, 8)}...{wallet.account.address.slice(-6)}
-          </div>
-        </div>
-      )}
-
       {/* Connect/Disconnect Wallet Button */}
       <button
         className={styles.connectWalletButton}
@@ -180,6 +170,16 @@ export function ProfilePage() {
         </span>
         <ArrowRightIcon className={styles.connectWalletArrow} />
       </button>
+
+      {/* Wallet Address Display - shown BELOW button when connected */}
+      {isWalletConnected && wallet?.account?.address && (
+        <div className={styles.walletAddressCard}>
+          <div className={styles.walletAddressLabel}>Connected Wallet</div>
+          <div className={styles.walletAddress}>
+            {wallet.account.address.slice(0, 8)}...{wallet.account.address.slice(-6)}
+          </div>
+        </div>
+      )}
 
       {/* Cash Out Button */}
       <button className={styles.cashOutButton} onClick={handleCashOutClick}>

@@ -9,6 +9,20 @@
   align-items: center;
   overflow: hidden;
   gap: 16px;
+  /* Button reset styles */
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.banner:hover {
+  transform: translateY(-2px);
+}
+
+.banner:active {
+  transform: translateY(0);
 }
 
 /* Variant Backgrounds */
@@ -67,16 +81,13 @@
 .depositButton {
   padding: 10px 20px;
   position: relative;
-  background: none;
-  border: none;
-  cursor: pointer;
   color: white;
   font-size: 16px;
   font-family: 'Roboto', sans-serif;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.32px;
-  transition: all 0.2s ease;
+  pointer-events: none; /* Prevent event bubbling, parent handles click */
 }
 
 .depositButton::before {
@@ -89,10 +100,6 @@
   background: rgba(255, 255, 255, 0.20);
   border-radius: 50px;
   z-index: -1;
-}
-
-.depositButton:active::before {
-  background: rgba(255, 255, 255, 0.15);
 }
 
 /* Right Section */
