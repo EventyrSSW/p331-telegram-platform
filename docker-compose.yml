@@ -8,7 +8,7 @@ services:
     environment:
       POSTGRES_USER: p331
       POSTGRES_PASSWORD: p331_local_dev
-      POSTGRES_DB: p331
+      POSTGRES_DB: backend
       # Create additional database for Nakama
       POSTGRES_MULTIPLE_DATABASES: nakama
     ports:

@@ -112,7 +112,12 @@
       "Bash(git -C /Users/daniillogachev/Work/p331-telegram-platform add:*)",
       "Bash(git -C /Users/daniillogachev/Work/p331-telegram-platform commit -m \"$\\(cat <<''EOF''\nrefactor\\(cashout\\): convert from modal to standalone page\n\n- Create new CashOutPage with full-screen layout\n- Add /cashout route to router\n- Update ProfilePage to navigate to /cashout instead of opening modal\n- Update SettingsPage to navigate to /cashout instead of opening modal\n- Remove CashOutModal dependencies from both pages\n- Add safe area padding to CashOutPage for Telegram integration\n- Preserve all wallet connection and validation logic\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
       "Bash(git -C /Users/daniillogachev/Work/p331-telegram-platform commit -m \"$\\(cat <<''EOF''\nfix\\(profile\\): remove unused refreshUser import\n\n- Remove refreshUser from useAuth destructuring\n- Fixes Vercel build error: TS6133\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
-      "Bash(git -C /Users/daniillogachev/Work/p331-telegram-platform commit -m \"chore: update local Claude settings\")"
+      "Bash(git -C /Users/daniillogachev/Work/p331-telegram-platform commit -m \"chore: update local Claude settings\")",
+      "Bash(git -C /Users/olegvoytenko/Development/p331-telegram-platform checkout --theirs tsconfig.app.tsbuildinfo)",
+      "Bash(git -C /Users/olegvoytenko/Development/p331-telegram-platform add:*)",
+      "Bash(git -C /Users/olegvoytenko/Development/p331-telegram-platform rebase --continue)",
+      "Bash(GIT_EDITOR=true git -C /Users/olegvoytenko/Development/p331-telegram-platform rebase --continue)",
+      "Bash(git -C /Users/olegvoytenko/Development/p331-telegram-platform diff --name-only --diff-filter=U)"
     ],
     "deny": [],
     "ask": []

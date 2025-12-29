@@ -148,7 +148,7 @@ PORT=3847
 NODE_ENV=development
 JWT_SECRET=local-dev-secret-key-min-32-characters-here
 TELEGRAM_BOT_TOKEN=
-DATABASE_URL=postgresql://p331:p331_local_dev@localhost:5432/p331
+DATABASE_URL=postgresql://p331:p331_local_dev@localhost:5432/backend
 ALLOW_WEB_DEBUG=true
 PAYMENT_RECEIVER_ADDRESS=
 ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000
@@ -282,7 +282,7 @@ docker ps | grep telegram-game-db-pg
 docker-compose logs telegram-game-db
 
 # Test connection
-psql -h localhost -U p331 -d p331
+psql -h localhost -U p331 -d backend
 # Password: p331_local_dev
 ```
 
