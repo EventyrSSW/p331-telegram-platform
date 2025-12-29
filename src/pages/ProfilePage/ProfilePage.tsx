@@ -67,6 +67,13 @@ export function ProfilePage() {
     tonConnectUI.openModal();
   };
 
+  const handleDisconnectWallet = async () => {
+    haptic.medium();
+    if (wallet) {
+      await tonConnectUI.disconnect();
+    }
+  };
+
   // Development mode fallback when not in Telegram - use mock data
   if (!user && !useMockData) {
     return (
@@ -153,22 +160,25 @@ export function ProfilePage() {
         </div>
       </div>
 
-      {/* Connect Wallet Button - always shown, displays address when connected */}
+      {/* Wallet Address Display - clickable to disconnect */}
+      {isWalletConnected && wallet?.account?.address && (
+        <div className={styles.walletAddressCard}>
+          <div className={styles.walletAddressLabel}>Connected Wallet</div>
+          <div className={styles.walletAddress}>
+            {wallet.account.address.slice(0, 8)}...{wallet.account.address.slice(-6)}
+          </div>
+        </div>
+      )}
+
+      {/* Connect/Disconnect Wallet Button */}
       <button
         className={styles.connectWalletButton}
-        onClick={handleConnectWallet}
-        disabled={isWalletConnected}
+        onClick={isWalletConnected ? handleDisconnectWallet : handleConnectWallet}
       >
-        {isWalletConnected && wallet?.account?.address ? (
-          <span className={styles.connectWalletText}>
-            {wallet.account.address.slice(0, 6)}...{wallet.account.address.slice(-4)}
-          </span>
-        ) : (
-          <>
-            <span className={styles.connectWalletText}>CONNECT WALLET</span>
-            <ArrowRightIcon className={styles.connectWalletArrow} />
-          </>
-        )}
+        <span className={styles.connectWalletText}>
+          {isWalletConnected ? 'DISCONNECT WALLET' : 'CONNECT WALLET'}
+        </span>
+        <ArrowRightIcon className={styles.connectWalletArrow} />
       </button>
 
       {/* Cash Out Button */}
