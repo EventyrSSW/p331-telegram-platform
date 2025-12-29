@@ -1,8 +1,7 @@
 .container {
   min-height: 100vh;
   background: linear-gradient(180deg, #0f0f1e 0%, #1a1a2e 100%);
-  padding: 20px;
-  padding-bottom: 100px;
+  padding: calc(20px + var(--tg-header-safe-area, 0px)) 20px 100px 20px;
 }
 
 .header {
