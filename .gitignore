@@ -25,3 +25,13 @@ dist-ssr
 .vercel
 .env
 .env*.local
+
+# Server environment files
+server/.env
+server/.env.local
+
+# Docker volumes
+postgres_data/
+
+# Ngrok logs
+.ngrok.log
