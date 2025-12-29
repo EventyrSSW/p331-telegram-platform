@@ -20,7 +20,6 @@ export const MOCK_STATS: UserStats = {
 };
 
 export const MOCK_RANK = 42;
-export const MOCK_GEMS = 50;
 
 /**
  * Check if we're running in local development mode without Telegram context

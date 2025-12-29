@@ -72,30 +72,6 @@
   gap: 12px;
 }
 
-/* Gems Section */
-.gemSection {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  background: rgba(23, 23, 23, 0.90);
-  border-radius: 40px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.gemIcon {
-  width: 24px;
-  height: 24px;
-  flex-shrink: 0;
-}
-
-.gemValue {
-  font-size: 16px;
-  font-weight: 700;
-  color: white;
-  letter-spacing: 0.32px;
-}
-
 /* TON Section */
 .tonSection {
   display: flex;

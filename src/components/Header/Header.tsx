@@ -6,11 +6,10 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useConfig } from '../../contexts/ConfigContext';
 import { api } from '../../services/api';
 import { AddTonModal } from '../AddTonModal/AddTonModal';
-import { MOCK_RANK, MOCK_GEMS } from '../../utils/mockData';
+import { MOCK_RANK } from '../../utils/mockData';
 import TonCoinIcon from '../../assets/icons/toncoin-ton-logo 1.svg?react';
 import PlusIcon from '../../assets/icons/vector.svg?react';
 import starIconPng from '../../assets/icons/cfcfda09650d68463d93067e00c49b9af785941d.png';
-import gemIconPng from '../../assets/icons/cccd620542bf4e2fcab2cd91308e69421223c92e.png';
 import avatarSvg from '../../assets/icons/Ellipse 1.svg';
 import styles from './Header.module.css';
 
@@ -120,14 +119,8 @@ export const Header = () => {
         <span className={styles.rankValue}>{MOCK_RANK}</span>
       </Link>
 
-      {/* Right Section - Gems and TON */}
+      {/* Right Section - TON */}
       <div className={styles.rightSection}>
-        {/* Gems */}
-        <div className={styles.gemSection}>
-          <img src={gemIconPng} alt="gem" className={styles.gemIcon} />
-          <span className={styles.gemValue}>{MOCK_GEMS}</span>
-        </div>
-
         {/* Coin Balance with Add Button */}
         <button
           className={styles.tonSection}
