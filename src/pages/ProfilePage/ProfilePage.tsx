@@ -196,6 +196,9 @@ export function ProfilePage() {
         onClose={() => setShowCashOutModal(false)}
         currentBalance={displayUser?.coinBalance ?? 0}
         onSuccess={handleCashOutSuccess}
+        connectedWalletAddress={wallet?.account?.address}
+        isWalletConnected={isWalletConnected}
+        onConnectWallet={handleConnectWallet}
       />
 
       <BottomNavBar />
