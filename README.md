@@ -375,3 +375,89 @@ Ensure both environment files have debug enabled:
 grep VITE_ALLOW_WEB_DEBUG .env.local
 grep ALLOW_WEB_DEBUG server/.env.local
 ```
+
+---
+
+## Important Notes for Local Development
+
+### 1. TON Payment Receiver Address
+
+The `PAYMENT_RECEIVER_ADDRESS` must be set in **both** environment files:
+
+| File | Variable |
+|------|----------|
+| `.env.local` (root) | `VITE_PAYMENT_RECEIVER_ADDRESS=0QA...` |
+| `server/.env.local` | `PAYMENT_RECEIVER_ADDRESS=0QA...` |
+
+After updating `server/.env.local`, run the seed to update the database:
+```bash
+cd server && npm run prisma:seed
+```
+
+### 2. Adding Coins for Testing
+
+Games require coins to play. To add coins to a test user:
+
+1. Open Nakama Console: http://localhost:7351 (admin / password)
+2. Go to **Accounts** > Find your debug user (by Telegram ID)
+3. Click on the user > **Wallet** tab
+4. Update the wallet JSON:
+   ```json
+   {"coins": 10000}
+   ```
+5. Click **Save**
+
+Alternatively, use the RPC endpoint (if implemented):
+```bash
+# Via Nakama Console > API Explorer > add_test_coins RPC
+```
+
+### 3. Debug User Credentials
+
+When opening http://localhost:5173 in browser (not Telegram), you'll be prompted for:
+- **Telegram ID**: Any number (e.g., `123456789`)
+- **Username**: Any string (e.g., `test_user`)
+
+These credentials are saved in localStorage and reused on refresh.
+
+### 4. Restarting After Env Changes
+
+Environment variables are loaded at startup:
+- **Frontend** (`VITE_*`): Restart Vite (`npm run dev`)
+- **Backend**: Restart server (nodemon auto-restarts on code changes, but NOT on `.env` changes)
+
+```bash
+# Full restart
+npm run dev:local
+
+# Or restart just frontend+backend (keeps Docker running)
+npm run dev:all
+```
+
+### 5. Clearing All Data
+
+To start completely fresh:
+```bash
+# Stop and remove all containers + volumes
+docker-compose down -v
+
+# Remove node_modules (optional)
+rm -rf node_modules server/node_modules
+
+# Fresh start
+npm install && cd server && npm install && cd ..
+npm run dev:local
+```
+
+### 6. Viewing Logs
+
+```bash
+# All Docker logs
+docker-compose logs -f
+
+# Specific service
+docker-compose logs -f nakama
+docker-compose logs -f backend-db
+
+# Backend server logs appear in terminal running npm run dev:all
+```
