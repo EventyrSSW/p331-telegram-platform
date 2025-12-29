@@ -14,7 +14,7 @@ import ArrowRightIcon from '../../assets/icons/arrow-right.svg?react';
 import { MOCK_USER, MOCK_STATS, shouldUseMockData } from '../../utils/mockData';
 
 export function ProfilePage() {
-  const { user, refreshUser } = useAuth();
+  const { user } = useAuth();
   const [tonConnectUI] = useTonConnectUI();
   const wallet = useTonWallet();
   const [stats, setStats] = useState<UserStats | null>(null);
