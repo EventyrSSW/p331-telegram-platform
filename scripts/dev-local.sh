@@ -130,7 +130,7 @@ seed_database() {
 seed_nakama() {
     echo -e "${YELLOW}🎮 Seeding Nakama game levels...${NC}"
     cd "$PROJECT_DIR"
-    node scripts/seed-nakama.js || true
+    node scripts/seed-nakama.cjs || true
 }
 
 # Open browser with URLs

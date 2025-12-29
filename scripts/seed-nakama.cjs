@@ -2,11 +2,11 @@
 
 /**
  * Seeds Nakama storage with game level data
- * Run after Nakama is healthy: node scripts/seed-nakama.js
+ * Run after Nakama is healthy: node scripts/seed-nakama.cjs
  */
 
-const NAKAMA_URL = process.env.NAKAMA_URL || 'http://localhost:7350';
-const NAKAMA_SERVER_KEY = process.env.NAKAMA_SERVER_KEY || 'defaultkey';
+const { execSync } = require('child_process');
+const fs = require('fs');
 
 const levelsData = {
   levels: [
@@ -45,78 +45,50 @@ const levelsData = {
   updatedBy: "local-dev-seed"
 };
 
-async function seedNakamaStorage() {
+function seedNakamaStorage() {
   console.log('Seeding Nakama storage with game levels...');
 
-  // Create basic auth header (server key with empty secret)
-  const auth = Buffer.from(`${NAKAMA_SERVER_KEY}:`).toString('base64');
-
-  try {
-    // Write to storage using Nakama's console API
-    const response = await fetch(`${NAKAMA_URL}/v2/console/storage`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Basic ${auth}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        collection: 'levels',
-        key: 'puzzle-master',
-        user_id: '00000000-0000-0000-0000-000000000000', // System user
-        value: JSON.stringify(levelsData),
-        permission_read: 2, // Public read
-        permission_write: 0  // No client write
-      })
-    });
-
-    if (response.ok) {
-      console.log('✅ Nakama storage seeded: levels/puzzle-master (30 levels)');
-      return true;
-    } else {
-      // Try alternative approach using SQL directly
-      console.log('Console API not available, trying direct DB insert...');
-      return await seedViaDatabase();
-    }
-  } catch (error) {
-    console.log('Console API failed, trying direct DB insert...');
-    return await seedViaDatabase();
-  }
-}
-
-async function seedViaDatabase() {
-  // Use psql to insert directly into Nakama's storage table
-  const { execSync } = require('child_process');
-
+  // Escape single quotes for SQL
   const value = JSON.stringify(levelsData).replace(/'/g, "''");
-  const sql = `
-    INSERT INTO storage (collection, key, user_id, value, version, read, write, create_time, update_time)
-    VALUES (
-      'levels',
-      'puzzle-master',
-      '00000000-0000-0000-0000-000000000000',
-      '${value}',
-      '*',
-      2,
-      0,
-      NOW(),
-      NOW()
-    )
-    ON CONFLICT (collection, key, user_id)
-    DO UPDATE SET value = EXCLUDED.value, update_time = NOW();
-  `;
+
+  const sql = `INSERT INTO storage (collection, key, user_id, value, version, read, write, create_time, update_time)
+VALUES (
+  'levels',
+  'puzzle-master',
+  '00000000-0000-0000-0000-000000000000',
+  '${value}',
+  '*',
+  2,
+  0,
+  NOW(),
+  NOW()
+)
+ON CONFLICT (collection, key, user_id)
+DO UPDATE SET value = EXCLUDED.value, update_time = NOW();`;
+
+  const tmpFile = '/tmp/nakama-seed.sql';
 
   try {
-    execSync(`docker exec p331-nakama-postgres psql -U nakama -d nakama -c "${sql}"`, {
-      stdio: 'pipe'
-    });
+    // Write SQL to temp file
+    fs.writeFileSync(tmpFile, sql);
+
+    // Copy SQL file to container
+    execSync(`docker cp ${tmpFile} p331-nakama-postgres:/tmp/seed.sql`, { stdio: 'pipe' });
+
+    // Execute SQL in container
+    execSync(`docker exec p331-nakama-postgres psql -U nakama -d nakama -f /tmp/seed.sql`, { stdio: 'pipe' });
+
     console.log('✅ Nakama storage seeded: levels/puzzle-master (30 levels)');
+
+    // Cleanup
+    fs.unlinkSync(tmpFile);
     return true;
   } catch (error) {
     console.error('❌ Failed to seed Nakama storage:', error.message);
+    if (fs.existsSync(tmpFile)) fs.unlinkSync(tmpFile);
     return false;
   }
 }
 
-seedNakamaStorage().then(success => {
-  process.exit(success ? 0 : 1);
-});
+const success = seedNakamaStorage();
+process.exit(success ? 0 : 1);
