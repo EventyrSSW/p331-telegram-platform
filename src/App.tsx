@@ -3,6 +3,7 @@ import { TelegramProvider, useTelegram } from './providers/TelegramProvider'
 import { TonConnectProvider } from './providers/TonConnectProvider'
 import { ConfigProvider } from './contexts/ConfigContext'
 import { AuthProvider } from './contexts/AuthContext'
+import { ModalProvider } from './contexts/ModalContext'
 import { NakamaProvider } from './contexts/NakamaContext'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { SplashScreen } from './components/SplashScreen'
@@ -26,10 +27,12 @@ function App() {
         <ConfigProvider>
           <TelegramProvider>
             <AuthProvider>
-              <NakamaProvider>
-                <NakamaConnector />
-                <AppContent />
-              </NakamaProvider>
+              <ModalProvider>
+                <NakamaProvider>
+                  <NakamaConnector />
+                  <AppContent />
+                </NakamaProvider>
+              </ModalProvider>
             </AuthProvider>
           </TelegramProvider>
         </ConfigProvider>

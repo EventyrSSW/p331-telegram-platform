@@ -36,16 +36,19 @@ export const WelcomeBonusBanner: React.FC<WelcomeBonusBannerProps> = ({
   };
 
   return (
-    <div className={`${styles.banner} ${styles[variant]}`}>
+    <button
+      className={`${styles.banner} ${styles[variant]}`}
+      onClick={handleDepositClick}
+    >
       <div className={styles.content}>
         <div className={styles.textSection}>
           <div className={styles.label}>Welcome Bonus</div>
           <div className={styles.title}>Double Your Deposit</div>
         </div>
 
-        <button className={styles.depositButton} onClick={handleDepositClick}>
+        <div className={styles.depositButton}>
           DEPOSIT NOW
-        </button>
+        </div>
       </div>
 
       <div className={styles.rightSection}>
@@ -57,6 +60,6 @@ export const WelcomeBonusBanner: React.FC<WelcomeBonusBannerProps> = ({
           <span className={styles.timerText}>{timeLeft}</span>
         </div>
       </div>
-    </div>
+    </button>
   );
 };

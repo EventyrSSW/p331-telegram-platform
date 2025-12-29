@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { CashOutModal } from '../../components/CashOutModal/CashOutModal';
 import { haptic } from '../../providers/TelegramProvider';
@@ -8,7 +9,11 @@ import styles from './SettingsPage.module.css';
 export function SettingsPage() {
   const { user, refreshUser } = useAuth();
   const navigate = useNavigate();
+  const [tonConnectUI] = useTonConnectUI();
+  const wallet = useTonWallet();
   const [showCashOutModal, setShowCashOutModal] = useState(false);
+
+  const isWalletConnected = !!wallet;
 
   // Load preferences from localStorage
   const [soundEnabled, setSoundEnabled] = useState(() => {
@@ -47,6 +52,10 @@ export function SettingsPage() {
 
   const handleCashOutSuccess = async () => {
     await refreshUser();
+  };
+
+  const handleConnectWallet = () => {
+    tonConnectUI.openModal();
   };
 
   // Development mode: Still show settings page without user
@@ -154,6 +163,9 @@ export function SettingsPage() {
           onClose={() => setShowCashOutModal(false)}
           currentBalance={user.coinBalance}
           onSuccess={handleCashOutSuccess}
+          connectedWalletAddress={wallet?.account?.address}
+          isWalletConnected={isWalletConnected}
+          onConnectWallet={handleConnectWallet}
         />
       )}
     </div>

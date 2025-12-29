@@ -158,6 +158,53 @@
   outline: 1px solid #0098EA;
 }
 
+.connectedWalletDisplay {
+  align-self: stretch;
+  padding: 12px 16px;
+  background: rgba(0, 152, 234, 0.1);
+  border: 1px solid rgba(0, 152, 234, 0.3);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.walletAddressText {
+  color: #0098EA;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 0.5px;
+}
+
+.connectWalletButton {
+  align-self: stretch;
+  padding: 12px 20px;
+  background: #0098EA;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  color: white;
+  font-size: 16px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.32px;
+  transition: background 0.2s ease;
+}
+
+.connectWalletButton:hover {
+  background: #007AC2;
+}
+
+.connectWalletButton:active {
+  transform: scale(0.98);
+}
+
+.connectWalletButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .bottomSection {
   align-self: stretch;
   flex: 1;
