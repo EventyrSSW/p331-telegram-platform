@@ -77,7 +77,9 @@
       "Skill(superpowers:executing-plans)",
       "WebFetch(domain:www.figma.com)",
       "Bash(ls:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(git -C /Users/daniillogachev/Work/p331-telegram-platform status)",
+      "Bash(git -C /Users/daniillogachev/Work/p331-telegram-platform add .)"
     ],
     "deny": [],
     "ask": []

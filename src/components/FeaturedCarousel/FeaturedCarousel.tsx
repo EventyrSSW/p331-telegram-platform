@@ -77,8 +77,10 @@ const VideoSlide = ({ game, onGameClick }: { game: Game; onGameClick: (game: Gam
         style={{ display: showVideo ? 'none' : 'block' }}
       />
       <div className={styles.overlay}>
-        <span className={styles.category}>{game.category}</span>
-        <h3 className={styles.title}>{game.title}</h3>
+        <div className={styles.leftInfo}>
+          <span className={styles.category}>{game.category}</span>
+          <h3 className={styles.title}>{game.title}</h3>
+        </div>
         <button
           className={styles.playButton}
           onClick={(e) => {

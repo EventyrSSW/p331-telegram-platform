@@ -19,14 +19,14 @@ export const FeaturedCard: React.FC<FeaturedCardProps> = ({ game, onPlay }) => {
         alt={game.title}
         className={styles.image}
       />
+      <div className={styles.categoryBadge}>{game.category}</div>
       <div className={styles.overlay}>
         <div className={styles.info}>
-          <div className={styles.category}>{game.category}</div>
           <div className={styles.title}>{game.title}</div>
+          <button className={styles.playButton} onClick={handlePlay}>
+            Play Now
+          </button>
         </div>
-        <button className={styles.playButton} onClick={handlePlay}>
-          Play
-        </button>
       </div>
     </div>
   );

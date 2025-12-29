@@ -22,7 +22,7 @@
   border-radius: var(--radius-xl);
   overflow: hidden;
   position: relative;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 1 / 1;
   cursor: pointer;
   box-shadow: var(--shadow-card);
   transition: transform var(--transition-normal), box-shadow var(--transition-normal);
@@ -51,27 +51,36 @@
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 40px 20px 20px;
-  background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.8) 100%);
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+  padding: 32px 24px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+}
+
+.leftInfo {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  flex: 1;
 }
 
 .category {
-  font-size: 11px;
-  color: var(--color-text-label);
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  font-weight: 600;
+  letter-spacing: 0.5px;
 }
 
 .title {
-  font-size: 24px;
+  color: white;
+  font-size: 28px;
   font-weight: 700;
-  color: var(--color-text-primary);
+  line-height: 1.2;
   margin: 0;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 .description {
@@ -85,31 +94,26 @@
 }
 
 .playButton {
-  background: var(--color-accent-orange);
-  color: var(--color-text-primary);
+  background-color: var(--color-accent-primary);
+  color: white;
   border: none;
-  border-radius: var(--radius-button);
-  padding: 14px 48px;
+  border-radius: 50px;
+  padding: 14px 32px;
   font-size: 16px;
   font-weight: 700;
   cursor: pointer;
-  transition: all var(--transition-normal);
-  align-self: flex-start;
-  margin-top: 8px;
-  box-shadow: var(--shadow-cta);
-  letter-spacing: 0.02em;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  align-self: flex-end;
 }
 
 .playButton:hover {
-  background: var(--color-accent-orange-hover);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-cta-hover);
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(255, 77, 0, 0.4);
 }
 
 .playButton:active {
-  background: var(--color-accent-orange-active);
-  transform: translateY(0);
-  box-shadow: var(--shadow-cta);
+  transform: scale(0.98);
 }
 
 .indicators {

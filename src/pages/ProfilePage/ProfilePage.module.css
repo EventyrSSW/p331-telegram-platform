@@ -313,6 +313,56 @@
   color: white;
 }
 
+/* Connect Wallet Button */
+.connectWalletButton {
+  /* Box model */
+  width: 362px;
+  max-width: calc(100% - 28px);
+  height: 44px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 50px;
+
+  /* Display */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  /* Visual */
+  background: #0098EA;
+  cursor: pointer;
+
+  /* Animation */
+  transition: background 0.2s ease;
+}
+
+.connectWalletButton:hover {
+  background: #007AC2;
+}
+
+.connectWalletButton:active {
+  transform: scale(0.98);
+}
+
+.connectWalletButton:focus-visible {
+  outline: 2px solid #0098EA;
+  outline-offset: 2px;
+}
+
+.connectWalletText {
+  color: white;
+  font-size: 16px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.32px;
+}
+
+.connectWalletArrow {
+  width: 24px;
+  height: 24px;
+  color: white;
+}
+
 /* Error */
 .error {
   text-align: center;

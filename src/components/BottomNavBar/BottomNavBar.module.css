@@ -32,7 +32,7 @@
 }
 
 .navItemActive {
-  color: white;
+  color: #FF4D00;
 }
 
 .navIcon {
@@ -41,11 +41,12 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  transition: all 0.2s ease;
 }
 
 .navIcon svg {
-  width: 32px;
-  height: 32px;
+  width: 24px;
+  height: 24px;
 }
 
 .navLabel {

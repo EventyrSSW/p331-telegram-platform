@@ -7,7 +7,7 @@ import { useConfig } from '../../contexts/ConfigContext';
 import { api } from '../../services/api';
 import { AddTonModal } from '../AddTonModal/AddTonModal';
 import { MOCK_RANK, MOCK_GEMS } from '../../utils/mockData';
-import TonCoinIcon from '../../assets/icons/toncoin-ton-logo 1.svg?react';
+import CashIcon from '../../assets/icons/cash.svg?react';
 import PlusIcon from '../../assets/icons/vector.svg?react';
 import starIconPng from '../../assets/icons/cfcfda09650d68463d93067e00c49b9af785941d.png';
 import gemIconPng from '../../assets/icons/cccd620542bf4e2fcab2cd91308e69421223c92e.png';
@@ -117,7 +117,7 @@ export const Header = () => {
       <Link to="/leaderboard" className={styles.leftSection}>
         <img src={avatarSvg} alt="avatar" className={styles.avatar} />
         <img src={starIconPng} alt="star" className={styles.starIcon} />
-        <span className={styles.rankValue}>#{MOCK_RANK}</span>
+        <span className={styles.rankValue}>{MOCK_RANK}</span>
       </Link>
 
       {/* Right Section - Gems and TON */}
@@ -128,13 +128,13 @@ export const Header = () => {
           <span className={styles.gemValue}>{MOCK_GEMS}</span>
         </div>
 
-        {/* TON Balance with Add Button */}
+        {/* Coin Balance with Add Button */}
         <button
           className={styles.tonSection}
           onClick={() => setIsAddTonModalOpen(true)}
         >
-          <TonCoinIcon className={styles.tonIcon} />
-          <span className={styles.tonValue}>TON</span>
+          <CashIcon className={styles.tonIcon} />
+          <span className={styles.tonValue}>${user?.coinBalance ?? 0}</span>
           <PlusIcon className={styles.plusIcon} />
         </button>
       </div>

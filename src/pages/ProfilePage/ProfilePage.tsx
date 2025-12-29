@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTonConnectUI } from '@tonconnect/ui-react';
+import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { api, UserStats } from '../../services/api';
 import { CashOutModal } from '../../components/CashOutModal/CashOutModal';
@@ -16,8 +16,8 @@ import { MOCK_USER, MOCK_STATS, shouldUseMockData } from '../../utils/mockData';
 
 export function ProfilePage() {
   const { user, refreshUser } = useAuth();
-  // TON Connect UI hook - reserved for future wallet integration features
-  const [_tonConnectUI] = useTonConnectUI();
+  const [tonConnectUI] = useTonConnectUI();
+  const wallet = useTonWallet();
   const [stats, setStats] = useState<UserStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -28,6 +28,7 @@ export function ProfilePage() {
   const useMockData = shouldUseMockData();
   const displayUser = useMockData ? MOCK_USER : user;
   const displayStats = useMockData ? MOCK_STATS : stats;
+  const isWalletConnected = !!wallet;
 
   useEffect(() => {
     loadStats();
@@ -59,6 +60,11 @@ export function ProfilePage() {
   const handleSettingsClick = () => {
     haptic.light();
     navigate('/settings');
+  };
+
+  const handleConnectWallet = () => {
+    haptic.medium();
+    tonConnectUI.openModal();
   };
 
   // Development mode fallback when not in Telegram
@@ -147,9 +153,17 @@ export function ProfilePage() {
         </div>
       </div>
 
+      {/* Connect Wallet Button - shown when wallet is not connected */}
+      {!isWalletConnected && (
+        <button className={styles.connectWalletButton} onClick={handleConnectWallet}>
+          <span className={styles.connectWalletText}>CONNECT WALLET</span>
+          <ArrowRightIcon className={styles.connectWalletArrow} />
+        </button>
+      )}
+
       {/* Cash Out Button */}
       <button className={styles.cashOutButton} onClick={handleCashOutClick}>
-        <span className={styles.cashOutText}>Cash out Your Winnings</span>
+        <span className={styles.cashOutText}>CASH OUT YOUR WINNINGS</span>
         <ArrowRightIcon className={styles.cashOutArrow} />
       </button>
 

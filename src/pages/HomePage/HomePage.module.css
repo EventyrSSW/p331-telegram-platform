@@ -17,9 +17,6 @@
 
 .bonusSection {
   margin-bottom: var(--spacing-lg);
-  display: flex;
-  justify-content: center;
-  align-items: center;
 }
 
 .error {

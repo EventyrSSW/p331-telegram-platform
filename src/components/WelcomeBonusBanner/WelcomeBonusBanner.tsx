@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { haptic } from '../../providers/TelegramProvider';
 import ClockIcon from '../../assets/icons/clock.svg?react';
+import bonusImage2x from '../../assets/images/d321f4534ce7a69afd6e3121648f26052532820d.png';
 import styles from './WelcomeBonusBanner.module.css';
 
 interface WelcomeBonusBannerProps {
@@ -49,7 +50,7 @@ export const WelcomeBonusBanner: React.FC<WelcomeBonusBannerProps> = ({
 
       <div className={styles.rightSection}>
         <div className={styles.multiplierImage}>
-          <div className={styles.multiplierText}>2X</div>
+          <img src={bonusImage2x} alt="2X Bonus" className={styles.bonusImage} />
         </div>
         <div className={styles.timer}>
           <ClockIcon className={styles.clockIcon} />
