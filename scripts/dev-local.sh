@@ -113,8 +113,8 @@ wait_for_services() {
 run_migrations() {
     echo -e "${YELLOW}🔄 Running database migrations...${NC}"
     cd "$PROJECT_DIR/server"
-    # Use db push for local development (more forgiving with existing schemas)
-    npx prisma db push --accept-data-loss 2>/dev/null || npx prisma migrate deploy
+    # Use db push for local development
+    npx prisma db push
     echo -e "${GREEN}✅ Migrations complete${NC}"
 }
 
