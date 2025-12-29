@@ -39,32 +39,82 @@ open http://localhost:5173
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                           Browser                                │
-│                     http://localhost:5173                        │
-└─────────────────────────────────────────────────────────────────┘
-                               │
-                               ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                   Frontend (Vite + React)                        │
-│                     localhost:5173                               │
-│                   [Runs on host machine]                         │
-└─────────────────────────────────────────────────────────────────┘
-                    │                      │
-                    ▼                      ▼
-┌────────────────────────────┐   ┌────────────────────────────────┐
-│      Backend API           │   │     Nakama Game Server         │
-│    localhost:3847          │   │      localhost:7350            │
-│  [Runs on host machine]    │   │    [Docker: p331-nakama-server]│
-└────────────────────────────┘   └────────────────────────────────┘
-            │                              │
-            ▼                              ▼
-┌────────────────────────────┐   ┌────────────────────────────────┐
-│   Backend PostgreSQL       │   │    Nakama PostgreSQL           │
-│    localhost:5432          │   │     localhost:5433             │
-│ [Docker: p331-backend-     │   │ [Docker: p331-nakama-postgres] │
-│          postgres]         │   │                                │
-└────────────────────────────┘   └────────────────────────────────┘
+                              ┌─────────────────────────────────┐
+                              │            Browser              │
+                              │     http://localhost:5173       │
+                              └─────────────────────────────────┘
+                                             │
+                         ┌───────────────────┼───────────────────┐
+                         │                   │                   │
+                         ▼                   ▼                   ▼
+              ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
+              │    Frontend     │ │   Backend API   │ │  Nakama Server  │
+              │   (Vite/React)  │ │   (Express.js)  │ │  (Game Server)  │
+              │                 │ │                 │ │                 │
+              │  localhost:5173 │ │ localhost:3847  │ │ localhost:7350  │
+              │    [HOST]       │ │    [HOST]       │ │   [DOCKER]      │
+              └─────────────────┘ └─────────────────┘ └─────────────────┘
+                                         │                   │
+                                         ▼                   ▼
+                              ┌─────────────────┐ ┌─────────────────┐
+                              │  Backend DB     │ │   Nakama DB     │
+                              │  (PostgreSQL)   │ │  (PostgreSQL)   │
+                              │                 │ │                 │
+                              │ localhost:5432  │ │ localhost:5433  │
+                              │   [DOCKER]      │ │   [DOCKER]      │
+                              └─────────────────┘ └─────────────────┘
+```
+
+### Service Details
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              HOST MACHINE                                    │
+│                                                                             │
+│  ┌──────────────────────────────┐  ┌──────────────────────────────┐        │
+│  │  Frontend (Vite + React)     │  │  Backend API (Express.js)    │        │
+│  │  Port: 5173                  │  │  Port: 3847                  │        │
+│  │                              │  │                              │        │
+│  │  - React 18 + TypeScript     │  │  - REST API endpoints        │        │
+│  │  - TailwindCSS               │  │  - Prisma ORM                │        │
+│  │  - TON Connect               │  │  - JWT authentication        │        │
+│  │  - Telegram Mini App SDK     │  │  - Telegram auth             │        │
+│  └──────────────────────────────┘  └──────────────────────────────┘        │
+│                                                                             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                              DOCKER CONTAINERS                               │
+│                                                                             │
+│  ┌────────────────────────────────────────────────────────────────────┐    │
+│  │  p331-backend-postgres                                              │    │
+│  │  Image: postgres:15-alpine                                          │    │
+│  │  Port: 5432                                                         │    │
+│  │  Database: backend | User: backend | Pass: backend_local_dev        │    │
+│  │                                                                     │    │
+│  │  Tables: User, Game, CoinPackage, GameSession, Transaction, etc.   │    │
+│  └────────────────────────────────────────────────────────────────────┘    │
+│                                                                             │
+│  ┌────────────────────────────────────────────────────────────────────┐    │
+│  │  p331-nakama-postgres                                               │    │
+│  │  Image: postgres:15-alpine                                          │    │
+│  │  Port: 5433                                                         │    │
+│  │  Database: nakama | User: nakama | Pass: nakama_local_dev           │    │
+│  │                                                                     │    │
+│  │  Tables: users, wallet_ledger, leaderboard, storage, etc.          │    │
+│  └────────────────────────────────────────────────────────────────────┘    │
+│                                                                             │
+│  ┌────────────────────────────────────────────────────────────────────┐    │
+│  │  p331-nakama-server                                                 │    │
+│  │  Image: heroiclabs/nakama:3.21.1                                    │    │
+│  │  Ports: 7349 (gRPC), 7350 (HTTP/WS), 7351 (Console)                │    │
+│  │                                                                     │    │
+│  │  Features:                                                          │    │
+│  │  - Real-time multiplayer matches (PvP, PvH)                        │    │
+│  │  - Wallet & coin management                                         │    │
+│  │  - Leaderboards                                                     │    │
+│  │  - Custom game logic (nakama/modules/main.js)                      │    │
+│  └────────────────────────────────────────────────────────────────────┘    │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
