@@ -3,6 +3,7 @@ import {
   useContext,
   useState,
   useEffect,
+  useRef,
   ReactNode,
   useCallback,
 } from 'react';
@@ -91,6 +92,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const loginInitiatedRef = useRef(false);
 
   const login = useCallback(async () => {
     setIsLoading(true);
@@ -181,6 +183,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Auto-login on mount
   useEffect(() => {
+    // Prevent double execution in React StrictMode
+    if (loginInitiatedRef.current) {
+      console.log('[Auth] Login already initiated, skipping');
+      return;
+    }
+    loginInitiatedRef.current = true;
+
     const token = api.getToken();
     console.log('[Auth] useEffect mount, token exists:', !!token);
 
