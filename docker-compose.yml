@@ -2,7 +2,8 @@ version: '3.8'
 
 services:
   # PostgreSQL Database
-  db:
+  telegram-game-db:
+    container_name: telegram-game-db-pg
     image: postgres:15-alpine
     environment:
       POSTGRES_USER: p331
@@ -11,7 +12,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - telegram_game_postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U p331"]
       interval: 5s
@@ -19,17 +20,18 @@ services:
       retries: 5
 
   # Nakama Game Server
-  nakama:
+  telegram-game-nakama:
+    container_name: telegram-game-nakama
     image: registry.heroiclabs.com/heroiclabs/nakama:3.21.1
     entrypoint:
       - "/bin/sh"
       - "-ecx"
       - >
-        /nakama/nakama migrate up --database.address postgres:p331_local_dev@db:5432/p331 &&
-        exec /nakama/nakama --name nakama1 --database.address postgres:p331_local_dev@db:5432/p331 --logger.level DEBUG --session.token_expiry_sec 7200 --runtime.js_entrypoint "main.js"
+        /nakama/nakama migrate up --database.address postgres:p331_local_dev@telegram-game-db:5432/p331 &&
+        exec /nakama/nakama --name nakama1 --database.address postgres:p331_local_dev@telegram-game-db:5432/p331 --logger.level DEBUG --session.token_expiry_sec 7200 --runtime.js_entrypoint "main.js"
     restart: unless-stopped
     depends_on:
-      db:
+      telegram-game-db:
         condition: service_healthy
     ports:
       - "7349:7349"   # gRPC API
@@ -44,4 +46,4 @@ services:
       retries: 5
 
 volumes:
-  postgres_data:
+  telegram_game_postgres_data:
