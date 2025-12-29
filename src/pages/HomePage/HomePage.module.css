@@ -12,10 +12,10 @@
 }
 
 .featuredSection {
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
 }
 
-.categoriesSection {
+.bonusSection {
   margin-bottom: var(--spacing-lg);
 }
 

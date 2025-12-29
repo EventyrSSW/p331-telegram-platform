@@ -11,6 +11,7 @@ export interface Game {
   featured?: boolean;
   topPromoted?: boolean;
   videoUrl?: string;
+  locked?: boolean;
 }
 
 interface GameCardProps {
@@ -23,6 +24,7 @@ export const GameCard: React.FC<GameCardProps> = ({ game, onClick }) => {
   const [videoFailed, setVideoFailed] = useState(false);
 
   const handleClick = () => {
+    if (game.locked) return; // Don't allow clicks on locked games
     haptic.light();
     onClick?.(game);
   };
@@ -65,16 +67,16 @@ export const GameCard: React.FC<GameCardProps> = ({ game, onClick }) => {
   const showVideo = game.videoUrl && !videoFailed;
 
   return (
-    <button className={styles.card} onClick={handleClick}>
+    <button className={`${styles.card} ${game.locked ? styles.locked : ''}`} onClick={handleClick}>
       {/* Ribbon Badge */}
-      {game.featured && (
+      {game.featured && !game.locked && (
         <div className={styles.ribbonContainer}>
           <div className={`${styles.ribbon} ${styles.ribbonFeatured}`}>
             Featured
           </div>
         </div>
       )}
-      {game.topPromoted && !game.featured && (
+      {game.topPromoted && !game.featured && !game.locked && (
         <div className={styles.ribbonContainer}>
           <div className={`${styles.ribbon} ${styles.ribbonHot}`}>
             Hot
@@ -83,7 +85,7 @@ export const GameCard: React.FC<GameCardProps> = ({ game, onClick }) => {
       )}
 
       <div className={styles.thumbnailWrapper}>
-        {showVideo && (
+        {showVideo && !game.locked && (
           <video
             ref={videoRef}
             className={styles.video}
@@ -100,8 +102,16 @@ export const GameCard: React.FC<GameCardProps> = ({ game, onClick }) => {
           src={game.thumbnail}
           alt={game.title}
           className={styles.thumbnail}
-          style={{ display: showVideo ? 'none' : 'block' }}
+          style={{ display: showVideo && !game.locked ? 'none' : 'block' }}
         />
+
+        {/* Locked Overlay */}
+        {game.locked && (
+          <div className={styles.lockedOverlay}>
+            <div className={styles.lockIcon}>🔒</div>
+            <div className={styles.lockText}>Unlock Soon</div>
+          </div>
+        )}
       </div>
       <div className={styles.titleArea}>
         <span className={styles.title}>{game.title}</span>

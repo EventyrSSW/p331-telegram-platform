@@ -1,0 +1,154 @@
+/* Banner Container */
+.banner {
+  width: 100%;
+  padding: 20px;
+  position: relative;
+  border-radius: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  overflow: hidden;
+  gap: 16px;
+}
+
+/* Variant Backgrounds */
+.green {
+  background: linear-gradient(0deg, rgba(0, 0, 0, 0.50) 0%, rgba(0, 0, 0, 0.50) 100%),
+              linear-gradient(90deg, #86CE11 0%, #43990C 100%);
+}
+
+.blue {
+  background: linear-gradient(90deg, #3B5F7D 0%, #2B4A5F 100%);
+}
+
+/* Content Layout */
+.content {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+/* Text Section */
+.textSection {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+}
+
+.label {
+  color: #C2FD62;
+  font-size: 12px;
+  font-family: 'Roboto', sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.24px;
+}
+
+.green .label {
+  color: #C2FD62;
+}
+
+.blue .label {
+  color: #6ECCFF;
+}
+
+.title {
+  color: white;
+  font-size: 24px;
+  font-family: 'Roboto', sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.40px;
+}
+
+/* Deposit Button */
+.depositButton {
+  padding: 10px 20px;
+  position: relative;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: white;
+  font-size: 16px;
+  font-family: 'Roboto', sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.32px;
+  transition: all 0.2s ease;
+}
+
+.depositButton::before {
+  content: '';
+  position: absolute;
+  width: 149px;
+  height: 39px;
+  left: 0;
+  top: 0;
+  background: rgba(255, 255, 255, 0.20);
+  border-radius: 50px;
+  z-index: -1;
+}
+
+.depositButton:active::before {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Right Section */
+.rightSection {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 3px;
+}
+
+/* Multiplier Image/Badge */
+.multiplierImage {
+  width: 120px;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  border: 3px solid rgba(110, 204, 255, 0.6);
+  border-radius: 12px;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.bonusImage {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Timer */
+.timer {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 4px;
+}
+
+.clockIcon {
+  width: 18px;
+  height: 18px;
+}
+
+.green .clockIcon {
+  color: #86CE11;
+}
+
+.blue .clockIcon {
+  color: #0098EA;
+}
+
+.timerText {
+  color: white;
+  font-size: 12px;
+  font-family: 'Roboto', sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.24px;
+}

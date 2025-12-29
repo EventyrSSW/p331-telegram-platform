@@ -1,177 +1,194 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
-import { Address } from '@ton/core';
+import { useAuth } from '../../contexts/AuthContext';
+import { api, UserStats } from '../../services/api';
+import { CashOutModal } from '../../components/CashOutModal/CashOutModal';
 import { Header, BottomNavBar } from '../../components';
-import { api, User } from '../../services/api';
-import { useConfig } from '../../contexts/ConfigContext';
+import { haptic } from '../../providers/TelegramProvider';
 import styles from './ProfilePage.module.css';
+import GamepadIcon from '../../assets/icons/Group (6).svg?react';
+import MedalIcon from '../../assets/icons/Icon (statistic).svg?react';
+import TonCoinIcon from '../../assets/icons/toncoin-ton-logo 1.svg?react';
+import SettingsIcon from '../../assets/icons/Icon (general).svg?react';
+import ArrowRightIcon from '../../assets/icons/arrow-right.svg?react';
+import { MOCK_USER, MOCK_STATS, shouldUseMockData } from '../../utils/mockData';
 
-// Before component - add helper function
-const toUserFriendlyAddress = (rawAddress: string, isTestnet: boolean): string => {
-  try {
-    return Address.parse(rawAddress).toString({
-      bounceable: false,
-      testOnly: isTestnet,
-    });
-  } catch {
-    return rawAddress;
-  }
-};
-
-export const ProfilePage = () => {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // Inside component - add these hooks after existing useState
+export function ProfilePage() {
+  const { user, refreshUser } = useAuth();
   const [tonConnectUI] = useTonConnectUI();
   const wallet = useTonWallet();
-  const { config } = useConfig();
+  const [stats, setStats] = useState<UserStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [showCashOutModal, setShowCashOutModal] = useState(false);
+  const navigate = useNavigate();
 
-  const isTestnet = config?.ton.network === 'testnet';
+  // Use mock data for local development without Telegram context
+  const useMockData = shouldUseMockData();
+  const displayUser = useMockData ? MOCK_USER : user;
+  const displayStats = useMockData ? MOCK_STATS : stats;
+  const isWalletConnected = !!wallet;
 
-  // Compute user-friendly address
-  const userFriendlyAddress = wallet?.account.address
-    ? toUserFriendlyAddress(wallet.account.address, isTestnet)
-    : null;
+  useEffect(() => {
+    loadStats();
+  }, []);
+
+  const loadStats = async () => {
+    try {
+      setLoading(true);
+      const userStats = await api.getUserStats();
+      setStats(userStats);
+    } catch (err) {
+      console.error('Failed to load stats:', err);
+      setError('Failed to load statistics');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCashOutClick = () => {
+    haptic.medium();
+    setShowCashOutModal(true);
+  };
+
+  const handleCashOutSuccess = async () => {
+    await refreshUser();
+    await loadStats();
+  };
+
+  const handleSettingsClick = () => {
+    haptic.light();
+    navigate('/settings');
+  };
 
   const handleConnectWallet = () => {
+    haptic.medium();
     tonConnectUI.openModal();
   };
 
-  const handleDisconnectWallet = () => {
-    tonConnectUI.disconnect();
-  };
-
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const response = await api.getProfile();
-        setUser(response.user);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load profile');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchProfile();
-  }, []);
-
-  const formatWalletAddress = (address: string): string => {
-    if (address.length <= 12) return address;
-    return `${address.slice(0, 6)}...${address.slice(-4)}`;
-  };
-
-  const getDisplayName = (): string => {
-    if (!user) return '';
-    const parts = [user.firstName, user.lastName].filter(Boolean);
-    return parts.length > 0 ? parts.join(' ') : user.username || 'Anonymous';
-  };
-
-  if (isLoading) {
+  // Development mode fallback when not in Telegram - use mock data
+  if (!user && !useMockData) {
     return (
-      <div className={styles.page}>
-        <Header />
-        <main className={styles.main}>
-          <div className={styles.loading}>Loading profile...</div>
-        </main>
-      </div>
-    );
-  }
-
-  if (error || !user) {
-    return (
-      <div className={styles.page}>
-        <Header />
-        <main className={styles.main}>
-          <div className={styles.error}>{error || 'Profile not found'}</div>
-        </main>
+      <div className={styles.container}>
+        <div className={styles.profileSection}>
+          <div className={styles.avatar}>
+            <div className={styles.avatarPlaceholder}>DEV</div>
+          </div>
+          <h1 className={styles.username}>Development Mode</h1>
+          <p className={styles.joinDate}>Not authenticated (Telegram context required)</p>
+        </div>
+        <div className={styles.error}>
+          Please open this app in Telegram to see your profile
+        </div>
       </div>
     );
   }
 
   return (
-    <div className={styles.page}>
+    <div className={styles.container}>
       <Header />
-      <main className={styles.main}>
-        <div className={styles.profileHeader}>
-          <div className={styles.avatar}>
-            {user.photoUrl ? (
-              <img src={user.photoUrl} alt="Profile" className={styles.avatarImage} />
-            ) : (
-              <span className={styles.avatarPlaceholder}>
-                {(user.firstName?.[0] || user.username?.[0] || '?').toUpperCase()}
-              </span>
-            )}
-          </div>
-          <h1 className={styles.displayName}>{getDisplayName()}</h1>
-          {user.username && (
-            <span className={styles.username}>@{user.username}</span>
-          )}
-          {user.isPremium && (
-            <span className={styles.premiumBadge}>Premium</span>
-          )}
-        </div>
 
-        <div className={styles.section}>
-          <h2 className={styles.sectionTitle}>Account Info</h2>
-          <div className={styles.infoCard}>
-            <div className={styles.infoRow}>
-              <span className={styles.infoLabel}>Balance</span>
-              <span className={styles.infoValue}>{user.coinBalance.toLocaleString()} coins</span>
+      {/* Settings Button Row */}
+      <div className={styles.settingsRow}>
+        <button className={styles.settingsButton} onClick={handleSettingsClick}>
+          <SettingsIcon className={styles.settingsIcon} />
+          <span>SETTINGS</span>
+        </button>
+      </div>
+
+      {/* User Profile */}
+      <div className={styles.profileSection}>
+        <div className={styles.avatar}>
+          {displayUser?.photoUrl ? (
+            <img src={displayUser.photoUrl} alt={displayUser.username || 'User'} />
+          ) : (
+            <div className={styles.avatarPlaceholder}>
+              {(displayUser?.username?.[0] || displayUser?.firstName?.[0] || '?').toUpperCase()}
             </div>
+          )}
+        </div>
+        <h1 className={styles.username}>
+          {displayUser?.username || displayUser?.firstName || 'Anonymous'}
+        </h1>
+        <p className={styles.joinDate}>Joined Dec 2025</p>
+      </div>
+
+      {/* Stats Cards */}
+      <div className={styles.statsGrid}>
+        <div className={styles.statCard}>
+          <div className={styles.iconContainer}>
+            <GamepadIcon className={styles.statIcon} />
+          </div>
+          <div className={styles.statInfo}>
+            <div className={styles.statValue}>
+              {loading ? '...' : displayStats?.gamesPlayed || 0}
+            </div>
+            <div className={styles.statLabel}>Games played</div>
           </div>
         </div>
 
-        <div className={styles.section}>
-          <h2 className={styles.sectionTitle}>Wallet</h2>
-          <div className={styles.infoCard}>
-            {wallet ? (
-              <>
-                <div className={styles.infoRow}>
-                  <span className={styles.infoLabel}>Connected</span>
-                  <span className={styles.walletAddress}>
-                    {formatWalletAddress(userFriendlyAddress || wallet.account.address)}
-                  </span>
-                </div>
-                <button
-                  className={styles.disconnectButton}
-                  onClick={handleDisconnectWallet}
-                >
-                  Disconnect Wallet
-                </button>
-              </>
-            ) : user.walletAddress ? (
-              <>
-                <div className={styles.infoRow}>
-                  <span className={styles.infoLabel}>Saved Wallet</span>
-                  <span className={styles.walletAddress}>
-                    {formatWalletAddress(user.walletAddress)}
-                  </span>
-                </div>
-                <button
-                  className={styles.connectButton}
-                  onClick={handleConnectWallet}
-                >
-                  Reconnect Wallet
-                </button>
-              </>
-            ) : (
-              <button
-                className={styles.connectButton}
-                onClick={handleConnectWallet}
-              >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M21 18V19C21 20.1046 20.1046 21 19 21H5C3.89543 21 3 20.1046 3 19V5C3 3.89543 3.89543 3 5 3H19C20.1046 3 21 3.89543 21 5V6M16 12H22M22 12L19 9M22 12L19 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                Connect Wallet
-              </button>
-            )}
+        <div className={styles.statCard}>
+          <div className={styles.iconContainer}>
+            <MedalIcon className={styles.statIcon} />
+          </div>
+          <div className={styles.statInfo}>
+            <div className={styles.statValue}>
+              {loading ? '...' : displayStats?.totalWins || 0}
+            </div>
+            <div className={styles.statLabel}>Total wins</div>
           </div>
         </div>
-      </main>
+
+        <div className={styles.statCard}>
+          <div className={styles.iconContainer}>
+            <TonCoinIcon className={styles.statIcon} />
+          </div>
+          <div className={styles.statInfo}>
+            <div className={styles.statValue}>
+              ${loading ? '...' : displayStats?.amountWon || 0}
+            </div>
+            <div className={styles.statLabel}>Amount won</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Connect Wallet Button - always shown, displays address when connected */}
+      <button
+        className={styles.connectWalletButton}
+        onClick={handleConnectWallet}
+        disabled={isWalletConnected}
+      >
+        {isWalletConnected && wallet?.account?.address ? (
+          <span className={styles.connectWalletText}>
+            {wallet.account.address.slice(0, 6)}...{wallet.account.address.slice(-4)}
+          </span>
+        ) : (
+          <>
+            <span className={styles.connectWalletText}>CONNECT WALLET</span>
+            <ArrowRightIcon className={styles.connectWalletArrow} />
+          </>
+        )}
+      </button>
+
+      {/* Cash Out Button */}
+      <button className={styles.cashOutButton} onClick={handleCashOutClick}>
+        <span className={styles.cashOutText}>CASH OUT YOUR WINNINGS</span>
+        <ArrowRightIcon className={styles.cashOutArrow} />
+      </button>
+
+      {error && (
+        <div className={styles.error}>{error}</div>
+      )}
+
+      <CashOutModal
+        isOpen={showCashOutModal}
+        onClose={() => setShowCashOutModal(false)}
+        currentBalance={displayUser?.coinBalance ?? 0}
+        onSuccess={handleCashOutSuccess}
+      />
+
       <BottomNavBar />
     </div>
   );
-};
+}

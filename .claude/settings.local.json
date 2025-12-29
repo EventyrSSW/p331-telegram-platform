@@ -74,7 +74,12 @@
       "Bash(git -C /Users/olegvoytenko/Development/p331-telegram-platform merge-base HEAD main)",
       "Bash(git -C /Users/olegvoytenko/Development/p331-telegram-platform merge-base HEAD master)",
       "Skill(superpowers:execute-plan)",
-      "Skill(superpowers:executing-plans)"
+      "Skill(superpowers:executing-plans)",
+      "WebFetch(domain:www.figma.com)",
+      "Bash(ls:*)",
+      "Bash(grep:*)",
+      "Bash(git -C /Users/daniillogachev/Work/p331-telegram-platform status)",
+      "Bash(git -C /Users/daniillogachev/Work/p331-telegram-platform add .)"
     ],
     "deny": [],
     "ask": []

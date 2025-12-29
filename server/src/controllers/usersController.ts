@@ -145,4 +145,23 @@ export const usersController = {
       next(error);
     }
   },
+
+  async getUserStats(req: Request, res: Response, next: NextFunction) {
+    try {
+      const telegramUser = req.telegramUser!;
+
+      // Ensure user exists in database
+      const user = await userService.findOrCreateByTelegramId(telegramUser.id, {
+        username: telegramUser.username,
+        firstName: telegramUser.first_name,
+        lastName: telegramUser.last_name,
+      });
+
+      const stats = await userService.getUserGameStats(user.id);
+
+      res.json(stats);
+    } catch (error) {
+      next(error);
+    }
+  },
 };

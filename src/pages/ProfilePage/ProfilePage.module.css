@@ -1,180 +1,416 @@
-.page {
-  min-height: 100vh;
-  background-color: var(--color-bg-primary);
-}
-
-.main {
-  padding: 24px 16px;
-  padding-bottom: 100px;
-}
-
-.loading,
-.error {
-  text-align: center;
-  color: var(--color-text-secondary);
-  padding: 40px 16px;
-}
-
-.error {
-  color: #ff4757;
-}
-
-.profileHeader {
+/* Container */
+.container {
+  width: 100%;
+  height: 100%;
+  background: #050505;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
+  justify-content: flex-start;
   align-items: center;
-  margin-bottom: 32px;
+  gap: 20px;
+  padding-bottom: 80px; /* Space for bottom nav */
 }
 
-.avatar {
-  width: 96px;
-  height: 96px;
-  border-radius: 50%;
-  background: var(--color-accent-primary);
+/* Top Header with Resource Badges */
+.topHeader {
+  width: 100%;
+  padding: 20px 14px 14px 29px;
+  position: relative;
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
+  background: rgba(23, 23, 23, 0.50);
+}
+
+.resourceBadge {
+  width: 109px;
+  height: 28px;
+  padding: 4px 10px;
+  position: relative;
+  background: rgba(23, 23, 23, 0.70);
+  border-radius: 40px;
+  border-bottom: 1px solid #3D3D3D;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2px;
+}
+
+.rankBadge {
+  padding-left: 20px;
+  padding-right: 10px;
+}
+
+.cashBadge {
   display: flex;
   align-items: center;
-  justify-content: center;
-  margin-bottom: 16px;
+  gap: 2px;
+  padding-right: 4px;
+}
+
+.badgeIcon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: white;
+}
+
+.badgeValue {
+  flex: 1;
+  text-align: center;
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.28px;
+}
+
+.badgeAvatar {
+  position: absolute;
+  left: -15px;
+  top: -1px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
   overflow: hidden;
 }
 
-.avatarImage {
+.badgeAvatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.badgePlaceholder {
+  width: 100%;
+  height: 100%;
+  background: rgba(23, 23, 23, 0.70);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.plusButton {
+  width: 20px;
+  height: 20px;
+  background: transparent;
+  border: none;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.plusIcon {
+  width: 14px;
+  height: 14px;
+  color: #0098EA;
+}
+
+/* Settings Row */
+.settingsRow {
+  width: 100%;
+  padding: 0 14px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.settingsButton {
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.20);
+  border: none;
+  border-radius: 50px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.28px;
+  transition: background 0.2s ease;
+}
+
+.settingsButton:hover {
+  background: rgba(255, 255, 255, 0.30);
+}
+
+.settingsIcon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+/* Profile Section */
+.profileSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.avatar {
+  width: 124px;
+  height: 124px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
 .avatarPlaceholder {
-  font-size: 36px;
-  font-weight: 700;
-  color: var(--color-text-primary);
-}
-
-.displayName {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--color-text-primary);
-  margin: 0 0 4px 0;
-}
-
-.username {
-  font-size: 14px;
-  color: var(--color-text-secondary);
-  margin-bottom: 8px;
-}
-
-.premiumBadge {
-  background: linear-gradient(135deg, #FFD700, #FFA500);
-  color: #000;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 4px 12px;
-  border-radius: var(--radius-full);
-}
-
-.section {
-  margin-bottom: 24px;
-}
-
-.sectionTitle {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--color-text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin: 0 0 12px 0;
-}
-
-.infoCard {
-  background: var(--color-bg-secondary);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-border-subtle);
-  padding: 16px;
-}
-
-.infoRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.infoLabel {
-  font-size: 14px;
-  color: var(--color-text-secondary);
-}
-
-.infoValue {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--color-accent-primary);
-}
-
-.walletAddress {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--color-text-primary);
-  font-family: monospace;
-  background: var(--color-bg-tertiary);
-  padding: 4px 8px;
-  border-radius: var(--radius-sm);
-}
-
-.noWallet {
-  text-align: center;
-  color: var(--color-text-secondary);
-}
-
-.noWallet span {
-  font-size: 14px;
-}
-
-.noWalletHint {
-  font-size: 12px;
-  margin: 8px 0 0 0;
-  opacity: 0.7;
-}
-
-.connectButton {
   width: 100%;
-  padding: 16px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border: none;
-  border-radius: var(--radius-md);
-  color: white;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
+  height: 100%;
+  background: #252525;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  transition: transform 0.2s ease;
-  margin-top: 12px;
+  color: white;
+  font-size: 40px;
+  font-weight: 700;
 }
 
-.connectButton:hover {
-  transform: translateY(-1px);
+.username {
+  margin: 0;
+  color: white;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.40px;
+  text-align: center;
 }
 
-.connectButton:active {
-  transform: translateY(0);
-}
-
-.disconnectButton {
-  width: 100%;
-  padding: 12px 16px;
-  background-color: transparent;
-  border: 1px solid var(--color-border-subtle);
-  border-radius: var(--radius-md);
-  color: var(--color-text-primary);
+.joinDate {
+  margin: 0;
+  color: #9F9F9F;
   font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  margin-top: 12px;
+  font-weight: 400;
+  letter-spacing: 0.28px;
+  text-align: center;
 }
 
-.disconnectButton:hover {
-  border-color: #ef4444;
-  color: #ef4444;
+/* Stats Grid */
+.statsGrid {
+  width: 100%;
+  max-width: 600px;
+  padding: 0 14px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.statCard {
+  flex: 1;
+  min-width: 100px;
+  max-width: 140px;
+  padding: 10px;
+  background: #171717;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+}
+
+.iconContainer {
+  width: 40px;
+  height: 40px;
+  background: #252525;
+  border-radius: 999px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.statIcon {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.statInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.statValue {
+  color: white;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.40px;
+  text-align: center;
+}
+
+.statLabel {
+  color: #9F9F9F;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.24px;
+  text-align: center;
+}
+
+/* Cash Out Button */
+.cashOutButton {
+  /* Box model */
+  width: 362px;
+  max-width: calc(100% - 28px);
+  height: 44px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 50px;
+
+  /* Display */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  /* Visual */
+  background: #FF4D00;
+  cursor: pointer;
+
+  /* Animation */
+  transition: background 0.2s ease;
+}
+
+.cashOutButton:hover {
+  background: #E54500;
+}
+
+.cashOutButton:active {
+  transform: scale(0.98);
+}
+
+.cashOutButton:focus-visible {
+  outline: 2px solid #FF4D00;
+  outline-offset: 2px;
+}
+
+.cashOutText {
+  color: white;
+  font-size: 16px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.32px;
+}
+
+.cashOutArrow {
+  width: 24px;
+  height: 24px;
+  color: white;
+}
+
+/* Connect Wallet Button */
+.connectWalletButton {
+  /* Box model */
+  width: 362px;
+  max-width: calc(100% - 28px);
+  height: 44px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 50px;
+
+  /* Display */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  /* Visual */
+  background: #0098EA;
+  cursor: pointer;
+
+  /* Animation */
+  transition: background 0.2s ease;
+}
+
+.connectWalletButton:hover:not(:disabled) {
+  background: #007AC2;
+}
+
+.connectWalletButton:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.connectWalletButton:focus-visible {
+  outline: 2px solid #0098EA;
+  outline-offset: 2px;
+}
+
+.connectWalletButton:disabled {
+  background: rgba(0, 152, 234, 0.5);
+  cursor: default;
+  opacity: 0.8;
+}
+
+.connectWalletText {
+  color: white;
+  font-size: 16px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.32px;
+}
+
+.connectWalletArrow {
+  width: 24px;
+  height: 24px;
+  color: white;
+}
+
+/* Error */
+.error {
+  text-align: center;
+  color: #ff4757;
+  padding: 16px;
+  margin-top: 16px;
+  background: rgba(255, 71, 87, 0.1);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .statsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .statsGrid {
+    gap: 8px;
+  }
+
+  .statCard {
+    padding: 12px 8px;
+  }
+
+  .statValue {
+    font-size: 20px;
+  }
+
+  .statLabel {
+    font-size: 11px;
+  }
+
+  .statIcon {
+    width: 28px;
+    height: 28px;
+  }
 }

@@ -1,6 +1,6 @@
 .card {
   position: relative;
-  aspect-ratio: 16 / 10;
+  aspect-ratio: 1 / 1;
   border-radius: 20px;
   overflow: hidden;
 }
@@ -11,42 +11,61 @@
   object-fit: cover;
 }
 
+.categoryBadge {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 6px 12px;
+  border-radius: 8px;
+  backdrop-filter: blur(4px);
+}
+
 .overlay {
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
   background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  padding: 24px;
+  padding: 32px 24px;
 }
 
 .info {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-}
-
-.category {
-  color: var(--color-text-secondary);
-  font-size: 12px;
+  gap: 16px;
+  align-items: flex-start;
 }
 
 .title {
   color: white;
-  font-size: 18px;
+  font-size: 28px;
   font-weight: 700;
+  line-height: 1.2;
 }
 
 .playButton {
   background-color: var(--color-accent-primary);
   color: white;
   border: none;
-  border-radius: 9999px;
-  padding: 12px 28px;
-  font-size: 14px;
-  font-weight: 600;
+  border-radius: 50px;
+  padding: 14px 32px;
+  font-size: 16px;
+  font-weight: 700;
   cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.playButton:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(255, 77, 0, 0.4);
+}
+
+.playButton:active {
+  transform: scale(0.98);
 }
