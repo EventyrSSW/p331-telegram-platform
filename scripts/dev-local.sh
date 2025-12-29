@@ -126,10 +126,29 @@ seed_database() {
     echo -e "${GREEN}✅ Seeding complete${NC}"
 }
 
+# Open browser with URLs
+open_browser() {
+    # Wait a moment for servers to be ready
+    sleep 3
+
+    # Open URLs in default browser (macOS)
+    if command -v open &> /dev/null; then
+        open "http://localhost:5173"
+        open "http://localhost:7351"
+    # Linux
+    elif command -v xdg-open &> /dev/null; then
+        xdg-open "http://localhost:5173"
+        xdg-open "http://localhost:7351"
+    fi
+}
+
 # Start backend and frontend
 start_dev_servers() {
     echo -e "${YELLOW}🖥️  Starting development servers...${NC}"
     cd "$PROJECT_DIR"
+
+    # Open browser in background after a short delay
+    open_browser &
 
     # This will run both frontend and backend concurrently
     npm run dev:all
