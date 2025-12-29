@@ -208,13 +208,13 @@ async function main() {
   // Seed system configuration
   const systemConfigs = [
     { key: 'ton_network', value: 'testnet' },
-    { key: 'ton_receiver_address', value: '' },
+    { key: 'ton_receiver_address', value: process.env.PAYMENT_RECEIVER_ADDRESS || '' },
   ];
 
   for (const config of systemConfigs) {
     await prisma.systemConfig.upsert({
       where: { key: config.key },
-      update: {},
+      update: { value: config.value },
       create: config,
     });
   }

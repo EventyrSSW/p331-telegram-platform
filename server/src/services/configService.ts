@@ -1,4 +1,5 @@
 import { prisma } from '../db/client';
+import { config } from '../config';
 
 export interface TonConfig {
   network: 'mainnet' | 'testnet';
@@ -55,10 +56,11 @@ class ConfigService {
   }
 
   async getTonConfig(): Promise<TonConfig> {
-    const config = await this.loadSystemConfig();
+    const dbConfig = await this.loadSystemConfig();
     return {
-      network: (config.get('ton_network') as 'mainnet' | 'testnet') || 'testnet',
-      receiverAddress: config.get('ton_receiver_address') || '',
+      network: (dbConfig.get('ton_network') as 'mainnet' | 'testnet') || 'testnet',
+      // Use DB value first, fall back to env variable for local dev
+      receiverAddress: dbConfig.get('ton_receiver_address') || config.ton.paymentReceiverAddress || '',
     };
   }
 
