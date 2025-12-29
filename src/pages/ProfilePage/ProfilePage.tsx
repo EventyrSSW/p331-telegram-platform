@@ -7,10 +7,10 @@ import { CashOutModal } from '../../components/CashOutModal/CashOutModal';
 import { Header, BottomNavBar } from '../../components';
 import { haptic } from '../../providers/TelegramProvider';
 import styles from './ProfilePage.module.css';
-import GamepadIcon from '../../assets/icons/gamepad.svg?react';
-import MedalIcon from '../../assets/icons/medal.svg?react';
-import DollarIcon from '../../assets/icons/dollar.svg?react';
-import SettingsIcon from '../../assets/icons/settings.svg?react';
+import GamepadIcon from '../../assets/icons/Group (6).svg?react';
+import MedalIcon from '../../assets/icons/Icon (statistic).svg?react';
+import TonCoinIcon from '../../assets/icons/toncoin-ton-logo 1.svg?react';
+import SettingsIcon from '../../assets/icons/Icon (general).svg?react';
 import ArrowRightIcon from '../../assets/icons/arrow-right.svg?react';
 import { MOCK_USER, MOCK_STATS, shouldUseMockData } from '../../utils/mockData';
 
@@ -67,8 +67,8 @@ export function ProfilePage() {
     tonConnectUI.openModal();
   };
 
-  // Development mode fallback when not in Telegram
-  if (!user) {
+  // Development mode fallback when not in Telegram - use mock data
+  if (!user && !useMockData) {
     return (
       <div className={styles.container}>
         <div className={styles.profileSection}>
@@ -118,7 +118,7 @@ export function ProfilePage() {
       <div className={styles.statsGrid}>
         <div className={styles.statCard}>
           <div className={styles.iconContainer}>
-            <GamepadIcon className={styles.statIcon} style={{ color: '#86CE11' }} />
+            <GamepadIcon className={styles.statIcon} />
           </div>
           <div className={styles.statInfo}>
             <div className={styles.statValue}>
@@ -130,7 +130,7 @@ export function ProfilePage() {
 
         <div className={styles.statCard}>
           <div className={styles.iconContainer}>
-            <MedalIcon className={styles.statIcon} style={{ color: '#FF4D00' }} />
+            <MedalIcon className={styles.statIcon} />
           </div>
           <div className={styles.statInfo}>
             <div className={styles.statValue}>
@@ -142,7 +142,7 @@ export function ProfilePage() {
 
         <div className={styles.statCard}>
           <div className={styles.iconContainer}>
-            <DollarIcon className={styles.statIcon} style={{ color: '#0098EA' }} />
+            <TonCoinIcon className={styles.statIcon} />
           </div>
           <div className={styles.statInfo}>
             <div className={styles.statValue}>
@@ -153,13 +153,23 @@ export function ProfilePage() {
         </div>
       </div>
 
-      {/* Connect Wallet Button - shown when wallet is not connected */}
-      {!isWalletConnected && (
-        <button className={styles.connectWalletButton} onClick={handleConnectWallet}>
-          <span className={styles.connectWalletText}>CONNECT WALLET</span>
-          <ArrowRightIcon className={styles.connectWalletArrow} />
-        </button>
-      )}
+      {/* Connect Wallet Button - always shown, displays address when connected */}
+      <button
+        className={styles.connectWalletButton}
+        onClick={handleConnectWallet}
+        disabled={isWalletConnected}
+      >
+        {isWalletConnected && wallet?.account?.address ? (
+          <span className={styles.connectWalletText}>
+            {wallet.account.address.slice(0, 6)}...{wallet.account.address.slice(-4)}
+          </span>
+        ) : (
+          <>
+            <span className={styles.connectWalletText}>CONNECT WALLET</span>
+            <ArrowRightIcon className={styles.connectWalletArrow} />
+          </>
+        )}
+      </button>
 
       {/* Cash Out Button */}
       <button className={styles.cashOutButton} onClick={handleCashOutClick}>
@@ -174,7 +184,7 @@ export function ProfilePage() {
       <CashOutModal
         isOpen={showCashOutModal}
         onClose={() => setShowCashOutModal(false)}
-        currentBalance={user.coinBalance}
+        currentBalance={displayUser?.coinBalance ?? 0}
         onSuccess={handleCashOutSuccess}
       />
 
