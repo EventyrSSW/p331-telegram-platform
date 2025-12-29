@@ -126,6 +126,13 @@ seed_database() {
     echo -e "${GREEN}✅ Seeding complete${NC}"
 }
 
+# Seed Nakama storage with game levels
+seed_nakama() {
+    echo -e "${YELLOW}🎮 Seeding Nakama game levels...${NC}"
+    cd "$PROJECT_DIR"
+    node scripts/seed-nakama.js || true
+}
+
 # Open browser with URLs
 open_browser() {
     # Wait a moment for servers to be ready
@@ -178,6 +185,7 @@ main() {
     wait_for_services
     run_migrations
     seed_database
+    seed_nakama
 
     echo ""
     echo -e "${GREEN}✅ Local development environment is ready!${NC}"
