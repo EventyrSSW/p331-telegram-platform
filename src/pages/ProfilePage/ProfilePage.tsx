@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { api, UserStats } from '../../services/api';
-import { CashOutModal } from '../../components/CashOutModal/CashOutModal';
 import { Header, BottomNavBar } from '../../components';
 import { haptic } from '../../providers/TelegramProvider';
 import styles from './ProfilePage.module.css';
@@ -21,7 +20,6 @@ export function ProfilePage() {
   const [stats, setStats] = useState<UserStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showCashOutModal, setShowCashOutModal] = useState(false);
   const navigate = useNavigate();
 
   // Use mock data for local development without Telegram context
@@ -49,12 +47,7 @@ export function ProfilePage() {
 
   const handleCashOutClick = () => {
     haptic.medium();
-    setShowCashOutModal(true);
-  };
-
-  const handleCashOutSuccess = async () => {
-    await refreshUser();
-    await loadStats();
+    navigate('/cashout');
   };
 
   const handleSettingsClick = () => {
@@ -190,16 +183,6 @@ export function ProfilePage() {
       {error && (
         <div className={styles.error}>{error}</div>
       )}
-
-      <CashOutModal
-        isOpen={showCashOutModal}
-        onClose={() => setShowCashOutModal(false)}
-        currentBalance={displayUser?.coinBalance ?? 0}
-        onSuccess={handleCashOutSuccess}
-        connectedWalletAddress={wallet?.account?.address}
-        isWalletConnected={isWalletConnected}
-        onConnectWallet={handleConnectWallet}
-      />
 
       <BottomNavBar />
     </div>

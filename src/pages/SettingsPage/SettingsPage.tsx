@@ -1,19 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { CashOutModal } from '../../components/CashOutModal/CashOutModal';
 import { haptic } from '../../providers/TelegramProvider';
 import styles from './SettingsPage.module.css';
 
 export function SettingsPage() {
-  const { user, refreshUser } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
-  const [tonConnectUI] = useTonConnectUI();
-  const wallet = useTonWallet();
-  const [showCashOutModal, setShowCashOutModal] = useState(false);
-
-  const isWalletConnected = !!wallet;
 
   // Load preferences from localStorage
   const [soundEnabled, setSoundEnabled] = useState(() => {
@@ -33,7 +26,7 @@ export function SettingsPage() {
 
   const handleCashOutClick = () => {
     if (hapticsEnabled) haptic.medium();
-    setShowCashOutModal(true);
+    navigate('/cashout');
   };
 
   const handleSoundToggle = () => {
@@ -50,13 +43,6 @@ export function SettingsPage() {
     if (newValue) haptic.light(); // Only haptic if enabling
   };
 
-  const handleCashOutSuccess = async () => {
-    await refreshUser();
-  };
-
-  const handleConnectWallet = () => {
-    tonConnectUI.openModal();
-  };
 
   // Development mode: Still show settings page without user
   // Settings like sound/haptics work without authentication
@@ -156,18 +142,6 @@ export function SettingsPage() {
       <div className={styles.version}>
         Version 1.0.0
       </div>
-
-      {user && (
-        <CashOutModal
-          isOpen={showCashOutModal}
-          onClose={() => setShowCashOutModal(false)}
-          currentBalance={user.coinBalance}
-          onSuccess={handleCashOutSuccess}
-          connectedWalletAddress={wallet?.account?.address}
-          isWalletConnected={isWalletConnected}
-          onConnectWallet={handleConnectWallet}
-        />
-      )}
     </div>
   );
 }

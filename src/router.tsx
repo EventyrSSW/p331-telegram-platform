@@ -6,6 +6,7 @@ import { GameDetailPage } from './pages/GameDetailPage';
 import { LeaderboardPage } from './pages/LeaderboardPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { SettingsPage } from './pages/SettingsPage/SettingsPage';
+import { CashOutPage } from './pages/CashOutPage/CashOutPage';
 
 export const router = createBrowserRouter([
   {
@@ -35,5 +36,9 @@ export const router = createBrowserRouter([
   {
     path: '/settings',
     element: <SettingsPage />,
+  },
+  {
+    path: '/cashout',
+    element: <CashOutPage />,
   },
 ]);
