@@ -46,10 +46,6 @@ export function CashOutModal({
     onClose();
   };
 
-  const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCustomAddress(e.target.value);
-    setError('');
-  };
 
   const handleConnectWalletClick = () => {
     haptic.medium();
