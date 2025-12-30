@@ -15,3 +15,13 @@ body {
   overflow-x: hidden;
   background-color: var(--color-bg-page);
 }
+
+/* Ensure TonConnect modal appears above all other modals */
+[data-tc-wallets-modal-container],
+[data-tc-actions-modal-container],
+.tc-wallets-modal-backdrop,
+.tc-actions-modal-backdrop,
+div[class*="tc-wallets-modal"],
+div[class*="tc-actions-modal"] {
+  z-index: 10000 !important;
+}

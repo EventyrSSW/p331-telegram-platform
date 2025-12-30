@@ -117,7 +117,17 @@
       "Bash(git -C /Users/olegvoytenko/Development/p331-telegram-platform add:*)",
       "Bash(git -C /Users/olegvoytenko/Development/p331-telegram-platform rebase --continue)",
       "Bash(GIT_EDITOR=true git -C /Users/olegvoytenko/Development/p331-telegram-platform rebase --continue)",
-      "Bash(git -C /Users/olegvoytenko/Development/p331-telegram-platform diff --name-only --diff-filter=U)"
+      "Bash(git -C /Users/olegvoytenko/Development/p331-telegram-platform diff --name-only --diff-filter=U)",
+      "Bash(git -C /Users/olegvoytenko/Development/p331-telegram-platform log --oneline -5)",
+      "Bash(git -C /Users/olegvoytenko/Development/p331-telegram-platform push origin main)",
+      "Bash(git -C /Users/olegvoytenko/Development/p331-telegram-platform stash pop)",
+      "Bash(git -C /Users/olegvoytenko/Development/p331-telegram-platform stash drop)",
+      "WebFetch(domain:toncenter.com)",
+      "WebFetch(domain:docs.ton.org)",
+      "Bash(git -C /Users/olegvoytenko/Development/p331-telegram-platform diff main...HEAD -- server/src/config/index.ts)",
+      "Bash(git -C /Users/olegvoytenko/Development/p331-telegram-platform checkout main)",
+      "Bash(git -C /Users/olegvoytenko/Development/p331-telegram-platform pull)",
+      "Bash(git -C /Users/olegvoytenko/Development/p331-telegram-platform branch -d multiplayer-updates)"
     ],
     "deny": [],
     "ask": []

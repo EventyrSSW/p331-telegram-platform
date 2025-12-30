@@ -1,6 +1,7 @@
 .page {
   min-height: 100vh;
   background-color: var(--color-bg-primary);
+  padding-top: var(--tg-safe-area-top, 0px);
 }
 
 .main {

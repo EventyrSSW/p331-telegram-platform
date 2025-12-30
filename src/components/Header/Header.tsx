@@ -32,7 +32,13 @@ export const Header = () => {
   const userAvatar = displayUser?.photoUrl;
 
   const handleConnectWallet = () => {
-    tonConnectUI.openModal();
+    console.log('[TonConnect] Opening modal...');
+    try {
+      tonConnectUI.openModal();
+      console.log('[TonConnect] Modal opened');
+    } catch (error) {
+      console.error('[TonConnect] Failed to open modal:', error);
+    }
   };
 
   const handleSendTransaction = async (amount: number) => {
