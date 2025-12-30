@@ -1274,22 +1274,61 @@ function matchLeave(ctx, logger, nk, dispatcher, tick, state, presences) {
     return null;
   }
 
-  // If all real players disconnected during an active match, auto-forfeit after a short grace period
-  // For now, immediately forfeit disconnected players (they get score 0)
+  // If all real players disconnected during an active match
   if (connectedPlayerCount === 0 && (state.status === "ready" || state.status === "playing")) {
-    logger.info("All players disconnected during active match - forfeiting");
+    logger.info("All players disconnected during active match");
 
-    // Assign score 0 to all disconnected players who haven't submitted
+    // Check if anyone submitted a score
+    var anyoneSubmitted = false;
     for (var odredacted in state.players) {
       var player = state.players[odredacted];
-      if (!player.isHouse && !state.results[odredacted]) {
-        state.results[odredacted] = { score: 0, timeMs: 999999999 };
-        logger.info("Assigned forfeit score to disconnected player " + odredacted);
+      if (!player.isHouse && state.results[odredacted]) {
+        anyoneSubmitted = true;
+        break;
       }
     }
 
-    // Resolve the match
-    resolveMatch(ctx, nk, logger, dispatcher, state);
+    if (anyoneSubmitted) {
+      // At least one player submitted - resolve normally (non-submitters get score 0)
+      logger.info("At least one player submitted - resolving match");
+      for (var odredacted in state.players) {
+        var player = state.players[odredacted];
+        if (!player.isHouse && !state.results[odredacted]) {
+          state.results[odredacted] = { score: 0, timeMs: 999999999 };
+          logger.info("Assigned forfeit score to disconnected player " + odredacted);
+        }
+      }
+      resolveMatch(ctx, nk, logger, dispatcher, state);
+    } else {
+      // Nobody submitted - cancel and refund all players
+      logger.info("No players submitted scores - cancelling match and refunding");
+      for (var odredacted in state.players) {
+        var player = state.players[odredacted];
+        if (!player.isHouse) {
+          // Refund bet
+          nk.walletUpdate(odredacted, { coins: state.betAmount }, {
+            type: "bet_refund",
+            gameId: state.gameId,
+            betAmount: state.betAmount,
+            reason: "all_players_disconnected",
+            matchId: ctx.matchId,
+            timestamp: Date.now()
+          }, true);
+          logger.info("Refunded " + state.betAmount + " coins to " + odredacted);
+
+          // Update match history to cancelled
+          updateMatchHistoryCancelled(nk, logger, ctx.matchId, odredacted);
+        }
+      }
+
+      // Broadcast cancellation
+      dispatcher.broadcastMessage(3, JSON.stringify({
+        type: "match_cancelled",
+        reason: "all_players_disconnected",
+        refunded: true
+      }), null, null, true);
+    }
+
     return null;
   }
 
