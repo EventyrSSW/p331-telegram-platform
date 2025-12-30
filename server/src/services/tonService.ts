@@ -1,6 +1,28 @@
-import TonWeb, { Transaction } from 'tonweb';
+import TonWeb from 'tonweb';
 import { config } from '../config';
 import { logger } from '../utils/logger';
+
+// Transaction type from TonWeb API
+interface TonTransaction {
+  transaction_id: {
+    lt: string;
+    hash: string;
+  };
+  utime: number;
+  fee: string;
+  in_msg?: {
+    source: string;
+    destination: string;
+    value: string;
+    message?: string;
+  };
+  out_msgs: Array<{
+    source: string;
+    destination: string;
+    value: string;
+    message?: string;
+  }>;
+}
 
 // Minimum transaction age in seconds for finality (TON achieves finality in ~5 seconds)
 const MIN_TX_AGE_SECONDS = 5;
@@ -72,7 +94,7 @@ export class TonService {
       }
 
       // Find the transaction by hash
-      const tx = transactions.find((t: Transaction) => t.transaction_id.hash === txHash);
+      const tx = transactions.find((t: TonTransaction) => t.transaction_id.hash === txHash);
 
       if (!tx) {
         logger.warn('TON verification failed: transaction not found', { txHash });
