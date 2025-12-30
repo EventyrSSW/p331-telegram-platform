@@ -412,6 +412,120 @@ function generateSampleMahjongLevels() {
   return levels;
 }
 
+/**
+ * RPC to update user wallet balance
+ * IMPORTANT: This should only be called by the Node.js backend after blockchain verification
+ *
+ * Payload: {
+ *   userId: string,      // Nakama user ID
+ *   amount: number,       // Amount to add (in cents/smallest unit)
+ *   tonTxHash: string,    // TON transaction hash (for idempotency)
+ *   tonAmount: string,    // TON amount in nanoTON
+ *   reason: string        // Reason for update (e.g., "ton_purchase")
+ * }
+ */
+function rpcUpdateUserWallet(ctx, logger, nk, payload) {
+  logger.info("update_user_wallet called");
+
+  var data;
+  try {
+    data = JSON.parse(payload);
+  } catch (e) {
+    return JSON.stringify({
+      success: false,
+      error: "Invalid payload",
+      code: "INVALID_PAYLOAD"
+    });
+  }
+
+  var userId = data.userId;
+  var amount = data.amount;
+  var tonTxHash = data.tonTxHash;
+  var tonAmount = data.tonAmount;
+  var reason = data.reason || "ton_purchase";
+
+  if (!userId || !amount || !tonTxHash) {
+    return JSON.stringify({
+      success: false,
+      error: "Missing required fields: userId, amount, tonTxHash",
+      code: "MISSING_FIELDS"
+    });
+  }
+
+  // Idempotency check - have we already processed this transaction?
+  try {
+    var reads = nk.storageRead([
+      { collection: "processed_transactions", key: tonTxHash }
+    ]);
+
+    if (reads.length > 0) {
+      logger.info("Transaction " + tonTxHash + " already processed, returning cached result");
+      return JSON.stringify({
+        success: true,
+        alreadyProcessed: true,
+        previousResult: reads[0].value
+      });
+    }
+  } catch (e) {
+    logger.warn("Could not check idempotency: " + e.message);
+  }
+
+  // Update wallet
+  try {
+    nk.walletUpdate(userId, { coins: amount }, {
+      type: reason,
+      tonTxHash: tonTxHash,
+      tonAmount: tonAmount,
+      timestamp: Date.now()
+    }, true);
+
+    logger.info("Added " + amount + " coins to user " + userId + " for tx " + tonTxHash);
+  } catch (e) {
+    logger.error("Failed to update wallet: " + e.message);
+    return JSON.stringify({
+      success: false,
+      error: "Wallet update failed: " + e.message,
+      code: "WALLET_UPDATE_FAILED"
+    });
+  }
+
+  // Store processed transaction for idempotency
+  var processedRecord = {
+    userId: userId,
+    amount: amount,
+    tonTxHash: tonTxHash,
+    tonAmount: tonAmount,
+    reason: reason,
+    processedAt: Date.now()
+  };
+
+  try {
+    nk.storageWrite([{
+      collection: "processed_transactions",
+      key: tonTxHash,
+      value: processedRecord,
+      permissionRead: 0,  // Server only
+      permissionWrite: 0  // Server only
+    }]);
+  } catch (e) {
+    logger.warn("Could not store idempotency record: " + e.message);
+    // Continue - wallet update succeeded
+  }
+
+  // Get updated wallet balance
+  var account = nk.accountGetId(userId);
+  var wallet = account.wallet || {};
+  var newBalance = wallet.coins || 0;
+
+  return JSON.stringify({
+    success: true,
+    userId: userId,
+    addedAmount: amount,
+    newBalance: newBalance,
+    tonTxHash: tonTxHash
+  });
+}
+
 function InitModule(ctx, logger, nk, initializer) {
   logger.info("Initializing game match module...");
 
@@ -436,6 +550,9 @@ function InitModule(ctx, logger, nk, initializer) {
   initializer.registerRpc("get_match_history", rpcGetMatchHistory);
   initializer.registerRpc("cancel_match", rpcCancelMatch);
   initializer.registerRpc("sync_match_status", rpcSyncMatchStatus);
+
+  // Wallet sync RPC - called by Node.js backend only
+  initializer.registerRpc("update_user_wallet", rpcUpdateUserWallet);
 
   // Create leaderboards for each game type
   var gameTypes = ["mahjong", "solitaire", "puzzle"];
