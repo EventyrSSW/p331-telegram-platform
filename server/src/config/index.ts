@@ -49,6 +49,13 @@ export const config = {
         'https://telegram-platform.eventyr.cloud',
       ]),
   },
+
+  nakama: {
+    host: process.env.NAKAMA_HOST || 'localhost',
+    port: parseInt(process.env.NAKAMA_PORT || '7350', 10),
+    serverKey: process.env.NAKAMA_SERVER_KEY || 'defaultkey',
+    useSSL: process.env.NAKAMA_USE_SSL === 'true',
+  },
 } as const;
 
 // Validate required config in production
