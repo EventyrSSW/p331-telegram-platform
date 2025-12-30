@@ -75,6 +75,11 @@ interface NakamaContextValue {
   isSocketConnecting: boolean;
   socketError: string | null;
 
+  // Wallet state
+  coins: number;
+  isWalletLoading: boolean;
+  refreshWallet: () => Promise<void>;
+
   // Match state
   match: MatchState;
 
@@ -115,6 +120,8 @@ export function NakamaProvider({ children }: NakamaProviderProps) {
   const [isSocketConnecting, setIsSocketConnecting] = useState(false);
   const [socketError, setSocketError] = useState<string | null>(null);
   const [match, setMatch] = useState<MatchState>(initialMatchState);
+  const [coins, setCoins] = useState<number>(0);
+  const [isWalletLoading, setIsWalletLoading] = useState(false);
 
   const matchRef = useRef(match);
   matchRef.current = match;
@@ -172,13 +179,41 @@ export function NakamaProvider({ children }: NakamaProviderProps) {
     };
   }, [session]);
 
-  // Auto-connect socket when session is established
+  // Fetch wallet from Nakama
+  const refreshWallet = useCallback(async () => {
+    if (!nakamaService.isAuthenticated()) {
+      return;
+    }
+
+    setIsWalletLoading(true);
+    try {
+      const wallet = await nakamaService.getWallet();
+      setCoins(wallet.coins || 0);
+      console.log('[NakamaContext] Wallet refreshed, coins:', wallet.coins);
+    } catch (err) {
+      console.error('[NakamaContext] Failed to fetch wallet:', err);
+    } finally {
+      setIsWalletLoading(false);
+    }
+  }, []);
+
+  // Refresh wallet when match completes (to show updated balance after win/loss)
+  useEffect(() => {
+    if (match.status === 'completed') {
+      console.log('[NakamaContext] Match completed, refreshing wallet...');
+      refreshWallet();
+    }
+  }, [match.status, refreshWallet]);
+
+  // Auto-connect socket and fetch wallet when session is established
   useEffect(() => {
     if (session && !isSocketConnected && !isSocketConnecting) {
       console.log('[NakamaContext] Session established, connecting socket...');
       connectSocketInternal();
+      // Also fetch wallet
+      refreshWallet();
     }
-  }, [session, isSocketConnected, isSocketConnecting]);
+  }, [session, isSocketConnected, isSocketConnecting, refreshWallet]);
 
   const connectSocketInternal = async () => {
     setIsSocketConnecting(true);
@@ -397,6 +432,9 @@ export function NakamaProvider({ children }: NakamaProviderProps) {
     isSocketConnected,
     isSocketConnecting,
     socketError,
+    coins,
+    isWalletLoading,
+    refreshWallet,
     match,
     connect,
     disconnect,

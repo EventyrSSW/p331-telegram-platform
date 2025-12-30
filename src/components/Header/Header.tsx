@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
 import { Address } from '@ton/core';
-import { useAuth } from '../../contexts/AuthContext';
 import { useConfig } from '../../contexts/ConfigContext';
 import { useModal } from '../../contexts/ModalContext';
+import { useNakama } from '../../contexts/NakamaContext';
 import { api } from '../../services/api';
 import { AddTonModal } from '../AddTonModal/AddTonModal';
 import { MOCK_RANK } from '../../utils/mockData';
@@ -15,7 +15,7 @@ import avatarSvg from '../../assets/icons/Ellipse 1.svg';
 import styles from './Header.module.css';
 
 export const Header = () => {
-  const { user, refreshUser } = useAuth();
+  const { coins, refreshWallet } = useNakama();
   const { config } = useConfig();
   const { isAddTonModalOpen, openAddTonModal, closeAddTonModal } = useModal();
   const [tonConnectUI] = useTonConnectUI();
@@ -75,8 +75,8 @@ export const Header = () => {
         tonAmount: amountInNanoTon,
       });
 
-      // Refresh user data to get updated balance
-      await refreshUser();
+      // Refresh wallet to get updated balance
+      await refreshWallet();
 
       alert(`Successfully added ${amount} coins!`);
     } catch (error) {
@@ -128,7 +128,7 @@ export const Header = () => {
           onClick={openAddTonModal}
         >
           <TonCoinIcon className={styles.tonIcon} />
-          <span className={styles.tonValue}>{user?.coinBalance ?? 0}</span>
+          <span className={styles.tonValue}>{(coins / 100).toFixed(2)}</span>
           <PlusIcon className={styles.plusIcon} />
         </button>
       </div>
@@ -137,7 +137,7 @@ export const Header = () => {
       <AddTonModal
         isOpen={isAddTonModalOpen}
         onClose={closeAddTonModal}
-        currentBalance={user?.coinBalance ?? 0}
+        currentBalance={coins / 100}
         isWalletConnected={!!wallet}
         onConnectWallet={handleConnectWallet}
         onSendTransaction={handleSendTransaction}
