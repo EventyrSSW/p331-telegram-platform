@@ -987,13 +987,26 @@ function matchJoinAttempt(ctx, logger, nk, dispatcher, tick, state, presence, me
 function matchJoin(ctx, logger, nk, dispatcher, tick, state, presences) {
   for (var i = 0; i < presences.length; i++) {
     var presence = presences[i];
-    state.players[presence.userId] = {
-      userId: presence.userId,
-      sessionId: presence.sessionId,
-      username: presence.username,
-      isHouse: false
-    };
-    logger.info("Player " + presence.username + " joined match");
+
+    // Check if this is a reconnection
+    if (state.players[presence.userId]) {
+      // Player reconnecting - update session and clear disconnected flag
+      state.players[presence.userId].sessionId = presence.sessionId;
+      state.players[presence.userId].disconnected = false;
+      state.players[presence.userId].disconnectedAt = null;
+      logger.info("Player " + presence.username + " reconnected to match");
+    } else {
+      // New player joining
+      state.players[presence.userId] = {
+        userId: presence.userId,
+        sessionId: presence.sessionId,
+        username: presence.username,
+        isHouse: false,
+        disconnected: false,
+        disconnectedAt: null
+      };
+      logger.info("Player " + presence.username + " joined match");
+    }
   }
 
   var playerCount = Object.keys(state.players).length;
@@ -1213,9 +1226,10 @@ function matchLoop(ctx, logger, nk, dispatcher, tick, state, messages) {
 function matchLeave(ctx, logger, nk, dispatcher, tick, state, presences) {
   for (var i = 0; i < presences.length; i++) {
     var presence = presences[i];
-    logger.info("Player " + presence.username + " left match");
+    logger.info("Player " + presence.username + " left match (status: " + state.status + ")");
 
     if (state.status === "waiting") {
+      // Refund if still waiting for opponent
       nk.walletUpdate(presence.userId, { coins: state.betAmount }, {
         type: "bet_refund",
         gameId: state.gameId,
@@ -1229,17 +1243,53 @@ function matchLeave(ctx, logger, nk, dispatcher, tick, state, presences) {
       updateMatchHistoryCancelled(nk, logger, ctx.matchId, presence.userId);
 
       delete state.players[presence.userId];
+    } else if (state.status === "ready" || state.status === "playing") {
+      // Mark player as disconnected but don't remove (allow reconnection)
+      if (state.players[presence.userId]) {
+        state.players[presence.userId].disconnected = true;
+        state.players[presence.userId].disconnectedAt = Date.now();
+        logger.info("Player " + presence.username + " marked as disconnected");
+      }
     }
   }
 
+  // Count connected real players
+  var connectedPlayerCount = 0;
   var realPlayerCount = 0;
-  for (var userId in state.players) {
-    if (!state.players[userId].isHouse) {
+  for (var odredacted in state.players) {
+    var player = state.players[odredacted];
+    if (!player.isHouse) {
       realPlayerCount++;
+      if (!player.disconnected) {
+        connectedPlayerCount++;
+      }
     }
   }
 
+  logger.info("Match player count - real: " + realPlayerCount + ", connected: " + connectedPlayerCount);
+
+  // If no real players at all, terminate
   if (realPlayerCount === 0) {
+    logger.info("No real players left, terminating match");
+    return null;
+  }
+
+  // If all real players disconnected during an active match, auto-forfeit after a short grace period
+  // For now, immediately forfeit disconnected players (they get score 0)
+  if (connectedPlayerCount === 0 && (state.status === "ready" || state.status === "playing")) {
+    logger.info("All players disconnected during active match - forfeiting");
+
+    // Assign score 0 to all disconnected players who haven't submitted
+    for (var odredacted in state.players) {
+      var player = state.players[odredacted];
+      if (!player.isHouse && !state.results[odredacted]) {
+        state.results[odredacted] = { score: 0, timeMs: 999999999 };
+        logger.info("Assigned forfeit score to disconnected player " + odredacted);
+      }
+    }
+
+    // Resolve the match
+    resolveMatch(ctx, nk, logger, dispatcher, state);
     return null;
   }
 
