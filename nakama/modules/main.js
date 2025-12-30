@@ -1226,8 +1226,39 @@ function matchLoop(ctx, logger, nk, dispatcher, tick, state, messages) {
       logger.info("Players status: " + playerList.join(", "));
       logger.info("Total results: " + Object.keys(state.results).length + "/" + Object.keys(state.players).length);
 
-      if (checkAllResultsSubmitted(state)) {
-        logger.info("All players submitted - resolving match!");
+      // Check if we can resolve the match
+      // Either all players submitted, or all non-submitters are disconnected
+      var canResolve = true;
+      var hasDisconnectedWithoutScore = false;
+
+      for (var odredacted in state.players) {
+        var player = state.players[odredacted];
+        if (!player.isHouse && !state.results[odredacted]) {
+          // Player hasn't submitted
+          if (player.disconnected) {
+            hasDisconnectedWithoutScore = true;
+            logger.info("Player " + odredacted + " is disconnected without score - will forfeit");
+          } else {
+            // Player is still connected but hasn't submitted - can't resolve yet
+            canResolve = false;
+            break;
+          }
+        }
+      }
+
+      if (canResolve) {
+        // Assign score 0 to all disconnected players who haven't submitted
+        if (hasDisconnectedWithoutScore) {
+          for (var odredacted in state.players) {
+            var player = state.players[odredacted];
+            if (!player.isHouse && !state.results[odredacted] && player.disconnected) {
+              state.results[odredacted] = { score: 0, timeMs: 999999999 };
+              logger.info("Assigned forfeit score (0) to disconnected player " + odredacted);
+            }
+          }
+        }
+
+        logger.info("All players submitted or forfeited - resolving match!");
         state.status = "completed";
         resolveMatch(ctx, nk, logger, dispatcher, state);
         return null;
