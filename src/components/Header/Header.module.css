@@ -52,6 +52,29 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
+.avatarPlaceholder {
+  position: absolute;
+  left: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 3px solid rgba(5, 5, 5, 0.95);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  background: #252525;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatarIcon {
+  width: 28px;
+  height: 28px;
+  color: #9F9F9F;
+}
+
 .starIcon {
   width: 24px;
   height: 24px;

@@ -5,24 +5,31 @@ import { Address } from '@ton/core';
 import { useConfig } from '../../contexts/ConfigContext';
 import { useModal } from '../../contexts/ModalContext';
 import { useNakama } from '../../contexts/NakamaContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { api } from '../../services/api';
 import { AddTonModal } from '../AddTonModal/AddTonModal';
-import { MOCK_RANK } from '../../utils/mockData';
+import { MOCK_RANK, MOCK_USER, shouldUseMockData } from '../../utils/mockData';
 import TonCoinIcon from '../../assets/icons/toncoin-ton-logo 1.svg?react';
 import PlusIcon from '../../assets/icons/vector.svg?react';
+import UserIcon from '../../assets/icons/user.svg?react';
 import starIconPng from '../../assets/icons/cfcfda09650d68463d93067e00c49b9af785941d.png';
-import avatarSvg from '../../assets/icons/Ellipse 1.svg';
 import styles from './Header.module.css';
 
 export const Header = () => {
   const { coins, refreshWallet } = useNakama();
   const { config } = useConfig();
+  const { user } = useAuth();
   const { isAddTonModalOpen, openAddTonModal, closeAddTonModal } = useModal();
   const [tonConnectUI] = useTonConnectUI();
   const wallet = useTonWallet();
   const [isProcessing, setIsProcessing] = useState(false);
 
   const isTestnet = config?.ton.network === 'testnet';
+
+  // Get user avatar - use Telegram photo if available
+  const useMockData = shouldUseMockData();
+  const displayUser = useMockData ? MOCK_USER : user;
+  const userAvatar = displayUser?.photoUrl;
 
   const handleConnectWallet = () => {
     tonConnectUI.openModal();
@@ -115,7 +122,13 @@ export const Header = () => {
     <header className={styles.header}>
       {/* Left Section - Avatar and Rank */}
       <Link to="/leaderboard" className={styles.leftSection}>
-        <img src={avatarSvg} alt="avatar" className={styles.avatar} />
+        {userAvatar ? (
+          <img src={userAvatar} alt="avatar" className={styles.avatar} />
+        ) : (
+          <div className={styles.avatarPlaceholder}>
+            <UserIcon className={styles.avatarIcon} />
+          </div>
+        )}
         <img src={starIconPng} alt="star" className={styles.starIcon} />
         <span className={styles.rankValue}>{MOCK_RANK}</span>
       </Link>

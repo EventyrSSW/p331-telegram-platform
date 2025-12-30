@@ -181,9 +181,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  font-size: 40px;
-  font-weight: 700;
+}
+
+.avatarIcon {
+  width: 60px;
+  height: 60px;
+  color: #9F9F9F;
 }
 
 .username {

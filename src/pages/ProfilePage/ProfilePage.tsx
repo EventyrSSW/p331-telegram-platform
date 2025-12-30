@@ -11,6 +11,7 @@ import MedalIcon from '../../assets/icons/Icon (statistic).svg?react';
 import TonCoinIcon from '../../assets/icons/toncoin-ton-logo 1.svg?react';
 import SettingsIcon from '../../assets/icons/Icon (general).svg?react';
 import ArrowRightIcon from '../../assets/icons/arrow-right.svg?react';
+import UserIcon from '../../assets/icons/user.svg?react';
 import { MOCK_USER, shouldUseMockData } from '../../utils/mockData';
 
 export function ProfilePage() {
@@ -116,7 +117,7 @@ export function ProfilePage() {
             <img src={avatarUrl} alt={displayName} />
           ) : (
             <div className={styles.avatarPlaceholder}>
-              {displayName[0]?.toUpperCase() || '?'}
+              <UserIcon className={styles.avatarIcon} />
             </div>
           )}
         </div>
