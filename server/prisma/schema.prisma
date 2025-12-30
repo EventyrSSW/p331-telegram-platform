@@ -32,19 +32,20 @@ model User {
 }
 
 model Transaction {
-  id              String    @id @default(cuid())
-  userId          String
-  user            User      @relation(fields: [userId], references: [id])
-  type            TransactionType
-  amount          Decimal   @db.Decimal(18, 3)  // Supports up to 3 decimal places
-  tonAmount       BigInt?   // In nanoTON
-  tonTxHash       String?   // Blockchain transaction hash
-  status          TransactionStatus @default(PENDING)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id               String    @id @default(cuid())
+  userId           String
+  user             User      @relation(fields: [userId], references: [id])
+  type             TransactionType
+  amount           Decimal   @db.Decimal(18, 3)  // Supports up to 3 decimal places
+  tonAmount        BigInt?   // In nanoTON
+  tonTxHash        String?   @unique  // Blockchain transaction hash - unique to prevent replay attacks
+  tonSenderAddress String?   // Store sender address for audit
+  status           TransactionStatus @default(PENDING)
+  verifiedAt       DateTime? // When blockchain verification completed
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   @@index([userId])
-  @@index([tonTxHash])
 }
 
 enum TransactionType {
