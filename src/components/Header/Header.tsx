@@ -76,11 +76,9 @@ export const Header = () => {
       // Send transaction - this will open wallet for user confirmation
       const result = await tonConnectUI.sendTransaction(transaction);
 
-      // Transaction successful - add coins to user balance (1 TON = 1 Coin)
-      await api.addCoins(amount, {
-        transactionHash: result.boc,
-        tonAmount: amountInNanoTon,
-      });
+      // Transaction successful - verify on blockchain and add coins
+      // Server will verify the transaction on TON blockchain before crediting
+      await api.addCoinsVerified(result.boc, amountInNanoTon);
 
       // Refresh wallet to get updated balance
       await refreshWallet();

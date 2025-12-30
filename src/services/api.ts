@@ -181,6 +181,26 @@ class ApiService {
     return this.fetch<UserBalance>('/users/me/balance');
   }
 
+  /**
+   * Add coins with blockchain verification (recommended)
+   * Server verifies the transaction on TON blockchain before crediting
+   */
+  async addCoinsVerified(
+    transactionHash: string,
+    tonAmount: string // nanoTON as string
+  ): Promise<UserBalance> {
+    return this.fetch<UserBalance>('/users/me/add-coins', {
+      method: 'POST',
+      body: JSON.stringify({
+        transactionHash,
+        tonAmount,
+      }),
+    });
+  }
+
+  /**
+   * @deprecated Use addCoinsVerified instead for secure blockchain verification
+   */
   async addCoins(
     amount: number,
     options?: {
