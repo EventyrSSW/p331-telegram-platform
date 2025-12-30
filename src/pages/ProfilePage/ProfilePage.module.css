@@ -299,6 +299,18 @@
   text-align: center;
 }
 
+/* No Stats Message */
+.noStatsMessage {
+  width: 100%;
+  max-width: 600px;
+  padding: 20px;
+  text-align: center;
+  color: #9F9F9F;
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0.28px;
+}
+
 /* Cash Out Button */
 .cashOutButton {
   /* Box model */

@@ -70,7 +70,12 @@ function getPlayerStats(nk, userId, gameId) {
       { collection: "player_stats", key: gameId, userId: userId }
     ]);
     if (statsReads.length > 0) {
-      return statsReads[0].value;
+      var stats = statsReads[0].value;
+      // Ensure totalAmountWon exists for backwards compatibility
+      if (stats.totalAmountWon === undefined) {
+        stats.totalAmountWon = 0;
+      }
+      return stats;
     }
   } catch (e) {
     // Fall through to defaults
@@ -81,11 +86,12 @@ function getPlayerStats(nk, userId, gameId) {
     averageScore: 0,
     highScore: 0,
     wins: 0,
-    losses: 0
+    losses: 0,
+    totalAmountWon: 0
   };
 }
 
-function updatePlayerStats(nk, userId, gameId, score, won) {
+function updatePlayerStats(nk, userId, gameId, score, won, amountWon) {
   var stats = getPlayerStats(nk, userId, gameId);
 
   stats.gamesPlayed++;
@@ -96,6 +102,10 @@ function updatePlayerStats(nk, userId, gameId, score, won) {
   }
   if (won) {
     stats.wins++;
+    // Track amount won (payout - betAmount = net profit, but we store gross payout)
+    if (amountWon && amountWon > 0) {
+      stats.totalAmountWon += amountWon;
+    }
   } else {
     stats.losses++;
   }
@@ -419,6 +429,7 @@ function InitModule(ctx, logger, nk, initializer) {
   initializer.registerRpc("add_test_coins", rpcAddTestCoins);
   initializer.registerRpc("get_config", rpcGetConfig);
   initializer.registerRpc("get_player_stats", rpcGetPlayerStats);
+  initializer.registerRpc("get_user_profile", rpcGetUserProfile);
   initializer.registerRpc("admin_update_levels", rpcAdminUpdateLevels);
 
   // Match history RPCs
@@ -560,6 +571,77 @@ function rpcGetPlayerStats(ctx, logger, nk, payload) {
     gameId: gameId,
     stats: stats
   });
+}
+
+function rpcGetUserProfile(ctx, logger, nk, payload) {
+  var userId = ctx.userId;
+  logger.info("get_user_profile called by " + userId);
+
+  // Get user account info
+  var account;
+  try {
+    var accounts = nk.accountsGetId([userId]);
+    if (accounts && accounts.length > 0) {
+      account = accounts[0];
+    }
+  } catch (e) {
+    logger.error("Failed to get account: " + e.message);
+  }
+
+  // Get aggregated stats across all games
+  // Read all player_stats entries for this user
+  var totalGamesPlayed = 0;
+  var totalWins = 0;
+  var totalAmountWon = 0;
+  var gameStats = {};
+
+  try {
+    // List all storage objects in player_stats collection for this user
+    var result = nk.storageList(userId, "player_stats", 100, "");
+
+    if (result && result.objects) {
+      for (var i = 0; i < result.objects.length; i++) {
+        var obj = result.objects[i];
+        var stats = obj.value;
+        var gameId = obj.key;
+
+        // Aggregate totals
+        totalGamesPlayed += stats.gamesPlayed || 0;
+        totalWins += stats.wins || 0;
+        totalAmountWon += stats.totalAmountWon || 0;
+
+        // Store per-game stats
+        gameStats[gameId] = {
+          gamesPlayed: stats.gamesPlayed || 0,
+          wins: stats.wins || 0,
+          losses: stats.losses || 0,
+          highScore: stats.highScore || 0,
+          averageScore: stats.averageScore || 0,
+          totalAmountWon: stats.totalAmountWon || 0
+        };
+      }
+    }
+
+    logger.info("Found stats for " + Object.keys(gameStats).length + " games, total: " + totalGamesPlayed + " played, " + totalWins + " wins, " + totalAmountWon + " amount won");
+  } catch (e) {
+    logger.error("Failed to get player stats: " + e.message);
+  }
+
+  var profile = {
+    odredacted: userId,
+    username: account ? account.user.username : null,
+    displayName: account ? account.user.displayName : null,
+    avatarUrl: account ? account.user.avatarUrl : null,
+    createTime: account ? account.user.createTime : null,
+    stats: {
+      gamesPlayed: totalGamesPlayed,
+      wins: totalWins,
+      totalAmountWon: totalAmountWon
+    },
+    gameStats: gameStats
+  };
+
+  return JSON.stringify(profile);
 }
 
 function rpcAdminUpdateLevels(ctx, logger, nk, payload) {
@@ -1204,14 +1286,29 @@ function matchLoop(ctx, logger, nk, dispatcher, tick, state, messages) {
     var message = messages[i];
     if (message.opCode === 2) {
       var data = JSON.parse(nk.binaryToString(message.data));
+
+      logger.info("=== SCORE SUBMISSION RECEIVED ===");
+      logger.info("Match ID: " + ctx.matchId);
+      logger.info("Match Status: " + state.status);
+      logger.info("Player: " + message.sender.username + " (" + message.sender.userId + ")");
+      logger.info("Score: " + data.score + ", Time: " + data.timeMs + "ms");
+      logger.info("Existing results count: " + Object.keys(state.results).length);
+
+      // Log FULL player state BEFORE processing
+      logger.info("=== PLAYER STATE AT SUBMISSION TIME ===");
+      for (var debugId in state.players) {
+        var debugPlayer = state.players[debugId];
+        logger.info("Player " + debugId + ": username=" + debugPlayer.username +
+                   ", isHouse=" + debugPlayer.isHouse +
+                   ", disconnected=" + debugPlayer.disconnected +
+                   ", disconnectedAt=" + debugPlayer.disconnectedAt);
+      }
+      logger.info("=========================================");
+
       state.results[message.sender.userId] = {
         score: data.score,
         timeMs: data.timeMs
       };
-
-      logger.info("=== SCORE SUBMISSION ===");
-      logger.info("Player: " + message.sender.username + " (" + message.sender.userId + ")");
-      logger.info("Score: " + data.score + ", Time: " + data.timeMs + "ms");
 
       // Update match history with submitted score
       updateMatchHistoryScore(nk, logger, ctx.matchId, message.sender.userId, data.score);
@@ -1231,8 +1328,13 @@ function matchLoop(ctx, logger, nk, dispatcher, tick, state, messages) {
       var canResolve = true;
       var hasDisconnectedWithoutScore = false;
 
+      logger.info("=== CHECKING IF MATCH CAN RESOLVE ===");
       for (var odredacted in state.players) {
         var player = state.players[odredacted];
+        logger.info("Player " + odredacted + ": isHouse=" + player.isHouse +
+                   ", hasResult=" + !!state.results[odredacted] +
+                   ", disconnected=" + player.disconnected);
+
         if (!player.isHouse && !state.results[odredacted]) {
           // Player hasn't submitted
           if (player.disconnected) {
@@ -1240,11 +1342,13 @@ function matchLoop(ctx, logger, nk, dispatcher, tick, state, messages) {
             logger.info("Player " + odredacted + " is disconnected without score - will forfeit");
           } else {
             // Player is still connected but hasn't submitted - can't resolve yet
+            logger.info("Player " + odredacted + " is CONNECTED but hasn't submitted - waiting...");
             canResolve = false;
             break;
           }
         }
       }
+      logger.info("canResolve=" + canResolve + ", hasDisconnectedWithoutScore=" + hasDisconnectedWithoutScore);
 
       if (canResolve) {
         // Assign score 0 to all disconnected players who haven't submitted
@@ -1273,9 +1377,15 @@ function matchLoop(ctx, logger, nk, dispatcher, tick, state, messages) {
 }
 
 function matchLeave(ctx, logger, nk, dispatcher, tick, state, presences) {
+  logger.info("=== MATCH LEAVE CALLED ===");
+  logger.info("Match ID: " + ctx.matchId + ", Status: " + state.status);
+  logger.info("Presences leaving: " + presences.length);
+
   for (var i = 0; i < presences.length; i++) {
     var presence = presences[i];
-    logger.info("Player " + presence.username + " left match (status: " + state.status + ")");
+    logger.info("Player leaving: " + presence.username + " (" + presence.userId + ")");
+    logger.info("Current match status: " + state.status);
+    logger.info("Player exists in state.players: " + !!state.players[presence.userId]);
 
     if (state.status === "waiting") {
       // Refund if still waiting for opponent
@@ -1295,12 +1405,26 @@ function matchLeave(ctx, logger, nk, dispatcher, tick, state, presences) {
     } else if (state.status === "ready" || state.status === "playing") {
       // Mark player as disconnected but don't remove (allow reconnection)
       if (state.players[presence.userId]) {
+        logger.info("BEFORE: Player " + presence.userId + " disconnected flag = " + state.players[presence.userId].disconnected);
         state.players[presence.userId].disconnected = true;
         state.players[presence.userId].disconnectedAt = Date.now();
-        logger.info("Player " + presence.username + " marked as disconnected");
+        logger.info("AFTER: Player " + presence.userId + " disconnected flag = " + state.players[presence.userId].disconnected);
+        logger.info("Player " + presence.username + " MARKED AS DISCONNECTED");
+      } else {
+        logger.warn("Player " + presence.userId + " NOT FOUND in state.players - cannot mark as disconnected!");
       }
+    } else {
+      logger.info("Status is '" + state.status + "' - not handling leave specially");
     }
   }
+
+  // Log current state of all players
+  logger.info("=== PLAYER STATE AFTER LEAVE ===");
+  for (var odredacted in state.players) {
+    var p = state.players[odredacted];
+    logger.info("Player " + odredacted + ": disconnected=" + p.disconnected + ", isHouse=" + p.isHouse);
+  }
+  logger.info("==============================");
 
   // Count connected real players
   var connectedPlayerCount = 0;
@@ -1453,9 +1577,10 @@ function resolveMatch(ctx, nk, logger, dispatcher, state) {
       var playerResult = state.results[userId];
       var playerScore = playerResult ? playerResult.score : 0;
       var playerWon = (userId === winnerId);
+      var playerPayout = playerWon ? payout : 0;
 
-      updatePlayerStats(nk, userId, state.gameId, playerScore, playerWon);
-      logger.info("Updated stats for " + userId + ": score=" + playerScore + ", won=" + playerWon);
+      updatePlayerStats(nk, userId, state.gameId, playerScore, playerWon, playerPayout);
+      logger.info("Updated stats for " + userId + ": score=" + playerScore + ", won=" + playerWon + ", payout=" + playerPayout);
     }
   }
 
@@ -1479,19 +1604,23 @@ function resolveMatch(ctx, nk, logger, dispatcher, state) {
           timestamp: Date.now()
         }, true);
 
-        nk.notificationSend(
-          odredacted,
-          "You lost to House",
-          {
-            matchType: "PVH",
-            lostAmount: state.betAmount,
-            playerScore: state.results[odredacted] ? state.results[odredacted].score : 0,
-            houseScore: state.results["house"] ? state.results["house"].score : 0
-          },
-          102,  // Different code for house loss
-          "",
-          true
-        );
+        try {
+          nk.notificationSend(
+            odredacted,
+            "You lost to House",
+            {
+              matchType: "PVH",
+              lostAmount: state.betAmount,
+              playerScore: state.results[odredacted] ? state.results[odredacted].score : 0,
+              houseScore: state.results["house"] ? state.results["house"].score : 0
+            },
+            102,  // Different code for house loss
+            null,
+            true
+          );
+        } catch (e) {
+          logger.warn("Failed to send house loss notification: " + e.message);
+        }
 
         logger.info("Player " + odredacted + " lost " + state.betAmount + " coins to house");
         break;
@@ -1510,14 +1639,18 @@ function resolveMatch(ctx, nk, logger, dispatcher, state) {
       timestamp: Date.now()
     }, true);
 
-    nk.notificationSend(
-      winner.userId,
-      "You won!",
-      { payout: payout, matchType: state.housePlayer ? "PVH" : "PVP" },
-      100,
-      "",
-      true
-    );
+    try {
+      nk.notificationSend(
+        winner.userId,
+        "You won!",
+        { payout: payout, matchType: state.housePlayer ? "PVH" : "PVP" },
+        100,
+        null,
+        true
+      );
+    } catch (e) {
+      logger.warn("Failed to send win notification: " + e.message);
+    }
 
     logger.info("Paid " + payout + " coins to " + winner.userId);
 
@@ -1559,14 +1692,18 @@ function resolveMatch(ctx, nk, logger, dispatcher, state) {
         timestamp: Date.now()
       }, true);
 
-      nk.notificationSend(
-        odredacted,
-        "You lost",
-        { matchType: state.housePlayer ? "PVH" : "PVP" },
-        101,
-        "",
-        true
-      );
+      try {
+        nk.notificationSend(
+          odredacted,
+          "You lost",
+          { matchType: state.housePlayer ? "PVH" : "PVP" },
+          101,
+          null,
+          true
+        );
+      } catch (e) {
+        logger.warn("Failed to send loss notification: " + e.message);
+      }
     }
   }
 

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { api, UserStats } from '../../services/api';
+import { nakamaService, UserProfile } from '../../services/nakama';
 import { Header, BottomNavBar } from '../../components';
 import { haptic } from '../../providers/TelegramProvider';
 import styles from './ProfilePage.module.css';
@@ -11,13 +11,13 @@ import MedalIcon from '../../assets/icons/Icon (statistic).svg?react';
 import TonCoinIcon from '../../assets/icons/toncoin-ton-logo 1.svg?react';
 import SettingsIcon from '../../assets/icons/Icon (general).svg?react';
 import ArrowRightIcon from '../../assets/icons/arrow-right.svg?react';
-import { MOCK_USER, MOCK_STATS, shouldUseMockData } from '../../utils/mockData';
+import { MOCK_USER, shouldUseMockData } from '../../utils/mockData';
 
 export function ProfilePage() {
   const { user } = useAuth();
   const [tonConnectUI] = useTonConnectUI();
   const wallet = useTonWallet();
-  const [stats, setStats] = useState<UserStats | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -25,25 +25,37 @@ export function ProfilePage() {
   // Use mock data for local development without Telegram context
   const useMockData = shouldUseMockData();
   const displayUser = useMockData ? MOCK_USER : user;
-  const displayStats = useMockData ? MOCK_STATS : stats;
   const isWalletConnected = !!wallet;
 
   useEffect(() => {
-    loadStats();
+    loadProfile();
   }, []);
 
-  const loadStats = async () => {
+  const loadProfile = async () => {
+    if (!nakamaService.isAuthenticated()) {
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
-      const userStats = await api.getUserStats();
-      setStats(userStats);
+      setError(null);
+      const userProfile = await nakamaService.getUserProfile();
+      setProfile(userProfile);
     } catch (err) {
-      console.error('Failed to load stats:', err);
-      setError('Failed to load statistics');
+      console.error('Failed to load profile:', err);
+      setError('Failed to load profile');
     } finally {
       setLoading(false);
     }
   };
+
+  // Use profile data from Nakama if available, fallback to auth context
+  const displayName = profile?.displayName || profile?.username || displayUser?.username || displayUser?.firstName || 'Anonymous';
+  const avatarUrl = profile?.avatarUrl || displayUser?.photoUrl;
+  const gamesPlayed = profile?.stats?.gamesPlayed ?? 0;
+  const totalWins = profile?.stats?.wins ?? 0;
+  const totalAmountWon = profile?.stats?.totalAmountWon ?? 0;
 
   const handleCashOutClick = () => {
     haptic.medium();
@@ -100,58 +112,74 @@ export function ProfilePage() {
       {/* User Profile */}
       <div className={styles.profileSection}>
         <div className={styles.avatar}>
-          {displayUser?.photoUrl ? (
-            <img src={displayUser.photoUrl} alt={displayUser.username || 'User'} />
+          {avatarUrl ? (
+            <img src={avatarUrl} alt={displayName} />
           ) : (
             <div className={styles.avatarPlaceholder}>
-              {(displayUser?.username?.[0] || displayUser?.firstName?.[0] || '?').toUpperCase()}
+              {displayName[0]?.toUpperCase() || '?'}
             </div>
           )}
         </div>
-        <h1 className={styles.username}>
-          {displayUser?.username || displayUser?.firstName || 'Anonymous'}
-        </h1>
-        <p className={styles.joinDate}>Joined Dec 2025</p>
+        <h1 className={styles.username}>{displayName}</h1>
+        <p className={styles.joinDate}>
+          {profile?.createTime
+            ? `Joined ${new Date(profile.createTime).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}`
+            : 'Joined Dec 2025'}
+        </p>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats Cards - only show stats that exist */}
       <div className={styles.statsGrid}>
-        <div className={styles.statCard}>
-          <div className={styles.iconContainer}>
-            <GamepadIcon className={styles.statIcon} />
-          </div>
-          <div className={styles.statInfo}>
-            <div className={styles.statValue}>
-              {loading ? '...' : displayStats?.gamesPlayed || 0}
+        {(gamesPlayed > 0 || loading) && (
+          <div className={styles.statCard}>
+            <div className={styles.iconContainer}>
+              <GamepadIcon className={styles.statIcon} />
             </div>
-            <div className={styles.statLabel}>Games played</div>
+            <div className={styles.statInfo}>
+              <div className={styles.statValue}>
+                {loading ? '...' : gamesPlayed}
+              </div>
+              <div className={styles.statLabel}>Games played</div>
+            </div>
           </div>
-        </div>
+        )}
 
-        <div className={styles.statCard}>
-          <div className={styles.iconContainer}>
-            <MedalIcon className={styles.statIcon} />
-          </div>
-          <div className={styles.statInfo}>
-            <div className={styles.statValue}>
-              {loading ? '...' : displayStats?.totalWins || 0}
+        {(totalWins > 0 || loading) && (
+          <div className={styles.statCard}>
+            <div className={styles.iconContainer}>
+              <MedalIcon className={styles.statIcon} />
             </div>
-            <div className={styles.statLabel}>Total wins</div>
+            <div className={styles.statInfo}>
+              <div className={styles.statValue}>
+                {loading ? '...' : totalWins}
+              </div>
+              <div className={styles.statLabel}>Total wins</div>
+            </div>
           </div>
-        </div>
+        )}
 
-        <div className={styles.statCard}>
-          <div className={styles.iconContainer}>
-            <TonCoinIcon className={styles.statIcon} />
-          </div>
-          <div className={styles.statInfo}>
-            <div className={styles.statValue}>
-              ${loading ? '...' : displayStats?.amountWon || 0}
+        {/* Amount won - only show if user has won anything */}
+        {(totalAmountWon > 0 || loading) && (
+          <div className={styles.statCard}>
+            <div className={styles.iconContainer}>
+              <TonCoinIcon className={styles.statIcon} />
             </div>
-            <div className={styles.statLabel}>Amount won</div>
+            <div className={styles.statInfo}>
+              <div className={styles.statValue}>
+                {loading ? '...' : `$${(totalAmountWon / 100).toFixed(2)}`}
+              </div>
+              <div className={styles.statLabel}>Amount won</div>
+            </div>
           </div>
-        </div>
+        )}
       </div>
+
+      {/* Show message if no stats yet */}
+      {!loading && gamesPlayed === 0 && (
+        <div className={styles.noStatsMessage}>
+          Play your first game to see your stats here!
+        </div>
+      )}
 
       {/* Connect/Disconnect Wallet Button */}
       <button

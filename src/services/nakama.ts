@@ -118,6 +118,29 @@ export interface SyncMatchStatusResponse {
   entry: MatchHistoryEntry | null;
 }
 
+export interface GameStats {
+  gamesPlayed: number;
+  wins: number;
+  losses: number;
+  highScore: number;
+  averageScore: number;
+  totalAmountWon: number;
+}
+
+export interface UserProfile {
+  odredacted: string;
+  username: string | null;
+  displayName: string | null;
+  avatarUrl: string | null;
+  createTime: string | null;
+  stats: {
+    gamesPlayed: number;
+    wins: number;
+    totalAmountWon: number;
+  };
+  gameStats: { [gameId: string]: GameStats };
+}
+
 class NakamaService {
   private client: Client;
   private session: Session | null = null;
@@ -599,6 +622,22 @@ class NakamaService {
 
     console.log('[Nakama] Match status:', result.status, 'canReconnect:', result.canReconnect);
     return result as SyncMatchStatusResponse;
+  }
+
+  // User Profile methods
+  async getUserProfile(): Promise<UserProfile> {
+    if (!this.session) {
+      throw new Error('Not authenticated');
+    }
+
+    console.log('[Nakama] Getting user profile');
+    const response = await this.client.rpc(this.session, 'get_user_profile', {});
+    const result = typeof response.payload === 'string'
+      ? JSON.parse(response.payload)
+      : response.payload;
+
+    console.log('[Nakama] User profile:', result.username, 'stats:', result.stats);
+    return result as UserProfile;
   }
 }
 
