@@ -4,7 +4,7 @@ const prisma = new PrismaClient();
 
 const games = [
   {
-    slug: 'mahjong-dash',
+    slug: 'puzzle-master',
     title: 'Mahjong Dash',
     description: 'Mahjong Dash is a fresh twist on classic Mahjong puzzles—slide tiles to rearrange the board, match identical tiles in a row or column, and clear all tiles to beat the level.',
     thumbnail: 'https://play-lh.googleusercontent.com/7t5ira1csgh5H5EuBwt1xmaMEHssN13ABopnpOAXpIIOhA_U80yhGnjhHmHa948xXAe1D-w_BrFh76Ocd6XaSw=w5120-h2880-rw',
@@ -21,7 +21,7 @@ const games = [
     topPromoted: false,
   },
   {
-    slug: 'puzzle-master',
+    slug: 'mahjong-dash',
     title: 'Puzzle Master',
     description: 'Challenge your mind with hundreds of brain-teasing puzzles. Match colors, solve patterns, and unlock new levels.',
     thumbnail: 'https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/79/02/f5/7902f5bc-7389-d7b2-6524-57c062a83870/mzl.vgxttdpa.jpg/392x696bb.jpg',
