@@ -444,7 +444,7 @@ function rpcUpdateUserWallet(ctx, logger, nk, payload) {
   var tonAmount = data.tonAmount;
   var reason = data.reason || "ton_purchase";
 
-  if (!userId || !amount || !tonTxHash) {
+  if (!userId || typeof amount !== 'number' || amount <= 0 || !tonTxHash) {
     return JSON.stringify({
       success: false,
       error: "Missing required fields: userId, amount, tonTxHash",
@@ -513,9 +513,14 @@ function rpcUpdateUserWallet(ctx, logger, nk, payload) {
   }
 
   // Get updated wallet balance
-  var account = nk.accountGetId(userId);
-  var wallet = account.wallet || {};
-  var newBalance = wallet.coins || 0;
+  var newBalance = 0;
+  try {
+    var account = nk.accountGetId(userId);
+    var wallet = account.wallet || {};
+    newBalance = wallet.coins || 0;
+  } catch (e) {
+    logger.warn("Could not fetch updated balance: " + e.message);
+  }
 
   return JSON.stringify({
     success: true,
