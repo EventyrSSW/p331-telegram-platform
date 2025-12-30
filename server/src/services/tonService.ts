@@ -24,8 +24,8 @@ interface TonTransaction {
   }>;
 }
 
-// Minimum transaction age in seconds for finality (TON achieves finality in ~5 seconds)
-const MIN_TX_AGE_SECONDS = 5;
+// Maximum age of transaction to consider (5 minutes)
+const MAX_TX_AGE_SECONDS = 300;
 
 // Maximum transactions to fetch (may need pagination for high-volume scenarios)
 const MAX_TRANSACTIONS_TO_FETCH = 100;
@@ -59,15 +59,24 @@ export class TonService {
   /**
    * Verify a TON transaction on the blockchain
    *
-   * @param txHash - The transaction hash (base64 encoded)
+   * Note: TonConnect returns a BOC (Bag of Cells), not the actual blockchain tx hash.
+   * We verify by finding a recent transaction with the exact expected amount.
+   * The BOC is stored for idempotency to prevent replay attacks.
+   *
+   * @param boc - The BOC returned by TonConnect (used for idempotency, not lookup)
    * @param expectedAmountNano - Expected amount in nanoTON
    * @returns VerificationResult with transaction details if verified
    */
   async verifyTransaction(
-    txHash: string,
+    boc: string,
     expectedAmountNano: bigint
   ): Promise<VerificationResult> {
-    logger.info('TON verification attempt', { txHash, expectedAmountNano: expectedAmountNano.toString() });
+    logger.info('TON verification attempt', {
+      bocLength: boc.length,
+      expectedAmountNano: expectedAmountNano.toString(),
+      receiverAddress: this.receiverAddress,
+      apiEndpoint: config.ton.apiEndpoint,
+    });
 
     if (!this.receiverAddress) {
       logger.warn('TON verification failed: receiver address not configured');
@@ -79,86 +88,82 @@ export class TonService {
 
     try {
       // Fetch recent transactions for our receiver address
-      // TON transactions are identified by (address, lt, hash)
+      logger.info('Fetching transactions for receiver address', { address: this.receiverAddress });
       const transactions = await this.tonweb.getTransactions(
         this.receiverAddress,
         MAX_TRANSACTIONS_TO_FETCH
       );
 
+      logger.info('Fetched transactions', { count: transactions?.length || 0 });
+
       if (!transactions || transactions.length === 0) {
-        logger.warn('TON verification failed: no transactions found', { txHash });
+        logger.warn('TON verification failed: no transactions found for receiver');
         return {
           verified: false,
-          error: 'No transactions found for receiver address',
+          error: 'No transactions found for receiver address. Transaction may still be processing.',
         };
       }
 
-      // Find the transaction by hash
-      const tx = transactions.find((t: TonTransaction) => t.transaction_id.hash === txHash);
+      // Find a recent transaction with the exact expected amount
+      // Since we can't match by BOC/hash directly, we match by amount and recency
+      const nowSeconds = Math.floor(Date.now() / 1000);
 
-      if (!tx) {
-        logger.warn('TON verification failed: transaction not found', { txHash });
+      const matchingTx = transactions.find((t: TonTransaction) => {
+        // Must have incoming message
+        if (!t.in_msg) return false;
+
+        // Check destination matches our receiver
+        if (!this.addressesMatch(t.in_msg.destination, this.receiverAddress)) return false;
+
+        // Check amount matches exactly
+        const receivedAmount = BigInt(t.in_msg.value || '0');
+        if (receivedAmount !== expectedAmountNano) return false;
+
+        // Check transaction is recent (within MAX_TX_AGE_SECONDS)
+        const txAge = nowSeconds - t.utime;
+        if (txAge > MAX_TX_AGE_SECONDS) return false;
+
+        return true;
+      });
+
+      if (!matchingTx) {
+        // Log some debug info about what we found
+        const recentTxs = transactions.slice(0, 5).map((t: TonTransaction) => ({
+          hash: t.transaction_id.hash,
+          amount: t.in_msg?.value,
+          age: nowSeconds - t.utime,
+          dest: t.in_msg?.destination,
+        }));
+        logger.warn('TON verification failed: no matching transaction found', {
+          expectedAmount: expectedAmountNano.toString(),
+          recentTransactions: recentTxs,
+        });
         return {
           verified: false,
-          error: 'Transaction not found on blockchain',
+          error: 'Transaction not found. It may still be processing - please wait a moment and try again.',
         };
       }
 
-      // Verify incoming message exists and has correct destination
-      if (!tx.in_msg) {
-        logger.warn('TON verification failed: no incoming message', { txHash });
-        return {
-          verified: false,
-          error: 'Transaction has no incoming message',
-        };
-      }
+      logger.info('TON verification successful', {
+        txHash: matchingTx.transaction_id.hash,
+        sender: matchingTx.in_msg!.source,
+        amount: matchingTx.in_msg!.value,
+        lt: matchingTx.transaction_id.lt,
+      });
 
-      // Verify destination matches our receiver
-      const destAddress = tx.in_msg.destination;
-      if (!this.addressesMatch(destAddress, this.receiverAddress)) {
-        logger.warn('TON verification failed: destination mismatch', { txHash, destAddress, expected: this.receiverAddress });
-        return {
-          verified: false,
-          error: 'Transaction destination does not match payment address',
-        };
-      }
-
-      // Verify amount
-      const receivedAmount = BigInt(tx.in_msg.value || '0');
-      if (receivedAmount < expectedAmountNano) {
-        logger.warn('TON verification failed: amount mismatch', { txHash, expected: expectedAmountNano.toString(), received: receivedAmount.toString() });
-        return {
-          verified: false,
-          error: `Amount mismatch: expected ${expectedAmountNano}, got ${receivedAmount}`,
-        };
-      }
-
-      // TON achieves finality within ~5 seconds (single masterchain block)
-      // We can consider transaction confirmed if it appears in our query
-      // For extra safety, check transaction age
-      const txAge = Date.now() / 1000 - tx.utime;
-      if (txAge < MIN_TX_AGE_SECONDS) {
-        logger.warn('TON verification failed: transaction too recent', { txHash, txAge });
-        return {
-          verified: false,
-          error: 'Transaction too recent, waiting for confirmation',
-        };
-      }
-
-      logger.info('TON verification successful', { txHash, sender: tx.in_msg.source, amount: tx.in_msg.value });
       return {
         verified: true,
         transaction: {
-          hash: tx.transaction_id.hash,
-          lt: tx.transaction_id.lt,
-          amount: tx.in_msg.value,
-          sender: tx.in_msg.source,
-          timestamp: tx.utime,
+          hash: matchingTx.transaction_id.hash,
+          lt: matchingTx.transaction_id.lt,
+          amount: matchingTx.in_msg!.value,
+          sender: matchingTx.in_msg!.source,
+          timestamp: matchingTx.utime,
         },
       };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      logger.error('TON verification API error', { txHash, error: message });
+      logger.error('TON verification API error', { error: message, stack: error instanceof Error ? error.stack : undefined });
       return {
         verified: false,
         error: `Verification failed: ${message}`,
