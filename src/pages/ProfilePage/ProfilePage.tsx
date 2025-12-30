@@ -123,9 +123,11 @@ export function ProfilePage() {
         </div>
         <h1 className={styles.username}>{displayName}</h1>
         <p className={styles.joinDate}>
-          {profile?.createTime
-            ? `Joined ${new Date(profile.createTime).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}`
-            : 'Joined Dec 2025'}
+          {loading
+            ? '...'
+            : profile?.createTime
+              ? `Joined ${new Date(profile.createTime * 1000).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}`
+              : ''}
         </p>
       </div>
 

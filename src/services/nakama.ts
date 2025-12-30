@@ -132,7 +132,7 @@ export interface UserProfile {
   username: string | null;
   displayName: string | null;
   avatarUrl: string | null;
-  createTime: string | null;
+  createTime: number | null;
   stats: {
     gamesPlayed: number;
     wins: number;
