@@ -237,6 +237,50 @@ class ApiService {
   async getConfig(): Promise<AppConfig> {
     return this.fetch<AppConfig>('/config');
   }
+
+  // Invoice methods for TON payment verification
+  async createInvoice(amountNano: string): Promise<{
+    invoiceId: string;
+    memo: string;
+    amountNano: string;
+    amountCoins: number;
+    expiresAt: string;
+  }> {
+    return this.fetch('/invoices/create', {
+      method: 'POST',
+      body: JSON.stringify({ amountNano }),
+    });
+  }
+
+  async verifyInvoice(invoiceId: string, boc: string, senderAddress: string): Promise<{
+    success: boolean;
+    balance?: number;
+    alreadyProcessed?: boolean;
+  }> {
+    return this.fetch('/invoices/verify', {
+      method: 'POST',
+      body: JSON.stringify({ invoiceId, boc, senderAddress }),
+    });
+  }
+
+  async getInvoiceStatus(invoiceId: string): Promise<{
+    id: string;
+    status: 'pending' | 'paid' | 'expired' | 'cancelled';
+    amountNano: string;
+    amountCoins: number;
+    memo: string;
+    expiresAt: string;
+  }> {
+    return this.fetch(`/invoices/${invoiceId}`, {
+      method: 'GET',
+    });
+  }
+
+  async cancelInvoice(invoiceId: string): Promise<{ success: boolean }> {
+    return this.fetch(`/invoices/${invoiceId}/cancel`, {
+      method: 'POST',
+    });
+  }
 }
 
 export const api = new ApiService();
