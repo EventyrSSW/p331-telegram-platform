@@ -6,6 +6,7 @@ import routes from './routes';
 import { requestLogger } from './middleware/requestLogger';
 import { errorHandler } from './middleware/errorHandler';
 import { generalLimiter } from './middleware/rateLimit';
+import { startInvoiceExpirationJob } from './jobs/expireInvoices';
 
 const app = express();
 
@@ -40,4 +41,7 @@ app.listen(config.port, () => {
     port: config.port,
     env: config.nodeEnv,
   });
+
+  // Start background jobs
+  startInvoiceExpirationJob();
 });
