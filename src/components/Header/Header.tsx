@@ -57,6 +57,9 @@ export const Header = () => {
       // Convert TON to nanoTON (1 TON = 10^9 nanoTON)
       const amountInNanoTon = (amount * 1_000_000_000).toString();
 
+      // 1. Create invoice on backend (get memo for transaction matching)
+      const invoice = await api.createInvoice(amountInNanoTon);
+
       // Parse and normalize receiver address for TonConnect
       let receiverAddress: string;
       try {
@@ -68,35 +71,41 @@ export const Header = () => {
         return;
       }
 
-      // Create transaction request
+      // 2. Build transaction with memo for matching
       const transaction = {
-        validUntil: Math.floor(Date.now() / 1000) + 600, // 10 minutes from now
+        validUntil: Math.floor(Date.now() / 1000) + 600, // 10 minutes
         messages: [
           {
             address: receiverAddress,
             amount: amountInNanoTon,
+            payload: invoice.memo, // Include memo for transaction matching
           },
         ],
       };
 
-      // Send transaction - this will open wallet for user confirmation
+      // 3. Send transaction via TonConnect
       const result = await tonConnectUI.sendTransaction(transaction);
 
-      // Transaction successful - verify on blockchain and add coins
-      // Server will verify the transaction on TON blockchain before crediting
-      await api.addCoinsVerified(result.boc, amountInNanoTon);
+      // 4. Verify invoice with backend (3-layer duplicate protection)
+      const verification = await api.verifyInvoice(
+        invoice.invoiceId,
+        result.boc,
+        wallet.account.address
+      );
 
-      // Refresh wallet to get updated balance
-      await refreshWallet();
-
-      alert(`Successfully added ${amount} coins!`);
+      if (verification.success) {
+        // Refresh wallet to get updated balance
+        await refreshWallet();
+        alert(`Successfully added ${amount} TON!`);
+      } else {
+        alert('Payment verification failed. Please try again.');
+      }
     } catch (error) {
       console.error('Failed to send TON:', error);
 
       let errorMessage = 'Failed to send TON. Please try again.';
 
       if (error instanceof Error) {
-        // Log full error for debugging
         console.error('Error details:', {
           message: error.message,
           name: error.name,
@@ -108,15 +117,16 @@ export const Header = () => {
         if (msg.includes('cancel')) {
           errorMessage = 'Transaction cancelled.';
         } else if (msg.includes('amount')) {
-          errorMessage = error.message; // Show validation errors
+          errorMessage = error.message;
         } else if (msg.includes('network') || msg.includes('fetch') ||
                    msg.includes('timeout') || msg.includes('connection')) {
           errorMessage = 'Network error. Please check your connection.';
+        } else if (msg.includes('expired')) {
+          errorMessage = 'Invoice expired. Please try again.';
         }
       }
 
       alert(errorMessage);
-      throw error;
     } finally {
       setIsProcessing(false);
     }
