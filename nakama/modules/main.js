@@ -758,7 +758,8 @@ function rpcSyncMatchStatus(ctx, logger, nk, payload) {
   // Also check if the match still exists in Nakama
   if (canReconnect) {
     try {
-      var matches = nk.matchList(1, true, null, null, null, null);
+      // List all matches and check if ours exists
+      var matches = nk.matchList(100, true, null, null, null, null);
       var matchExists = false;
       for (var i = 0; i < matches.length; i++) {
         if (matches[i].matchId === matchId) {
@@ -766,10 +767,27 @@ function rpcSyncMatchStatus(ctx, logger, nk, payload) {
           break;
         }
       }
-      // If we can't find the match, it may have ended
-      // In production, you might want a more sophisticated check
+
+      if (!matchExists) {
+        logger.info("Match " + matchId + " no longer exists in Nakama - updating history to cancelled");
+        canReconnect = false;
+
+        // Update the history entry since the match is gone
+        entry.status = "cancelled";
+        entry.updatedAt = Date.now();
+        nk.storageWrite([{
+          collection: "match_history",
+          key: matchId,
+          userId: userId,
+          value: entry,
+          permissionRead: 1,
+          permissionWrite: 0
+        }]);
+      }
     } catch (e) {
       logger.warn("Could not check match existence: " + e.message);
+      // On error, be safe and don't allow reconnect
+      canReconnect = false;
     }
   }
 
