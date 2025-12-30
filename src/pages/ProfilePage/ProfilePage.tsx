@@ -128,58 +128,44 @@ export function ProfilePage() {
         </p>
       </div>
 
-      {/* Stats Cards - only show stats that exist */}
+      {/* Stats Cards - always show with 0 values if no data */}
       <div className={styles.statsGrid}>
-        {(gamesPlayed > 0 || loading) && (
-          <div className={styles.statCard}>
-            <div className={styles.iconContainer}>
-              <GamepadIcon className={styles.statIcon} />
-            </div>
-            <div className={styles.statInfo}>
-              <div className={styles.statValue}>
-                {loading ? '...' : gamesPlayed}
-              </div>
-              <div className={styles.statLabel}>Games played</div>
-            </div>
+        <div className={styles.statCard}>
+          <div className={styles.iconContainer}>
+            <GamepadIcon className={styles.statIcon} />
           </div>
-        )}
-
-        {(totalWins > 0 || loading) && (
-          <div className={styles.statCard}>
-            <div className={styles.iconContainer}>
-              <MedalIcon className={styles.statIcon} />
+          <div className={styles.statInfo}>
+            <div className={styles.statValue}>
+              {loading ? '...' : gamesPlayed}
             </div>
-            <div className={styles.statInfo}>
-              <div className={styles.statValue}>
-                {loading ? '...' : totalWins}
-              </div>
-              <div className={styles.statLabel}>Total wins</div>
-            </div>
+            <div className={styles.statLabel}>Games played</div>
           </div>
-        )}
-
-        {/* Amount won - only show if user has won anything */}
-        {(totalAmountWon > 0 || loading) && (
-          <div className={styles.statCard}>
-            <div className={styles.iconContainer}>
-              <TonCoinIcon className={styles.statIcon} />
-            </div>
-            <div className={styles.statInfo}>
-              <div className={styles.statValue}>
-                {loading ? '...' : `$${(totalAmountWon / 100).toFixed(2)}`}
-              </div>
-              <div className={styles.statLabel}>Amount won</div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Show message if no stats yet */}
-      {!loading && gamesPlayed === 0 && (
-        <div className={styles.noStatsMessage}>
-          Play your first game to see your stats here!
         </div>
-      )}
+
+        <div className={styles.statCard}>
+          <div className={styles.iconContainer}>
+            <MedalIcon className={styles.statIcon} />
+          </div>
+          <div className={styles.statInfo}>
+            <div className={styles.statValue}>
+              {loading ? '...' : totalWins}
+            </div>
+            <div className={styles.statLabel}>Total wins</div>
+          </div>
+        </div>
+
+        <div className={styles.statCard}>
+          <div className={styles.iconContainer}>
+            <TonCoinIcon className={styles.statIcon} />
+          </div>
+          <div className={styles.statInfo}>
+            <div className={styles.statValue}>
+              {loading ? '...' : `$${(totalAmountWon / 100).toFixed(2)}`}
+            </div>
+            <div className={styles.statLabel}>Amount won</div>
+          </div>
+        </div>
+      </div>
 
       {/* Connect/Disconnect Wallet Button */}
       <button
