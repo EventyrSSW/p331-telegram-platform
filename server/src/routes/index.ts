@@ -3,6 +3,7 @@ import gamesRoutes from './games';
 import usersRoutes from './users';
 import configRoutes from './config';
 import authRoutes from './auth';
+import invoicesRoutes from './invoices';
 import { telegramAuthMiddleware } from '../middleware/telegramAuth';
 
 const router = Router();
@@ -19,5 +20,6 @@ router.use('/auth', authRoutes);
 
 // Protected routes
 router.use('/users', telegramAuthMiddleware, usersRoutes);
+router.use('/invoices', telegramAuthMiddleware, invoicesRoutes);
 
 export default router;
