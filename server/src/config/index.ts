@@ -28,6 +28,10 @@ export const config = {
 
   ton: {
     paymentReceiverAddress: process.env.PAYMENT_RECEIVER_ADDRESS || '',
+    apiEndpoint: process.env.TON_API_ENDPOINT || 'https://toncenter.com/api/v2/jsonRPC',
+    apiKey: process.env.TON_API_KEY || '',
+    minConfirmations: parseInt(process.env.TON_MIN_CONFIRMATIONS || '1', 10),
+    verificationTimeoutMs: parseInt(process.env.TON_VERIFICATION_TIMEOUT_MS || '30000', 10),
   },
 
   // Debug mode - allows authentication without Telegram verification
