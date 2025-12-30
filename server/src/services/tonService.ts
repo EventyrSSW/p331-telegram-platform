@@ -1,4 +1,4 @@
-import TonWeb from 'tonweb';
+import TonWeb, { Transaction } from 'tonweb';
 import { config } from '../config';
 import { logger } from '../utils/logger';
 
@@ -72,7 +72,7 @@ export class TonService {
       }
 
       // Find the transaction by hash
-      const tx = transactions.find(t => t.transaction_id.hash === txHash);
+      const tx = transactions.find((t: Transaction) => t.transaction_id.hash === txHash);
 
       if (!tx) {
         logger.warn('TON verification failed: transaction not found', { txHash });
