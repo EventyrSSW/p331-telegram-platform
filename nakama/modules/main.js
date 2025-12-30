@@ -2,7 +2,7 @@
 
 // Default fallback values
 var DEFAULT_WAIT_TIMEOUT_SEC = 30;
-var DEFAULT_PLAY_TIMEOUT_SEC = 86400;
+var DEFAULT_PLAY_TIMEOUT_SEC = 300; // 5 minutes
 var DEFAULT_COMMISSION_RATE = 0.10;
 var DEFAULT_HOUSE_EDGE = 0.51;
 var DEFAULT_MIN_BET = 50;    // 50 cents = $0.50
@@ -114,13 +114,187 @@ function updatePlayerStats(nk, userId, gameId, score, won) {
   return stats;
 }
 
+// ===== Match History Helper Functions =====
+
+function writeMatchHistoryEntry(nk, logger, userId, matchId, gameId, betAmount, matchType, levelId) {
+  var entry = {
+    matchId: matchId,
+    status: "waiting",
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+    gameId: gameId,
+    matchType: matchType,
+    betAmount: betAmount,
+    levelId: levelId,
+    myScore: null,
+    result: null,
+    payout: null,
+    opponentId: null,
+    opponentName: null,
+    opponentScore: null,
+    opponentAvatar: null
+  };
+
+  nk.storageWrite([{
+    collection: "match_history",
+    key: matchId,
+    userId: userId,
+    value: entry,
+    permissionRead: 1,
+    permissionWrite: 0
+  }]);
+
+  logger.info("Created match history entry for user " + userId + ", match " + matchId);
+  return entry;
+}
+
+function updateMatchHistoryStatus(nk, logger, matchId, userId, status) {
+  var reads = nk.storageRead([
+    { collection: "match_history", key: matchId, userId: userId }
+  ]);
+
+  if (reads.length > 0) {
+    var entry = reads[0].value;
+    entry.status = status;
+    entry.updatedAt = Date.now();
+
+    nk.storageWrite([{
+      collection: "match_history",
+      key: matchId,
+      userId: userId,
+      value: entry,
+      permissionRead: 1,
+      permissionWrite: 0
+    }]);
+
+    logger.info("Updated match history status to " + status + " for user " + userId + ", match " + matchId);
+    return entry;
+  }
+  return null;
+}
+
+function updateMatchHistoryOpponent(nk, logger, matchId, userId, opponentId, opponentName, opponentAvatar) {
+  var reads = nk.storageRead([
+    { collection: "match_history", key: matchId, userId: userId }
+  ]);
+
+  if (reads.length > 0) {
+    var entry = reads[0].value;
+    entry.status = "ready";
+    entry.updatedAt = Date.now();
+    entry.opponentId = opponentId;
+    entry.opponentName = opponentName;
+    entry.opponentAvatar = opponentAvatar || null;
+
+    nk.storageWrite([{
+      collection: "match_history",
+      key: matchId,
+      userId: userId,
+      value: entry,
+      permissionRead: 1,
+      permissionWrite: 0
+    }]);
+
+    logger.info("Updated opponent info for user " + userId + ", match " + matchId + ", opponent: " + opponentName);
+    return entry;
+  }
+  return null;
+}
+
+function updateMatchHistoryScore(nk, logger, matchId, userId, score) {
+  var reads = nk.storageRead([
+    { collection: "match_history", key: matchId, userId: userId }
+  ]);
+
+  if (reads.length > 0) {
+    var entry = reads[0].value;
+    entry.status = "submitted";
+    entry.updatedAt = Date.now();
+    entry.myScore = score;
+
+    nk.storageWrite([{
+      collection: "match_history",
+      key: matchId,
+      userId: userId,
+      value: entry,
+      permissionRead: 1,
+      permissionWrite: 0
+    }]);
+
+    logger.info("Updated score to " + score + " for user " + userId + ", match " + matchId);
+    return entry;
+  }
+  return null;
+}
+
+function updateMatchHistoryComplete(nk, logger, matchId, userId, result, payout, opponentScore) {
+  var reads = nk.storageRead([
+    { collection: "match_history", key: matchId, userId: userId }
+  ]);
+
+  if (reads.length > 0) {
+    var entry = reads[0].value;
+    entry.status = "completed";
+    entry.updatedAt = Date.now();
+    entry.result = result;  // "won" or "lost"
+    entry.payout = payout;
+    entry.opponentScore = opponentScore;
+
+    nk.storageWrite([{
+      collection: "match_history",
+      key: matchId,
+      userId: userId,
+      value: entry,
+      permissionRead: 1,
+      permissionWrite: 0
+    }]);
+
+    logger.info("Completed match history for user " + userId + ", match " + matchId + ", result: " + result);
+    return entry;
+  }
+  return null;
+}
+
+function updateMatchHistoryCancelled(nk, logger, matchId, userId) {
+  var reads = nk.storageRead([
+    { collection: "match_history", key: matchId, userId: userId }
+  ]);
+
+  if (reads.length > 0) {
+    var entry = reads[0].value;
+    entry.status = "cancelled";
+    entry.updatedAt = Date.now();
+
+    nk.storageWrite([{
+      collection: "match_history",
+      key: matchId,
+      userId: userId,
+      value: entry,
+      permissionRead: 1,
+      permissionWrite: 0
+    }]);
+
+    logger.info("Cancelled match history for user " + userId + ", match " + matchId);
+    return entry;
+  }
+  return null;
+}
+
+// ===== End Match History Helper Functions =====
+
 function selectLevelForPlayer(nk, logger, userId, gameId, config) {
-  var stats = getPlayerStats(nk, userId, gameId);
   var levels = getGameLevels(nk, logger, gameId);
 
   if (levels.length === 0) {
     return null;
   }
+
+  // DEBUG: Always return the first level for testing
+  logger.info("DEBUG: Returning first level (id=" + levels[0].id + ") for debugging");
+  return levels[0];
+
+  /* ORIGINAL SKILL-BASED LEVEL SELECTION - commented out for debugging
+  var stats = getPlayerStats(nk, userId, gameId);
 
   // Find appropriate tier based on player's average score
   var playerAvgScore = stats.averageScore || 0;
@@ -152,6 +326,7 @@ function selectLevelForPlayer(nk, logger, userId, gameId, config) {
   // Random selection from eligible levels
   var randomIndex = Math.floor(Math.random() * eligibleLevels.length);
   return eligibleLevels[randomIndex];
+  END ORIGINAL SKILL-BASED LEVEL SELECTION */
 }
 
 // Generate sample mahjong levels for initial setup
@@ -245,6 +420,11 @@ function InitModule(ctx, logger, nk, initializer) {
   initializer.registerRpc("get_config", rpcGetConfig);
   initializer.registerRpc("get_player_stats", rpcGetPlayerStats);
   initializer.registerRpc("admin_update_levels", rpcAdminUpdateLevels);
+
+  // Match history RPCs
+  initializer.registerRpc("get_match_history", rpcGetMatchHistory);
+  initializer.registerRpc("cancel_match", rpcCancelMatch);
+  initializer.registerRpc("sync_match_status", rpcSyncMatchStatus);
 
   // Create leaderboards for each game type
   var gameTypes = ["mahjong", "solitaire", "puzzle"];
@@ -432,6 +612,178 @@ function rpcAdminUpdateLevels(ctx, logger, nk, payload) {
   });
 }
 
+// ===== Match History RPCs =====
+
+function rpcGetMatchHistory(ctx, logger, nk, payload) {
+  var data = {};
+  try {
+    if (payload && payload !== "" && payload !== "null") {
+      data = JSON.parse(payload);
+    }
+  } catch (e) {
+    // Use defaults
+  }
+
+  var limit = data.limit || 50;
+  var cursor = data.cursor || "";
+  var userId = ctx.userId;
+
+  logger.info("get_match_history called by " + userId + ", limit: " + limit);
+
+  try {
+    var result = nk.storageList(userId, "match_history", limit, cursor);
+
+    var history = [];
+    for (var i = 0; i < result.objects.length; i++) {
+      history.push(result.objects[i].value);
+    }
+
+    // Sort by updatedAt descending (newest first)
+    history.sort(function(a, b) {
+      return b.updatedAt - a.updatedAt;
+    });
+
+    logger.info("Returning " + history.length + " match history entries for " + userId);
+
+    return JSON.stringify({
+      history: history,
+      cursor: result.cursor || ""
+    });
+  } catch (e) {
+    logger.error("get_match_history error: " + e.message);
+    return JSON.stringify({
+      history: [],
+      cursor: "",
+      error: e.message
+    });
+  }
+}
+
+function rpcCancelMatch(ctx, logger, nk, payload) {
+  var data;
+  try {
+    data = JSON.parse(payload);
+  } catch (e) {
+    return JSON.stringify({ success: false, error: "Invalid payload" });
+  }
+
+  var matchId = data.matchId;
+  var userId = ctx.userId;
+
+  if (!matchId) {
+    return JSON.stringify({ success: false, error: "Missing matchId" });
+  }
+
+  logger.info("cancel_match called by " + userId + " for match " + matchId);
+
+  // Read current match history entry
+  var reads = nk.storageRead([
+    { collection: "match_history", key: matchId, userId: userId }
+  ]);
+
+  if (reads.length === 0) {
+    return JSON.stringify({ success: false, error: "Match not found" });
+  }
+
+  var entry = reads[0].value;
+
+  // Only allow cancel for "waiting" status
+  if (entry.status !== "waiting") {
+    return JSON.stringify({
+      success: false,
+      error: "Can only cancel matches in waiting status",
+      currentStatus: entry.status
+    });
+  }
+
+  // Refund bet
+  nk.walletUpdate(userId, { coins: entry.betAmount }, {
+    type: "bet_refund",
+    matchId: matchId,
+    reason: "user_cancelled",
+    timestamp: Date.now()
+  }, true);
+
+  // Update status to cancelled
+  updateMatchHistoryCancelled(nk, logger, matchId, userId);
+
+  // Signal match to terminate
+  try {
+    nk.matchSignal(matchId, JSON.stringify({ action: "cancel", userId: userId }));
+  } catch (e) {
+    // Match might already be gone
+    logger.warn("Could not signal match " + matchId + ": " + e.message);
+  }
+
+  logger.info("Match " + matchId + " cancelled by user " + userId + ", refunded " + entry.betAmount);
+
+  return JSON.stringify({
+    success: true,
+    refundAmount: entry.betAmount
+  });
+}
+
+function rpcSyncMatchStatus(ctx, logger, nk, payload) {
+  var data;
+  try {
+    data = JSON.parse(payload);
+  } catch (e) {
+    return JSON.stringify({ status: "unknown", canReconnect: false, entry: null, error: "Invalid payload" });
+  }
+
+  var matchId = data.matchId;
+  var userId = ctx.userId;
+
+  if (!matchId) {
+    return JSON.stringify({ status: "unknown", canReconnect: false, entry: null, error: "Missing matchId" });
+  }
+
+  logger.info("sync_match_status called by " + userId + " for match " + matchId);
+
+  // Read current match history entry
+  var reads = nk.storageRead([
+    { collection: "match_history", key: matchId, userId: userId }
+  ]);
+
+  if (reads.length === 0) {
+    return JSON.stringify({ status: "unknown", canReconnect: false, entry: null, error: "Match not found" });
+  }
+
+  var entry = reads[0].value;
+
+  // Determine if user can reconnect to this match
+  // Can reconnect if status is "ready" or "playing"
+  var canReconnect = entry.status === "ready" || entry.status === "playing";
+
+  // Also check if the match still exists in Nakama
+  if (canReconnect) {
+    try {
+      var matches = nk.matchList(1, true, null, null, null, null);
+      var matchExists = false;
+      for (var i = 0; i < matches.length; i++) {
+        if (matches[i].matchId === matchId) {
+          matchExists = true;
+          break;
+        }
+      }
+      // If we can't find the match, it may have ended
+      // In production, you might want a more sophisticated check
+    } catch (e) {
+      logger.warn("Could not check match existence: " + e.message);
+    }
+  }
+
+  logger.info("sync_match_status for " + matchId + ": status=" + entry.status + ", canReconnect=" + canReconnect);
+
+  return JSON.stringify({
+    status: entry.status,
+    canReconnect: canReconnect,
+    entry: entry
+  });
+}
+
+// ===== End Match History RPCs =====
+
 //function rpcJoinGame(ctx, logger, nk, payload) {
 //  var data = JSON.parse(payload);
 function rpcJoinGame(ctx, logger, nk, payload) {
@@ -546,6 +898,11 @@ logger.info("matchList returned: " + JSON.stringify(matches));
 if (matches.length > 0) {
     var matchId = matches[0].matchId;
     logger.info("Found existing match with room: " + matchId);
+
+    // Create match history entry for joining player
+    // matchType and levelId will be updated when match becomes ready
+    writeMatchHistoryEntry(nk, logger, userId, matchId, gameId, betAmount, "PVP", null);
+
     return JSON.stringify({ matchId: matchId, action: "join" });
   }
 
@@ -555,6 +912,10 @@ if (matches.length > 0) {
     creatorId: userId,
     createdAt: Date.now()
   });
+
+  // Create match history entry for match creator
+  // matchType and levelId will be updated when match becomes ready
+  writeMatchHistoryEntry(nk, logger, userId, matchId, gameId, betAmount, "PVP", null);
 
   logger.info("Created new match: " + matchId);
   return JSON.stringify({ matchId: matchId, action: "created" });
@@ -675,6 +1036,39 @@ function matchJoin(ctx, logger, nk, dispatcher, tick, state, presences) {
       commissionRate: state.config.commissionRate
     }), null, null, true);
 
+    // Update match history for both players with opponent info
+    var playerIds = Object.keys(state.players);
+    for (var p = 0; p < playerIds.length; p++) {
+      var odredacted = playerIds[p];
+      var opponentId = playerIds[p === 0 ? 1 : 0];
+      var opponentInfo = state.players[opponentId];
+
+      // Update history entry with opponent info, status=ready, and levelId
+      var reads = nk.storageRead([
+        { collection: "match_history", key: ctx.matchId, userId: odredacted }
+      ]);
+
+      if (reads.length > 0) {
+        var entry = reads[0].value;
+        entry.status = "playing";  // ready -> playing since game starts immediately
+        entry.updatedAt = Date.now();
+        entry.opponentId = opponentId;
+        entry.opponentName = opponentInfo.username;
+        entry.levelId = state.level ? state.level.id : null;
+        entry.matchType = "PVP";
+
+        nk.storageWrite([{
+          collection: "match_history",
+          key: ctx.matchId,
+          userId: odredacted,
+          value: entry,
+          permissionRead: 1,
+          permissionWrite: 0
+        }]);
+        logger.info("Updated match history for player " + odredacted + " vs " + opponentInfo.username);
+      }
+    }
+
     logger.info("Match ready! PVP mode, level " + (state.level ? state.level.id : "none"));
   }
 
@@ -728,6 +1122,36 @@ function matchLoop(ctx, logger, nk, dispatcher, tick, state, messages) {
       commissionRate: state.config.commissionRate
     }), null, null, true);
 
+    // Update match history for the real player with PVH info
+    for (var odredacted in state.players) {
+      var player = state.players[odredacted];
+      if (!player.isHouse) {
+        var reads = nk.storageRead([
+          { collection: "match_history", key: ctx.matchId, userId: odredacted }
+        ]);
+
+        if (reads.length > 0) {
+          var entry = reads[0].value;
+          entry.status = "playing";
+          entry.updatedAt = Date.now();
+          entry.opponentId = "house";
+          entry.opponentName = "House";
+          entry.levelId = state.level ? state.level.id : null;
+          entry.matchType = "PVH";
+
+          nk.storageWrite([{
+            collection: "match_history",
+            key: ctx.matchId,
+            userId: odredacted,
+            value: entry,
+            permissionRead: 1,
+            permissionWrite: 0
+          }]);
+          logger.info("Updated match history for player " + odredacted + " vs House (PVH)");
+        }
+      }
+    }
+
     logger.info("Match ready! PVH mode, level " + (state.level ? state.level.id : "none"));
   }
 
@@ -741,7 +1165,7 @@ function matchLoop(ctx, logger, nk, dispatcher, tick, state, messages) {
       }
     }
 
-    resolveMatch(nk, logger, dispatcher, state);
+    resolveMatch(ctx, nk, logger, dispatcher, state);
     return null;
   }
 
@@ -758,6 +1182,9 @@ function matchLoop(ctx, logger, nk, dispatcher, tick, state, messages) {
       logger.info("Player: " + message.sender.username + " (" + message.sender.userId + ")");
       logger.info("Score: " + data.score + ", Time: " + data.timeMs + "ms");
 
+      // Update match history with submitted score
+      updateMatchHistoryScore(nk, logger, ctx.matchId, message.sender.userId, data.score);
+
       // Log all players and their submission status
       var playerList = [];
       for (var odredacted in state.players) {
@@ -771,7 +1198,7 @@ function matchLoop(ctx, logger, nk, dispatcher, tick, state, messages) {
       if (checkAllResultsSubmitted(state)) {
         logger.info("All players submitted - resolving match!");
         state.status = "completed";
-        resolveMatch(nk, logger, dispatcher, state);
+        resolveMatch(ctx, nk, logger, dispatcher, state);
         return null;
       } else {
         logger.info("Waiting for other players to submit...");
@@ -797,6 +1224,10 @@ function matchLeave(ctx, logger, nk, dispatcher, tick, state, presences) {
         timestamp: Date.now()
       }, true);
       logger.info("Refunded " + state.betAmount + " coins to " + presence.userId);
+
+      // Update match history to cancelled
+      updateMatchHistoryCancelled(nk, logger, ctx.matchId, presence.userId);
+
       delete state.players[presence.userId];
     }
   }
@@ -843,7 +1274,7 @@ function generateHouseScore(playerScore, houseEdge) {
   }
 }
 
-function resolveMatch(nk, logger, dispatcher, state) {
+function resolveMatch(ctx, nk, logger, dispatcher, state) {
   var commissionRate = state.config.commissionRate || DEFAULT_COMMISSION_RATE;
   var pool = state.betAmount * 2;
   var commission = Math.floor(pool * commissionRate);
@@ -997,6 +1428,39 @@ function resolveMatch(nk, logger, dispatcher, state) {
         101,
         "",
         true
+      );
+    }
+  }
+
+  // Update match history for all real players with final results
+  for (var odredacted in state.players) {
+    var player = state.players[odredacted];
+    if (!player.isHouse) {
+      var playerWon = (odredacted === winnerId);
+      var playerPayout = playerWon ? payout : null;
+
+      // Find opponent score
+      var opponentScore = null;
+      if (state.housePlayer) {
+        opponentScore = state.results["house"] ? state.results["house"].score : null;
+      } else {
+        // PVP - find the other player's score
+        for (var oppId in state.players) {
+          if (oppId !== odredacted && !state.players[oppId].isHouse) {
+            opponentScore = state.results[oppId] ? state.results[oppId].score : null;
+            break;
+          }
+        }
+      }
+
+      updateMatchHistoryComplete(
+        nk,
+        logger,
+        ctx.matchId,
+        odredacted,
+        playerWon ? "won" : "lost",
+        playerPayout,
+        opponentScore
       );
     }
   }

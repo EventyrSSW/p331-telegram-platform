@@ -80,6 +80,44 @@ interface TelegramUserData {
   isPremium?: boolean;
 }
 
+// Match History types (for Results page)
+export type MatchHistoryStatus = 'waiting' | 'ready' | 'playing' | 'submitted' | 'completed' | 'cancelled';
+
+export interface MatchHistoryEntry {
+  matchId: string;
+  status: MatchHistoryStatus;
+  createdAt: number;
+  updatedAt: number;
+  gameId: string;
+  matchType: 'PVP' | 'PVH';
+  betAmount: number;
+  levelId: number | null;
+  myScore: number | null;
+  result: 'won' | 'lost' | null;
+  payout: number | null;
+  opponentId: string | null;
+  opponentName: string | null;
+  opponentScore: number | null;
+  opponentAvatar: string | null;
+}
+
+export interface MatchHistoryResponse {
+  history: MatchHistoryEntry[];
+  cursor: string;
+}
+
+export interface CancelMatchResponse {
+  success: boolean;
+  refundAmount?: number;
+  error?: string;
+}
+
+export interface SyncMatchStatusResponse {
+  status: MatchHistoryStatus;
+  canReconnect: boolean;
+  entry: MatchHistoryEntry | null;
+}
+
 class NakamaService {
   private client: Client;
   private session: Session | null = null;
@@ -511,6 +549,56 @@ class NakamaService {
 
     await this.client.rpc(this.session, 'add_test_coins', { amount });
     console.log('[Nakama] Added', amount, 'test coins');
+  }
+
+  // Match History methods
+  async getMatchHistory(limit: number = 50, cursor: string = ''): Promise<MatchHistoryResponse> {
+    if (!this.session) {
+      throw new Error('Not authenticated');
+    }
+
+    const response = await this.client.rpc(this.session, 'get_match_history', { limit, cursor });
+    const result = typeof response.payload === 'string'
+      ? JSON.parse(response.payload)
+      : response.payload;
+
+    console.log('[Nakama] Got', result.history?.length || 0, 'match history entries');
+    return result as MatchHistoryResponse;
+  }
+
+  async cancelMatch(matchId: string): Promise<CancelMatchResponse> {
+    if (!this.session) {
+      throw new Error('Not authenticated');
+    }
+
+    console.log('[Nakama] Cancelling match:', matchId);
+    const response = await this.client.rpc(this.session, 'cancel_match', { matchId });
+    const result = typeof response.payload === 'string'
+      ? JSON.parse(response.payload)
+      : response.payload;
+
+    if (result.success) {
+      console.log('[Nakama] Match cancelled, refunded:', result.refundAmount);
+    } else {
+      console.warn('[Nakama] Cancel failed:', result.error);
+    }
+
+    return result as CancelMatchResponse;
+  }
+
+  async syncMatchStatus(matchId: string): Promise<SyncMatchStatusResponse> {
+    if (!this.session) {
+      throw new Error('Not authenticated');
+    }
+
+    console.log('[Nakama] Syncing match status:', matchId);
+    const response = await this.client.rpc(this.session, 'sync_match_status', { matchId });
+    const result = typeof response.payload === 'string'
+      ? JSON.parse(response.payload)
+      : response.payload;
+
+    console.log('[Nakama] Match status:', result.status, 'canReconnect:', result.canReconnect);
+    return result as SyncMatchStatusResponse;
   }
 }
 

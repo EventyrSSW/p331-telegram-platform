@@ -56,6 +56,14 @@ interface JoinGameResponse {
   error?: string;
 }
 
+interface RejoinMatchParams {
+  matchId: string;
+  gameId: string;
+  betAmount: number;
+  levelId: number | null;
+  matchType: 'PVP' | 'PVH';
+}
+
 interface NakamaContextValue {
   // Session state
   session: Session | null;
@@ -79,6 +87,7 @@ interface NakamaContextValue {
 
   // Match actions
   joinGame: (gameId: string, betAmount: number) => Promise<JoinGameResponse | null>;
+  rejoinMatch: (params: RejoinMatchParams) => Promise<boolean>;
   submitScore: (score: number, timeMs: number) => Promise<void>;
   leaveMatch: () => Promise<void>;
   resetMatch: () => void;
@@ -279,6 +288,78 @@ export function NakamaProvider({ children }: NakamaProviderProps) {
     }
   }, []);
 
+  const rejoinMatch = useCallback(async (params: RejoinMatchParams): Promise<boolean> => {
+    console.log('[NakamaContext] Rejoining match:', params);
+
+    try {
+      // Ensure socket is connected
+      if (!isSocketConnected) {
+        await connectSocketInternal();
+      }
+
+      const socket = nakamaService.getSocket();
+      if (!socket) {
+        console.error('[NakamaContext] Socket not available for rejoin');
+        return false;
+      }
+
+      // Clear old presences before rejoining
+      nakamaService.clearMatchPresences();
+
+      // Join the match via socket
+      const matchResult = await socket.joinMatch(params.matchId);
+      console.log('[NakamaContext] Rejoined match, presences:', matchResult.presences);
+
+      // Build presences map from the match result
+      // This includes all players currently in the match
+      const presences: MatchPresence = {};
+      if (matchResult.presences) {
+        matchResult.presences.forEach(p => {
+          presences[p.user_id] = {
+            userId: p.user_id,
+            username: p.username,
+            avatarUrl: undefined,
+            isOnline: true,
+          };
+        });
+      }
+
+      // Also add current user to presences (we just joined)
+      if (session?.user_id && session?.username) {
+        presences[session.user_id] = {
+          userId: session.user_id,
+          username: session.username,
+          avatarUrl: undefined,
+          isOnline: true,
+        };
+      }
+
+      console.log('[NakamaContext] Final presences after rejoin:', presences);
+
+      // Update match state with all the info
+      setMatch({
+        matchId: params.matchId,
+        gameId: params.gameId,
+        betAmount: params.betAmount,
+        level: params.levelId ? { id: params.levelId, name: '', tier: '', tiles: [], totalPairs: 0, timeBonus: 0 } : null,
+        status: 'playing',
+        matchType: params.matchType,
+        presences,
+        myScore: null,
+        opponentScore: null,
+        winner: null,
+        payout: null,
+        error: null,
+      });
+
+      console.log('[NakamaContext] Match state updated after rejoin');
+      return true;
+    } catch (error) {
+      console.error('[NakamaContext] Failed to rejoin match:', error);
+      return false;
+    }
+  }, [isSocketConnected, session]);
+
   const leaveMatch = useCallback(async () => {
     try {
       if (matchRef.current.matchId) {
@@ -321,6 +402,7 @@ export function NakamaProvider({ children }: NakamaProviderProps) {
     disconnect,
     connectSocket,
     joinGame,
+    rejoinMatch,
     submitScore,
     leaveMatch,
     resetMatch,

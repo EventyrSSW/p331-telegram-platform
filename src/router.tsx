@@ -4,6 +4,7 @@ import { StorePage } from './pages/StorePage';
 import { GamePage } from './pages/GamePage';
 import { GameDetailPage } from './pages/GameDetailPage';
 import { LeaderboardPage } from './pages/LeaderboardPage';
+import { ResultsPage } from './pages/ResultsPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { SettingsPage } from './pages/SettingsPage/SettingsPage';
 import { CashOutPage } from './pages/CashOutPage/CashOutPage';
@@ -28,6 +29,10 @@ export const router = createBrowserRouter([
   {
     path: '/leaderboard',
     element: <LeaderboardPage />,
+  },
+  {
+    path: '/results',
+    element: <ResultsPage />,
   },
   {
     path: '/profile',

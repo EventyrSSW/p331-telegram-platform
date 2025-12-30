@@ -1,0 +1,156 @@
+.card {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--color-bg-secondary, #1a1a1a);
+  border-radius: 12px;
+  text-align: left;
+}
+
+.pending {
+  border: 1px solid rgba(255, 77, 0, 0.2);
+}
+
+.thumbnail {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: var(--color-bg-tertiary, #252525);
+}
+
+.thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.thumbnailPlaceholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-secondary, #9F9F9F);
+  font-size: 20px;
+}
+
+.info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary, white);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.statusText {
+  font-size: 13px;
+  color: var(--color-text-secondary, #9F9F9F);
+}
+
+.priceRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.priceLabel {
+  font-size: 14px;
+  color: #0098EA;
+  font-weight: 500;
+}
+
+.coinIcon {
+  width: 16px;
+  height: 16px;
+}
+
+.priceValue {
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+}
+
+.opponent {
+  font-size: 14px;
+  color: var(--color-text-secondary, #9F9F9F);
+}
+
+.scoreText {
+  font-size: 13px;
+  color: var(--color-text-secondary, #9F9F9F);
+}
+
+.rightContent {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.continueButton {
+  min-width: 90px;
+  padding: 8px 16px;
+  background: #FF4D00;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.continueButton:hover {
+  background: #E54500;
+}
+
+.continueButton:active {
+  transform: scale(0.98);
+}
+
+.cancelButton {
+  min-width: 90px;
+  padding: 8px 16px;
+  background: transparent;
+  color: #FF4D00;
+  border: 1px solid #FF4D00;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cancelButton:hover {
+  background: rgba(255, 77, 0, 0.1);
+}
+
+.cancelButton:active {
+  transform: scale(0.98);
+}
+
+.result {
+  font-size: 16px;
+  font-weight: 700;
+  padding: 4px 0;
+}
+
+.won {
+  color: #00C853;
+}
+
+.lost {
+  color: #FF4757;
+}

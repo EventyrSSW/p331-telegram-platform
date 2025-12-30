@@ -18,3 +18,4 @@ export { GameResultModal, type GameResultData } from './GameResultModal';
 export { MatchResultModal } from './MatchResultModal';
 export { SearchOpponentModal } from './SearchOpponentModal';
 export { MatchPresenceOverlay } from './MatchPresenceOverlay/MatchPresenceOverlay';
+export { ResultCard } from './ResultCard';

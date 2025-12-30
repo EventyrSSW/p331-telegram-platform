@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Header } from '../../components/Header/Header';
 import { BottomNavBar } from '../../components/BottomNavBar/BottomNavBar';
@@ -45,6 +45,7 @@ export function GameDetailPage() {
   const [gameResult, setGameResult] = useState<GameResultData | null>(null);
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [searchStatus, setSearchStatus] = useState<'searching' | 'found' | 'starting'>('searching');
+  const isNavigatingToGame = useRef(false);
 
   useEffect(() => {
     async function fetchGame() {
@@ -82,16 +83,20 @@ export function GameDetailPage() {
 
   // Handle match status changes
   useEffect(() => {
-    console.log('[GameDetailPage] Match status effect:', { status: match.status, level: match.level, gameId });
+    console.log('[GameDetailPage] Match status effect:', { status: match.status, level: match.level, gameId, isNavigating: isNavigatingToGame.current });
+
     if (match.status === 'waiting') {
       setShowSearchModal(true);
       setSearchStatus('searching');
-    } else if (match.status === 'ready' && gameId) {
-      console.log('[GameDetailPage] Match is ready, setting found status');
+      isNavigatingToGame.current = false; // Reset on new search
+    } else if ((match.status === 'ready' || match.status === 'playing') && gameId && !isNavigatingToGame.current) {
+      console.log('[GameDetailPage] Match is ready/playing, setting found status and navigating');
+      isNavigatingToGame.current = true; // Prevent duplicate navigation
       setSearchStatus('found');
+
       // Brief delay to show "found" animation before navigating
       const timer = setTimeout(() => {
-        console.log('[GameDetailPage] Timeout fired, navigating...');
+        console.log('[GameDetailPage] Timeout fired, navigating to game...');
         setShowSearchModal(false);
         navigate(`/game/${gameId}`, {
           state: {
@@ -101,7 +106,14 @@ export function GameDetailPage() {
           },
         });
       }, 1500);
-      return () => clearTimeout(timer);
+
+      // Don't clear the timer on cleanup - let the navigation happen
+      return () => {
+        // Only clear if we're not navigating (e.g., component unmounting for other reasons)
+        if (!isNavigatingToGame.current) {
+          clearTimeout(timer);
+        }
+      };
     }
   }, [match.status, match.level, match.matchId, match.betAmount, gameId, navigate]);
 

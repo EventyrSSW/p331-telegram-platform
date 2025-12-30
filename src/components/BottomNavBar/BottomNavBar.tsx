@@ -18,8 +18,8 @@ export const BottomNavBar = () => {
     <nav className={styles.container}>
       {/* Result Tab */}
       <Link
-        to="/leaderboard"
-        className={`${styles.navItem} ${isActive('/leaderboard') ? styles.navItemActive : ''}`}
+        to="/results"
+        className={`${styles.navItem} ${isActive('/results') ? styles.navItemActive : ''}`}
       >
         <div className={styles.navIcon}>
           <TrophyIcon />
