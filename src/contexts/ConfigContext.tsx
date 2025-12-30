@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { api, AppConfig } from '../services/api';
 
 interface ConfigContextType {
@@ -27,6 +27,7 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
   const [config, setConfig] = useState<AppConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const fetchInitiatedRef = useRef(false);
 
   const fetchConfig = async () => {
     try {
@@ -44,6 +45,10 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    // Prevent double fetch in React StrictMode
+    if (fetchInitiatedRef.current) return;
+    fetchInitiatedRef.current = true;
+
     fetchConfig();
   }, []);
 

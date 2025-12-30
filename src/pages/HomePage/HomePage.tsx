@@ -14,7 +14,7 @@ import {
   Game,
 } from '../../components';
 import { WelcomeBonusBanner } from '../../components/WelcomeBonusBanner/WelcomeBonusBanner';
-import { useGames } from '../../hooks/useGames';
+import { useGames } from '../../contexts/GamesContext';
 import styles from './HomePage.module.css';
 
 export const HomePage = () => {

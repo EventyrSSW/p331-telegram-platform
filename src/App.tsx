@@ -5,6 +5,7 @@ import { ConfigProvider } from './contexts/ConfigContext'
 import { AuthProvider } from './contexts/AuthContext'
 import { ModalProvider } from './contexts/ModalContext'
 import { NakamaProvider } from './contexts/NakamaContext'
+import { GamesProvider } from './contexts/GamesContext'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { SplashScreen } from './components/SplashScreen'
 import { NakamaConnector } from './components/NakamaConnector'
@@ -25,16 +26,18 @@ function App() {
     <ErrorBoundary>
       <TonConnectProvider>
         <ConfigProvider>
-          <TelegramProvider>
-            <AuthProvider>
-              <ModalProvider>
-                <NakamaProvider>
-                  <NakamaConnector />
-                  <AppContent />
-                </NakamaProvider>
-              </ModalProvider>
-            </AuthProvider>
-          </TelegramProvider>
+          <GamesProvider>
+            <TelegramProvider>
+              <AuthProvider>
+                <ModalProvider>
+                  <NakamaProvider>
+                    <NakamaConnector />
+                    <AppContent />
+                  </NakamaProvider>
+                </ModalProvider>
+              </AuthProvider>
+            </TelegramProvider>
+          </GamesProvider>
         </ConfigProvider>
       </TonConnectProvider>
     </ErrorBoundary>
