@@ -26,6 +26,7 @@ model User {
 
   transactions    Transaction[]
   gameSessions    GameSession[]
+  invoices        PaymentInvoice[]
 
   @@index([telegramId])
   @@index([walletAddress])
@@ -46,6 +47,37 @@ model Transaction {
   updatedAt        DateTime  @updatedAt
 
   @@index([userId])
+
+  invoice       PaymentInvoice?
+}
+
+model PaymentInvoice {
+  id            String    @id @default(cuid())
+  visibleId     String    @unique @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+
+  status        String    @default("pending")
+  amountNano    String
+  amountCoins   Decimal   @db.Decimal(18, 2)
+  memo          String    @unique
+
+  createdAt     DateTime  @default(now())
+  expiresAt     DateTime
+  paidAt        DateTime?
+  cancelledAt   DateTime?
+
+  // Filled when paid - all provide duplicate protection
+  transactionId    String?   @unique
+  transaction      Transaction? @relation(fields: [transactionId], references: [id])
+  bocHash          String?   @unique  // Normalized BOC hash - prevents replay of signed message
+  blockchainTxHash String?   @unique  // On-chain tx hash - prevents same tx crediting twice
+  senderAddress    String?            // Verified sender wallet for audit
+
+  @@index([userId])
+  @@index([status])
+  @@index([memo])
+  @@index([expiresAt])
 }
 
 enum TransactionType {
