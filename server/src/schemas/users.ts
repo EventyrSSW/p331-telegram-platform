@@ -25,6 +25,11 @@ export const addCoinsSchema = coinAmountSchema.extend({
     .optional(), // Amount in nanoTON as string (BigInt serialization)
 });
 
+export const addCoinsVerifiedSchema = z.object({
+  transactionHash: z.string().min(1, 'Transaction hash is required'),
+  tonAmount: z.string().min(1, 'TON amount is required'),  // In nanoTON as string
+});
+
 export const linkWalletSchema = z.object({
   walletAddress: z.string().min(1, 'Wallet address is required'),
 });

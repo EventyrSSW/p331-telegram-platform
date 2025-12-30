@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { userService, decimalToNumber } from '../services/userService';
-import { coinAmountSchema, addCoinsSchema, linkWalletSchema } from '../schemas/users';
+import { coinAmountSchema, addCoinsSchema, addCoinsVerifiedSchema, linkWalletSchema } from '../schemas/users';
 
 export const usersController = {
   async getBalance(req: Request, res: Response, next: NextFunction) {
@@ -63,6 +63,39 @@ export const usersController = {
   async addCoins(req: Request, res: Response, next: NextFunction) {
     try {
       const telegramUser = req.telegramUser!;
+
+      // Try new verified schema first
+      const verifiedParse = addCoinsVerifiedSchema.safeParse(req.body);
+
+      if (verifiedParse.success) {
+        // New secure flow with blockchain verification
+        const { transactionHash, tonAmount } = verifiedParse.data;
+
+        // Ensure user exists in database
+        await userService.findOrCreateByTelegramId(telegramUser.id, {
+          username: telegramUser.username,
+          firstName: telegramUser.first_name,
+          lastName: telegramUser.last_name,
+        });
+
+        const result = await userService.addCoinsVerified(
+          telegramUser.id,
+          BigInt(tonAmount),
+          transactionHash
+        );
+
+        if (!result.success) {
+          return res.status(400).json({ error: result.error });
+        }
+
+        return res.json({
+          telegramId: telegramUser.id,
+          balance: result.balance,
+          alreadyProcessed: result.alreadyProcessed,
+        });
+      }
+
+      // Fallback to old schema for backwards compatibility (should be removed later)
       const bodyParse = addCoinsSchema.safeParse(req.body);
 
       if (!bodyParse.success) {
@@ -77,6 +110,9 @@ export const usersController = {
         firstName: telegramUser.first_name,
         lastName: telegramUser.last_name,
       });
+
+      // DEPRECATED: Old unverified flow - log warning
+      console.warn('DEPRECATED: Using unverified addCoins flow. Update frontend to use verified flow.');
 
       const user = await userService.addCoins(telegramUser.id, amount, {
         tonTxHash: transactionHash,
