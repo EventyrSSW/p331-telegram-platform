@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -22,6 +22,7 @@ export function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const fetchInitiatedRef = useRef(false);
 
   // Use mock data for local development without Telegram context
   const useMockData = shouldUseMockData();
@@ -29,6 +30,10 @@ export function ProfilePage() {
   const isWalletConnected = !!wallet;
 
   useEffect(() => {
+    // Prevent double fetch in React StrictMode
+    if (fetchInitiatedRef.current) return;
+    fetchInitiatedRef.current = true;
+
     loadProfile();
   }, []);
 
