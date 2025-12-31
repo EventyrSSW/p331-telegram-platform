@@ -93,9 +93,10 @@ export const Header = () => {
       // 4. Send transaction via TonConnect
       const result = await tonConnectUI.sendTransaction(transaction);
 
-      // 5. Verify invoice with backend (retry up to 5 times for blockchain propagation)
-      const MAX_RETRIES = 5;
-      const RETRY_DELAY_MS = 3000;
+      // 5. Verify invoice with backend (retry up to 10 times for blockchain propagation)
+      // TON blockchain can take 30-60 seconds for transaction to appear
+      const MAX_RETRIES = 10;
+      const RETRY_DELAY_MS = 5000;
       let verification = null;
       let lastError = '';
 
