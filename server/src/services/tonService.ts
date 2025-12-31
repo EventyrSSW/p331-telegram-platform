@@ -1,4 +1,5 @@
 import TonWeb from 'tonweb';
+import { Cell } from '@ton/core';
 import { config } from '../config';
 import { logger } from '../utils/logger';
 
@@ -15,6 +16,11 @@ interface TonTransaction {
     destination: string;
     value: string;
     message?: string;
+    msg_data?: {
+      '@type': string;
+      body?: string;  // Base64-encoded message body
+      text?: string;  // Sometimes text is here
+    };
   };
   out_msgs: Array<{
     source: string;
@@ -22,6 +28,31 @@ interface TonTransaction {
     value: string;
     message?: string;
   }>;
+}
+
+/**
+ * Decode comment from TON message body (Base64-encoded Cell)
+ * Comment format: 32-bit opcode (0) + text
+ */
+function decodeComment(bodyBase64: string | undefined): string | null {
+  if (!bodyBase64) return null;
+
+  try {
+    const bodyBuffer = Buffer.from(bodyBase64, 'base64');
+    const cell = Cell.fromBoc(bodyBuffer)[0];
+    const slice = cell.beginParse();
+
+    // Read 32-bit opcode - 0 means text comment
+    const opcode = slice.loadUint(32);
+    if (opcode !== 0) return null;
+
+    // Read remaining bits as text
+    const text = slice.loadStringTail();
+    return text;
+  } catch (error) {
+    // Not a valid comment cell
+    return null;
+  }
 }
 
 // Maximum age of transaction to consider (5 minutes)
@@ -222,9 +253,12 @@ export class TonService {
         const receivedAmount = BigInt(t.in_msg.value || '0');
         if (receivedAmount !== expectedAmountNano) return false;
 
-        // Check memo/message matches
-        const txMemo = t.in_msg.message || '';
-        if (!txMemo.includes(memo)) return false;
+        // Check memo/message matches - decode from msg_data.body
+        const decodedComment = decodeComment(t.in_msg.msg_data?.body)
+          || t.in_msg.msg_data?.text
+          || t.in_msg.message
+          || '';
+        if (!decodedComment.includes(memo)) return false;
 
         // Check transaction is recent
         const txAge = nowSeconds - t.utime;
@@ -234,11 +268,11 @@ export class TonService {
       });
 
       if (!matchingTx) {
-        // Log debug info
+        // Log debug info with decoded comments
         const recentTxs = transactions.slice(0, 5).map((t: TonTransaction) => ({
           hash: t.transaction_id.hash,
           amount: t.in_msg?.value,
-          message: t.in_msg?.message,
+          comment: decodeComment(t.in_msg?.msg_data?.body) || t.in_msg?.msg_data?.text || t.in_msg?.message,
           source: t.in_msg?.source,
           age: nowSeconds - t.utime,
         }));
