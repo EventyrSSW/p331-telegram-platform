@@ -90,12 +90,12 @@ export const invoicesController = {
       }
 
       // Save verification data on first attempt (enables cron recovery if timeout)
-      if (!invoice.senderAddress || !invoice.bocHash) {
-        await invoiceService.saveFirstAttemptData(invoiceId, {
-          senderAddress: !invoice.senderAddress ? senderAddress : undefined,
-          bocHash: !invoice.bocHash ? bocHash : undefined,
-        });
-      }
+      // Always update senderAddress from BOC (actual sender wins)
+      // Only save bocHash if not already set
+      await invoiceService.saveFirstAttemptData(invoiceId, {
+        senderAddress: senderAddress,
+        bocHash: !invoice.bocHash ? bocHash : undefined,
+      });
 
       // Check invoice status (Layer 1: Invoice already paid?)
       if (invoice.status === 'paid') {

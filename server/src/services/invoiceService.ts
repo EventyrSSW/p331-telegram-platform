@@ -140,6 +140,8 @@ class InvoiceService {
   /**
    * Save verification data on first attempt (enables cron recovery)
    * Called early in verification flow before blockchain check
+   * senderAddress is always updated from BOC (actual sender wins)
+   * bocHash is only saved on first attempt
    */
   async saveFirstAttemptData(
     invoiceId: string,
@@ -147,7 +149,9 @@ class InvoiceService {
   ): Promise<void> {
     const updateData: { senderAddress?: string; bocHash?: string } = {};
 
+    // Always update senderAddress from BOC (actual sender wins over expected)
     if (data.senderAddress) updateData.senderAddress = data.senderAddress;
+    // Only save bocHash if not already set
     if (data.bocHash) updateData.bocHash = data.bocHash;
 
     if (Object.keys(updateData).length === 0) return;
