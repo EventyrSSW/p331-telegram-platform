@@ -91,26 +91,40 @@ export class NakamaService {
    * Map Telegram ID to Nakama user ID
    * Users authenticate with Telegram custom ID format: telegram_${telegramId}
    * (matches frontend src/services/nakama.ts authenticateWithTelegram)
+   *
+   * Note: We use authenticateCustom with create=false to look up existing users.
+   * getUsers() doesn't support lookup by custom ID.
    */
   async getNakamaUserIdFromTelegramId(telegramId: number): Promise<string | null> {
     // Nakama custom ID format for Telegram users (uses underscore, not colon)
     const customId = `telegram_${telegramId}`;
 
+    logger.info('Looking up Nakama user by custom ID', { telegramId, customId });
+
     try {
-      const session = await this.ensureServerSession();
+      // Use authenticateCustom with create=false to look up existing user
+      // This will fail if user doesn't exist, which is what we want
+      const session = await this.client.authenticateCustom(
+        customId,
+        false,  // create = false - don't create if not exists
+        undefined  // username not needed for lookup
+      );
 
-      // Try to fetch users by custom ID
-      const users = await this.client.getUsers(session, [], [], [customId]);
-
-      if (users.users && users.users.length > 0 && users.users[0].id) {
-        return users.users[0].id;
+      if (session && session.user_id) {
+        logger.info('Found Nakama user', { nakamaUserId: session.user_id, customId });
+        return session.user_id;
       }
 
-      logger.warn('No Nakama user found for Telegram ID', { telegramId });
+      logger.warn('No Nakama user found for Telegram ID', { telegramId, customId });
       return null;
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      logger.error('Failed to get Nakama user ID', { error: message, telegramId });
+      // "User account not found" is expected when user hasn't connected to Nakama yet
+      if (message.includes('not found') || message.includes('Not found')) {
+        logger.warn('Nakama user not found for Telegram ID', { telegramId, customId });
+      } else {
+        logger.error('Failed to get Nakama user ID', { error: message, telegramId, customId });
+      }
       return null;
     }
   }
