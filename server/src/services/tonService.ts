@@ -31,10 +31,10 @@ interface TonTransaction {
 
 /**
  * Decode comment from TON message
- * TonCenter returns comment in different fields depending on the message type:
- * - msg_data.body: Base64-encoded body (may not exist)
- * - msg_data.text: Plain text (rare)
- * - message: Sometimes Base64, sometimes already decoded text
+ * TonCenter returns comment in different fields:
+ * - message: Usually already decoded text (use this first!)
+ * - msg_data.text: Base64-encoded (confusingly named)
+ * - msg_data.body: Base64-encoded body
  */
 function decodeComment(msg: TonTransaction['in_msg'], debug = false): string | null {
   if (!msg) return null;
@@ -50,7 +50,32 @@ function decodeComment(msg: TonTransaction['in_msg'], debug = false): string | n
     msgDataText: msg.msg_data?.text,
   });
 
-  // Try msg_data.body first (Base64 encoded)
+  // Use 'message' field FIRST - it's usually already decoded!
+  if (msg.message && msg.message.trim()) {
+    const trimmed = msg.message.trim();
+    // Check if it looks like our memo format (p331_xxx) - use directly
+    if (trimmed.startsWith('p331_')) {
+      log('Using message field directly (memo format)', { message: trimmed });
+      return trimmed;
+    }
+    // Otherwise return as-is (might be other text)
+    log('Using message field as-is', { message: trimmed });
+    return trimmed;
+  }
+
+  // Fallback: Try to decode msg_data.text (it's Base64 despite the name)
+  if (msg.msg_data?.text) {
+    try {
+      const decoded = Buffer.from(msg.msg_data.text, 'base64').toString('utf-8');
+      const printable = decoded.replace(/[\x00-\x1F\x7F]/g, '').trim();
+      log('Decoded msg_data.text', { raw: msg.msg_data.text, decoded: printable });
+      if (printable && printable.length > 0) return printable;
+    } catch (e) {
+      log('Failed to decode msg_data.text', { error: String(e) });
+    }
+  }
+
+  // Fallback: Try msg_data.body (Base64 encoded)
   if (msg.msg_data?.body) {
     try {
       const decoded = Buffer.from(msg.msg_data.body, 'base64').toString('utf-8');
@@ -60,36 +85,6 @@ function decodeComment(msg: TonTransaction['in_msg'], debug = false): string | n
     } catch (e) {
       log('Failed to decode msg_data.body', { error: String(e) });
     }
-  }
-
-  // Try msg_data.text
-  if (msg.msg_data?.text) {
-    log('Using msg_data.text', { text: msg.msg_data.text });
-    return msg.msg_data.text;
-  }
-
-  // Try to decode message field as Base64 (TonCenter sometimes puts Base64 here)
-  if (msg.message) {
-    // Check if it looks like Base64 (only alphanumeric, +, /, = and reasonable length)
-    const base64Regex = /^[A-Za-z0-9+/]+=*$/;
-    const looksLikeBase64 = base64Regex.test(msg.message) && msg.message.length >= 4;
-    log('Checking message field', { message: msg.message, looksLikeBase64 });
-
-    if (looksLikeBase64) {
-      try {
-        const decoded = Buffer.from(msg.message, 'base64').toString('utf-8');
-        const printable = decoded.replace(/[\x00-\x1F\x7F]/g, '').trim();
-        log('Decoded message as Base64', { decoded: printable, hasGarbage: printable.includes('�') });
-        if (printable && printable.length > 0 && !printable.includes('�')) {
-          return printable;
-        }
-      } catch (e) {
-        log('Failed to decode message as Base64', { error: String(e) });
-      }
-    }
-    // Return as-is if not Base64
-    log('Using message as-is', { message: msg.message });
-    return msg.message;
   }
 
   log('No comment found');
