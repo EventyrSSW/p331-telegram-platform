@@ -10,6 +10,7 @@
   align-items: center;
   justify-content: center;
   padding: 24px;
+  animation: fadeIn 0.3s ease-out;
 }
 
 .content {
@@ -136,6 +137,17 @@
   border-radius: 4px;
   transition: all 0.3s ease;
 }
+
+.block:nth-child(1) { transition-delay: 0ms; }
+.block:nth-child(2) { transition-delay: 50ms; }
+.block:nth-child(3) { transition-delay: 100ms; }
+.block:nth-child(4) { transition-delay: 150ms; }
+.block:nth-child(5) { transition-delay: 200ms; }
+.block:nth-child(6) { transition-delay: 250ms; }
+.block:nth-child(7) { transition-delay: 300ms; }
+.block:nth-child(8) { transition-delay: 350ms; }
+.block:nth-child(9) { transition-delay: 400ms; }
+.block:nth-child(10) { transition-delay: 450ms; }
 
 .blockActive {
   background: #10B981;
@@ -264,4 +276,9 @@
 
 .closeButton:active {
   transform: scale(0.98);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
