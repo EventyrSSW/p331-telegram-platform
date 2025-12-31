@@ -8,6 +8,9 @@ import { useNakama } from '../../contexts/NakamaContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { api } from '../../services/api';
 import { AddTonModal } from '../AddTonModal/AddTonModal';
+import { PaymentVerificationModal } from '../PaymentVerificationModal';
+import { usePaymentVerification } from '../../hooks/usePaymentVerification';
+import { haptic } from '../../providers/TelegramProvider';
 import { MOCK_RANK, MOCK_USER, shouldUseMockData } from '../../utils/mockData';
 import TonCoinIcon from '../../assets/icons/toncoin-ton-logo 1.svg?react';
 import PlusIcon from '../../assets/icons/vector.svg?react';
@@ -23,6 +26,7 @@ export const Header = () => {
   const [tonConnectUI] = useTonConnectUI();
   const wallet = useTonWallet();
   const [isProcessing, setIsProcessing] = useState(false);
+  const paymentVerification = usePaymentVerification();
 
   const isTestnet = config?.ton.network === 'testnet';
 
@@ -44,7 +48,8 @@ export const Header = () => {
   const handleSendTransaction = async (amount: number) => {
     if (!wallet || !config?.ton.receiverAddress) {
       if (!config?.ton.receiverAddress) {
-        alert('Payment not configured. Please try again later.');
+        paymentVerification.startSending(amount);
+        paymentVerification.setError('Payment not configured. Please try again later.');
         return;
       }
       tonConnectUI.openModal();
@@ -52,6 +57,7 @@ export const Header = () => {
     }
 
     setIsProcessing(true);
+    paymentVerification.startSending(amount);
 
     try {
       // Convert TON to nanoTON (1 TON = 10^9 nanoTON)
@@ -67,7 +73,8 @@ export const Header = () => {
         receiverAddress = parsed.toString({ bounceable: true, testOnly: isTestnet });
       } catch (e) {
         console.error('Failed to parse receiver address:', config.ton.receiverAddress, e);
-        alert('Invalid payment address configuration. Please contact support.');
+        paymentVerification.setError('Invalid payment address configuration. Please contact support.');
+        setIsProcessing(false);
         return;
       }
 
@@ -93,18 +100,21 @@ export const Header = () => {
       // 4. Send transaction via TonConnect
       const result = await tonConnectUI.sendTransaction(transaction);
 
-      // 5. Verify invoice with backend (retry up to 10 times for blockchain propagation)
-      // TON blockchain can take 30-60 seconds for transaction to appear
+      // 5. Start verification with visual feedback
+      paymentVerification.startVerifying();
+
       const MAX_RETRIES = 10;
       const RETRY_DELAY_MS = 5000;
-      let verification = null;
-      let lastError = '';
+      const TOTAL_TIME = MAX_RETRIES * RETRY_DELAY_MS / 1000; // 50 seconds
 
       for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+        const remainingSeconds = Math.max(0, TOTAL_TIME - (attempt - 1) * (RETRY_DELAY_MS / 1000));
+        paymentVerification.updateAttempt(attempt, remainingSeconds);
+
         console.log(`[Payment] Verification attempt ${attempt}/${MAX_RETRIES}`);
 
         try {
-          verification = await api.verifyInvoice(
+          const verification = await api.verifyInvoice(
             invoice.invoiceId,
             result.boc,
             wallet.account.address
@@ -113,39 +123,46 @@ export const Header = () => {
           if (verification.success) {
             // Refresh wallet to get updated balance
             await refreshWallet();
-            alert(`Successfully added ${amount} TON!`);
+            paymentVerification.setSuccess();
+            haptic.success();
+            setIsProcessing(false);
+            closeAddTonModal();
             return; // Success - exit early
           }
         } catch (error) {
-          lastError = error instanceof Error ? error.message : 'Verification failed';
+          const lastError = error instanceof Error ? error.message : 'Verification failed';
           console.log(`[Payment] Attempt ${attempt} failed:`, lastError);
         }
 
-        // If not the last attempt, wait before retrying
+        // If not the last attempt, wait before retrying with countdown
         if (attempt < MAX_RETRIES) {
-          console.log(`[Payment] Waiting ${RETRY_DELAY_MS}ms before retry...`);
+          // Countdown during wait
+          const startTime = Date.now();
+          const waitInterval = setInterval(() => {
+            const elapsed = (Date.now() - startTime) / 1000;
+            const newRemaining = Math.max(0, TOTAL_TIME - (attempt - 1) * (RETRY_DELAY_MS / 1000) - elapsed);
+            paymentVerification.updateAttempt(attempt, Math.ceil(newRemaining));
+          }, 1000);
+
           await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS));
+          clearInterval(waitInterval);
         }
       }
 
       // All retries exhausted
-      alert('Transaction sent but verification timed out. Your balance will update shortly, or contact support if it doesn\'t appear within a few minutes.');
+      paymentVerification.setError('Transaction sent but verification timed out. Your balance will update shortly.');
+      setIsProcessing(false);
     } catch (error) {
       console.error('Failed to send TON:', error);
+      setIsProcessing(false);
 
       let errorMessage = 'Failed to send TON. Please try again.';
 
       if (error instanceof Error) {
-        console.error('Error details:', {
-          message: error.message,
-          name: error.name,
-          stack: error.stack,
-        });
-
         const msg = error.message.toLowerCase();
 
         if (msg.includes('cancel')) {
-          errorMessage = 'Transaction cancelled.';
+          errorMessage = 'Transaction cancelled by user.';
         } else if (msg.includes('amount')) {
           errorMessage = error.message;
         } else if (msg.includes('network') || msg.includes('fetch') ||
@@ -156,9 +173,7 @@ export const Header = () => {
         }
       }
 
-      alert(errorMessage);
-    } finally {
-      setIsProcessing(false);
+      paymentVerification.setError(errorMessage);
     }
   };
 
@@ -199,6 +214,24 @@ export const Header = () => {
         onConnectWallet={handleConnectWallet}
         onSendTransaction={handleSendTransaction}
         isProcessing={isProcessing}
+      />
+
+      {/* Payment Verification Modal */}
+      <PaymentVerificationModal
+        isOpen={paymentVerification.state.isOpen}
+        status={paymentVerification.state.status}
+        amount={paymentVerification.state.amount}
+        currentAttempt={paymentVerification.state.currentAttempt}
+        maxAttempts={paymentVerification.state.maxAttempts}
+        remainingSeconds={paymentVerification.state.remainingSeconds}
+        errorMessage={paymentVerification.state.errorMessage}
+        onClose={() => {
+          paymentVerification.reset();
+        }}
+        onRetry={() => {
+          paymentVerification.reset();
+          openAddTonModal();
+        }}
       />
     </header>
   );

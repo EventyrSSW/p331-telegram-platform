@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback } from 'react';
 import { PaymentStatus } from '../components/PaymentVerificationModal/PaymentVerificationModal';
 
 interface PaymentState {
