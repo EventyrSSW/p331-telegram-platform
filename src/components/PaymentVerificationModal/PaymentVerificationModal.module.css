@@ -5,7 +5,7 @@
   right: 0;
   bottom: 0;
   background: linear-gradient(180deg, #0A0A0A 0%, #1A1A2E 100%);
-  z-index: 800;
+  z-index: 5000; /* Above AddTonModal (2000), below TonConnect UI (10000) */
   display: flex;
   align-items: center;
   justify-content: center;
