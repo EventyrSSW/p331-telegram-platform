@@ -33,14 +33,18 @@ export const invoicesController = {
 
       const { amountNano } = parse.data;
 
-      // Ensure user exists
+      // Ensure user exists and get their wallet address
       const user = await userService.findOrCreateByTelegramId(telegramUser.id, {
         username: telegramUser.username,
         firstName: telegramUser.first_name,
         lastName: telegramUser.last_name,
       });
 
-      const invoice = await invoiceService.createInvoice(user.id, BigInt(amountNano));
+      const invoice = await invoiceService.createInvoice(
+        user.id,
+        BigInt(amountNano),
+        user.walletAddress || undefined
+      );
 
       res.json({
         invoiceId: invoice.invoiceId,
@@ -48,6 +52,7 @@ export const invoicesController = {
         amountNano: invoice.amountNano,
         amountCoins: invoice.amountCoins,
         expiresAt: invoice.expiresAt.toISOString(),
+        senderAddress: invoice.senderAddress,
       });
     } catch (error) {
       next(error);
