@@ -17,13 +17,14 @@ export interface CreateInvoiceResult {
 
 export interface InvoiceStatus {
   id: string;
-  status: 'pending' | 'paid' | 'expired' | 'cancelled';
+  status: 'pending' | 'paid' | 'expired' | 'cancelled' | 'paid_pending_nakama';
   amountNano: string;
   amountCoins: number;
   memo: string;
   createdAt: Date;
   expiresAt: Date;
   paidAt: Date | null;
+  senderAddress: string | null;
 }
 
 class InvoiceService {
@@ -90,6 +91,7 @@ class InvoiceService {
       createdAt: invoice.createdAt,
       expiresAt: invoice.expiresAt,
       paidAt: invoice.paidAt,
+      senderAddress: invoice.senderAddress,
     };
   }
 
@@ -112,7 +114,20 @@ class InvoiceService {
       createdAt: invoice.createdAt,
       expiresAt: invoice.expiresAt,
       paidAt: invoice.paidAt,
+      senderAddress: invoice.senderAddress,
     };
+  }
+
+  /**
+   * Update sender address on first verification attempt
+   * This captures the address even if verification fails, enabling cron recovery
+   */
+  async updateSenderAddress(invoiceId: string, senderAddress: string): Promise<void> {
+    await prisma.paymentInvoice.update({
+      where: { id: invoiceId },
+      data: { senderAddress },
+    });
+    logger.info('Updated invoice sender address', { invoiceId, senderAddress });
   }
 
   /**

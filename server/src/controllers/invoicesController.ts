@@ -75,6 +75,11 @@ export const invoicesController = {
         return res.status(404).json({ error: 'Invoice not found' });
       }
 
+      // Save sender address on first verification attempt (enables cron recovery)
+      if (senderAddress && !invoice.senderAddress) {
+        await invoiceService.updateSenderAddress(invoiceId, senderAddress);
+      }
+
       // Check invoice status (Layer 1: Invoice already paid?)
       if (invoice.status === 'paid') {
         const user = await userService.getBalance(telegramUser.id);
