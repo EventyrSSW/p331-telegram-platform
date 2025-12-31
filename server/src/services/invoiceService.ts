@@ -3,6 +3,7 @@ import { prisma } from '../db/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import { logger } from '../utils/logger';
 import { nanoid } from 'nanoid';
+import { normalizeAddress } from '../utils/addressNormalizer';
 
 const INVOICE_EXPIRY_MINUTES = 15;
 const TON_TO_COINS_RATE = 100; // 1 TON = 100 coins (adjust as needed)
@@ -40,6 +41,11 @@ class InvoiceService {
     const expiresAt = new Date(Date.now() + INVOICE_EXPIRY_MINUTES * 60 * 1000);
 
     try {
+      // Normalize wallet address if provided
+      const normalizedSenderAddress = walletAddress
+        ? await normalizeAddress(walletAddress)
+        : null;
+
       const invoice = await prisma.paymentInvoice.create({
         data: {
           userId,
@@ -47,7 +53,7 @@ class InvoiceService {
           amountCoins: new Decimal(coinsAmount),
           memo,
           expiresAt,
-          senderAddress: walletAddress || null,
+          senderAddress: normalizedSenderAddress,
         },
       });
 
@@ -56,7 +62,7 @@ class InvoiceService {
         memo,
         amountNano: amountNano.toString(),
         userId,
-        senderAddress: walletAddress || null,
+        senderAddress: normalizedSenderAddress,
       });
 
       return {
@@ -65,7 +71,7 @@ class InvoiceService {
         amountNano: amountNano.toString(),
         amountCoins: coinsAmount,
         expiresAt,
-        senderAddress: walletAddress || null,
+        senderAddress: normalizedSenderAddress,
       };
     } catch (error) {
       logger.error('Failed to create invoice', {
