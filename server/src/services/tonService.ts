@@ -1,5 +1,4 @@
 import TonWeb from 'tonweb';
-import { Cell } from '@ton/core';
 import { config } from '../config';
 import { logger } from '../utils/logger';
 
@@ -31,26 +30,20 @@ interface TonTransaction {
 }
 
 /**
- * Decode comment from TON message body (Base64-encoded Cell)
- * Comment format: 32-bit opcode (0) + text
+ * Decode comment from TON message body
+ * TonCenter API returns comment as plain Base64-encoded text (not a Cell BOC)
  */
 function decodeComment(bodyBase64: string | undefined): string | null {
   if (!bodyBase64) return null;
 
   try {
-    const bodyBuffer = Buffer.from(bodyBase64, 'base64');
-    const cell = Cell.fromBoc(bodyBuffer)[0];
-    const slice = cell.beginParse();
+    // TonCenter returns the text comment as plain Base64
+    const decoded = Buffer.from(bodyBase64, 'base64').toString('utf-8');
 
-    // Read 32-bit opcode - 0 means text comment
-    const opcode = slice.loadUint(32);
-    if (opcode !== 0) return null;
-
-    // Read remaining bits as text
-    const text = slice.loadStringTail();
-    return text;
+    // Filter out non-printable characters and return
+    const printable = decoded.replace(/[\x00-\x1F\x7F]/g, '').trim();
+    return printable || null;
   } catch (error) {
-    // Not a valid comment cell
     return null;
   }
 }
