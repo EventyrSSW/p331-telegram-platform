@@ -264,6 +264,97 @@ class InvoiceService {
   }
 
   /**
+   * Get pending invoices older than threshold for cron processing
+   * @param minAgeSeconds - Minimum age in seconds (default 90 = after frontend polling window)
+   * @param limit - Maximum invoices to return per batch
+   */
+  async getUnverifiedInvoices(minAgeSeconds = 90, limit = 50): Promise<Array<{
+    id: string;
+    userId: string;
+    memo: string;
+    amountNano: string;
+    amountCoins: number;
+    senderAddress: string | null;
+    expiresAt: Date;
+    createdAt: Date;
+  }>> {
+    const cutoffTime = new Date(Date.now() - minAgeSeconds * 1000);
+
+    const invoices = await prisma.paymentInvoice.findMany({
+      where: {
+        status: 'pending',
+        createdAt: { lt: cutoffTime },
+      },
+      orderBy: { createdAt: 'asc' },  // Process oldest first
+      take: limit,
+      select: {
+        id: true,
+        userId: true,
+        memo: true,
+        amountNano: true,
+        amountCoins: true,
+        senderAddress: true,
+        expiresAt: true,
+        createdAt: true,
+      },
+    });
+
+    return invoices.map(inv => ({
+      ...inv,
+      amountCoins: inv.amountCoins.toNumber(),
+    }));
+  }
+
+  /**
+   * Mark invoice as paid but pending Nakama sync
+   */
+  async markAsPaidPendingNakama(
+    invoiceId: string,
+    transactionId: string,
+    bocHash: string | null,
+    blockchainTxHash: string,
+    senderAddress: string
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      await prisma.paymentInvoice.update({
+        where: { id: invoiceId },
+        data: {
+          status: 'paid_pending_nakama',
+          paidAt: new Date(),
+          transactionId,
+          bocHash,
+          blockchainTxHash,
+          senderAddress,
+        },
+      });
+
+      logger.info('Invoice marked as paid_pending_nakama', {
+        invoiceId,
+        transactionId,
+        blockchainTxHash,
+      });
+
+      return { success: true };
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('Unique constraint')) {
+        return { success: false, error: 'duplicate_payment' };
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Update invoice status from paid_pending_nakama to paid after Nakama sync
+   */
+  async markNakamaSynced(invoiceId: string): Promise<void> {
+    await prisma.paymentInvoice.update({
+      where: { id: invoiceId },
+      data: { status: 'paid' },
+    });
+    logger.info('Invoice Nakama sync completed', { invoiceId });
+  }
+
+  /**
    * Get analytics for a user
    */
   async getUserInvoiceStats(userId: string) {
