@@ -153,27 +153,32 @@ export const Header = () => {
       console.error('Failed to send TON:', error);
       setIsProcessing(false);
 
-      // Check if user cancelled - let native TonConnect message handle it
+      // Only show our modal for specific known errors
+      // TonConnect handles its own UI for cancellation/rejection
       if (error instanceof Error) {
         const msg = error.message.toLowerCase();
-        if (msg.includes('cancel') || msg.includes('rejected') || msg.includes('user denied')) {
-          // User cancelled - don't show our modal, native SDK message is enough
+
+        // Network errors - show our modal
+        if (msg.includes('network') || msg.includes('fetch') ||
+            msg.includes('timeout') || msg.includes('connection')) {
+          paymentVerification.showError(amount, 'Network error. Please check your connection.');
           return;
         }
 
-        // For other errors, show our error modal
-        let errorMessage = 'Failed to send TON. Please try again.';
-
-        if (msg.includes('amount')) {
-          errorMessage = error.message;
-        } else if (msg.includes('network') || msg.includes('fetch') ||
-                   msg.includes('timeout') || msg.includes('connection')) {
-          errorMessage = 'Network error. Please check your connection.';
-        } else if (msg.includes('expired')) {
-          errorMessage = 'Invoice expired. Please try again.';
+        // Invoice expired - show our modal
+        if (msg.includes('expired')) {
+          paymentVerification.showError(amount, 'Invoice expired. Please try again.');
+          return;
         }
 
-        paymentVerification.showError(amount, errorMessage);
+        // Amount errors - show our modal
+        if (msg.includes('amount')) {
+          paymentVerification.showError(amount, error.message);
+          return;
+        }
+
+        // All other errors (cancel, reject, etc.) - let TonConnect handle it
+        // Don't show our modal
       }
     }
   };
