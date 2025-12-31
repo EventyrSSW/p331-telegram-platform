@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import styles from './PaymentVerificationModal.module.css';
 import { haptic } from '../../providers/TelegramProvider';
@@ -31,6 +32,14 @@ export function PaymentVerificationModal({
   onClose,
   onRetry,
 }: PaymentVerificationModalProps) {
+  useEffect(() => {
+    if (status === 'success') {
+      haptic.success();
+    } else if (status === 'error') {
+      haptic.error();
+    }
+  }, [status]);
+
   if (!isOpen) return null;
 
   // Only allow close on terminal states
