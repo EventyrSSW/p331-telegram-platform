@@ -27,28 +27,47 @@ export function decimalToNumber(decimal: unknown): number {
 
 export class UserService {
   /**
-   * Find or create a user by Telegram ID
-   * Uses upsert to ensure user exists with latest data
+   * Ensure user exists in database by Telegram ID
+   * DOES NOT update profile data - only creates if not exists
+   *
+   * Profile updates should ONLY happen in authService.authenticateFromTelegram()
+   * which receives real data from Telegram
    */
-  async findOrCreateByTelegramId(telegramId: number, userData: {
+  async ensureUserExists(telegramId: number) {
+    // First try to find existing user
+    const existingUser = await prisma.user.findUnique({
+      where: { telegramId: BigInt(telegramId) },
+    });
+
+    if (existingUser) {
+      return existingUser;
+    }
+
+    // User doesn't exist - this shouldn't happen in normal flow
+    // Users should be created during authentication via /api/auth/telegram
+    // But create with minimal data as fallback
+    return prisma.user.create({
+      data: {
+        telegramId: BigInt(telegramId),
+      },
+    });
+  }
+
+  /**
+   * @deprecated Use ensureUserExists() instead
+   * This method was updating profile data on every call, causing data corruption
+   * when debug mode provided fake user data.
+   *
+   * Keeping for backwards compatibility but now just calls ensureUserExists()
+   */
+  async findOrCreateByTelegramId(telegramId: number, _userData: {
     username?: string;
     firstName?: string;
     lastName?: string;
   }) {
-    return prisma.user.upsert({
-      where: { telegramId: BigInt(telegramId) },
-      update: {
-        username: userData.username,
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-      },
-      create: {
-        telegramId: BigInt(telegramId),
-        username: userData.username,
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-      },
-    });
+    // Ignore userData to prevent profile corruption
+    // Profile updates only happen in authService.authenticateFromTelegram()
+    return this.ensureUserExists(telegramId);
   }
 
   /**
