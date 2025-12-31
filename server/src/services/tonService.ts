@@ -36,20 +36,35 @@ interface TonTransaction {
  * - msg_data.text: Plain text (rare)
  * - message: Sometimes Base64, sometimes already decoded text
  */
-function decodeComment(msg: TonTransaction['in_msg']): string | null {
+function decodeComment(msg: TonTransaction['in_msg'], debug = false): string | null {
   if (!msg) return null;
+
+  const log = debug ? (s: string, data?: object) => logger.info(`[decodeComment] ${s}`, data) : () => {};
+
+  log('Raw message fields', {
+    hasMessage: !!msg.message,
+    messageValue: msg.message,
+    hasMsgData: !!msg.msg_data,
+    msgDataType: msg.msg_data?.['@type'],
+    msgDataBody: msg.msg_data?.body,
+    msgDataText: msg.msg_data?.text,
+  });
 
   // Try msg_data.body first (Base64 encoded)
   if (msg.msg_data?.body) {
     try {
       const decoded = Buffer.from(msg.msg_data.body, 'base64').toString('utf-8');
       const printable = decoded.replace(/[\x00-\x1F\x7F]/g, '').trim();
+      log('Decoded msg_data.body', { raw: msg.msg_data.body, decoded: printable });
       if (printable && printable.length > 0) return printable;
-    } catch { /* ignore */ }
+    } catch (e) {
+      log('Failed to decode msg_data.body', { error: String(e) });
+    }
   }
 
   // Try msg_data.text
   if (msg.msg_data?.text) {
+    log('Using msg_data.text', { text: msg.msg_data.text });
     return msg.msg_data.text;
   }
 
@@ -57,19 +72,27 @@ function decodeComment(msg: TonTransaction['in_msg']): string | null {
   if (msg.message) {
     // Check if it looks like Base64 (only alphanumeric, +, /, = and reasonable length)
     const base64Regex = /^[A-Za-z0-9+/]+=*$/;
-    if (base64Regex.test(msg.message) && msg.message.length >= 4) {
+    const looksLikeBase64 = base64Regex.test(msg.message) && msg.message.length >= 4;
+    log('Checking message field', { message: msg.message, looksLikeBase64 });
+
+    if (looksLikeBase64) {
       try {
         const decoded = Buffer.from(msg.message, 'base64').toString('utf-8');
         const printable = decoded.replace(/[\x00-\x1F\x7F]/g, '').trim();
+        log('Decoded message as Base64', { decoded: printable, hasGarbage: printable.includes('�') });
         if (printable && printable.length > 0 && !printable.includes('�')) {
           return printable;
         }
-      } catch { /* ignore */ }
+      } catch (e) {
+        log('Failed to decode message as Base64', { error: String(e) });
+      }
     }
     // Return as-is if not Base64
+    log('Using message as-is', { message: msg.message });
     return msg.message;
   }
 
+  log('No comment found');
   return null;
 }
 
@@ -258,8 +281,45 @@ export class TonService {
 
       const nowSeconds = Math.floor(Date.now() / 1000);
 
-      const matchingTx = transactions.find((t: TonTransaction) => {
-        if (!t.in_msg) return false;
+      // Log first 3 transactions in detail for debugging
+      logger.info('Checking transactions for memo match', {
+        memo,
+        expectedAmountNano: expectedAmountNano.toString(),
+        senderAddress,
+        receiverAddress: this.receiverAddress,
+        totalTransactions: transactions.length,
+      });
+
+      const matchingTx = transactions.find((t: TonTransaction, index: number) => {
+        const isFirst3 = index < 3;
+
+        if (!t.in_msg) {
+          if (isFirst3) logger.info(`[TX ${index}] No in_msg, skipping`);
+          return false;
+        }
+
+        const txAge = nowSeconds - t.utime;
+        const receivedAmount = BigInt(t.in_msg.value || '0');
+        const decodedComment = decodeComment(t.in_msg, isFirst3) || '';
+
+        // Log detailed info for first 3 transactions
+        if (isFirst3) {
+          logger.info(`[TX ${index}] Checking transaction`, {
+            hash: t.transaction_id.hash,
+            age: txAge,
+            amount: t.in_msg.value,
+            source: t.in_msg.source,
+            destination: t.in_msg.destination,
+            decodedComment,
+            checks: {
+              destMatch: this.addressesMatch(t.in_msg.destination, this.receiverAddress),
+              senderMatch: this.addressesMatch(t.in_msg.source, senderAddress),
+              amountMatch: receivedAmount === expectedAmountNano,
+              memoMatch: decodedComment.includes(memo),
+              ageOk: txAge <= MAX_TX_AGE_SECONDS,
+            },
+          });
+        }
 
         // Check destination matches our receiver
         if (!this.addressesMatch(t.in_msg.destination, this.receiverAddress)) return false;
@@ -268,15 +328,12 @@ export class TonService {
         if (!this.addressesMatch(t.in_msg.source, senderAddress)) return false;
 
         // Check amount matches
-        const receivedAmount = BigInt(t.in_msg.value || '0');
         if (receivedAmount !== expectedAmountNano) return false;
 
         // Check memo/message matches
-        const decodedComment = decodeComment(t.in_msg) || '';
         if (!decodedComment.includes(memo)) return false;
 
         // Check transaction is recent
-        const txAge = nowSeconds - t.utime;
         if (txAge > MAX_TX_AGE_SECONDS) return false;
 
         return true;
