@@ -34,22 +34,6 @@
   position: relative;
 }
 
-/* Sending state - wallet pulse */
-.indicator.sending {
-  background: linear-gradient(180deg, #3B82F6 0%, #1D4ED8 100%);
-  animation: pulse 2s ease-in-out infinite;
-}
-
-.walletIcon {
-  color: white;
-  animation: walletBounce 1s ease-in-out infinite;
-}
-
-@keyframes walletBounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-5px); }
-}
-
 /* Verifying state - blockchain animation */
 .indicator.verifying {
   background: linear-gradient(180deg, #F59E0B 0%, #D97706 100%);

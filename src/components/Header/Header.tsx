@@ -48,8 +48,7 @@ export const Header = () => {
   const handleSendTransaction = async (amount: number) => {
     if (!wallet || !config?.ton.receiverAddress) {
       if (!config?.ton.receiverAddress) {
-        paymentVerification.startSending(amount);
-        paymentVerification.setError('Payment not configured. Please try again later.');
+        console.error('Payment not configured');
         return;
       }
       tonConnectUI.openModal();
@@ -57,7 +56,6 @@ export const Header = () => {
     }
 
     setIsProcessing(true);
-    paymentVerification.startSending(amount);
 
     try {
       // Convert TON to nanoTON (1 TON = 10^9 nanoTON)
@@ -73,7 +71,6 @@ export const Header = () => {
         receiverAddress = parsed.toString({ bounceable: true, testOnly: isTestnet });
       } catch (e) {
         console.error('Failed to parse receiver address:', config.ton.receiverAddress, e);
-        paymentVerification.setError('Invalid payment address configuration. Please contact support.');
         setIsProcessing(false);
         return;
       }
@@ -97,11 +94,11 @@ export const Header = () => {
         ],
       };
 
-      // 4. Send transaction via TonConnect
+      // 4. Send transaction via TonConnect (native SDK popup handles confirmation)
       const result = await tonConnectUI.sendTransaction(transaction);
 
-      // 5. Start verification with visual feedback
-      paymentVerification.startVerifying();
+      // 5. Transaction sent! Now show verification modal
+      paymentVerification.startVerifying(amount);
 
       const MAX_RETRIES = 10;
       const RETRY_DELAY_MS = 5000;

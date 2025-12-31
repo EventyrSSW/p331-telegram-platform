@@ -13,8 +13,7 @@ interface PaymentState {
 
 interface UsePaymentVerificationReturn {
   state: PaymentState;
-  startSending: (amount: number) => void;
-  startVerifying: () => void;
+  startVerifying: (amount: number) => void;
   updateAttempt: (attempt: number, remainingSeconds: number) => void;
   setSuccess: () => void;
   setError: (message: string) => void;
@@ -23,7 +22,7 @@ interface UsePaymentVerificationReturn {
 
 const INITIAL_STATE: PaymentState = {
   isOpen: false,
-  status: 'sending',
+  status: 'verifying',
   amount: 0,
   currentAttempt: 0,
   maxAttempts: 10,
@@ -34,22 +33,15 @@ const INITIAL_STATE: PaymentState = {
 export function usePaymentVerification(): UsePaymentVerificationReturn {
   const [state, setState] = useState<PaymentState>(INITIAL_STATE);
 
-  const startSending = useCallback((amount: number) => {
+  const startVerifying = useCallback((amount: number) => {
     setState({
       ...INITIAL_STATE,
       isOpen: true,
-      status: 'sending',
-      amount,
-    });
-  }, []);
-
-  const startVerifying = useCallback(() => {
-    setState(prev => ({
-      ...prev,
       status: 'verifying',
+      amount,
       currentAttempt: 1,
       remainingSeconds: 50,
-    }));
+    });
   }, []);
 
   const updateAttempt = useCallback((attempt: number, remainingSeconds: number) => {
@@ -81,7 +73,6 @@ export function usePaymentVerification(): UsePaymentVerificationReturn {
 
   return {
     state,
-    startSending,
     startVerifying,
     updateAttempt,
     setSuccess,
