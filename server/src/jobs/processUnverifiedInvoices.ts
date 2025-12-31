@@ -227,7 +227,7 @@ async function creditInvoice(
     await invoiceService.markAsPaid(
       invoice.id,
       transactionId,
-      '', // No BOC for cron-verified invoices
+      null, // No BOC for cron-verified invoices
       blockchainTxHash,
       senderAddress
     );

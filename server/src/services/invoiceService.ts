@@ -181,7 +181,7 @@ class InvoiceService {
   async markAsPaid(
     invoiceId: string,
     transactionId: string,
-    bocHash: string,
+    bocHash: string | null,
     blockchainTxHash: string,
     senderAddress: string
   ): Promise<{ success: boolean; error?: string }> {
@@ -192,7 +192,7 @@ class InvoiceService {
           status: 'paid',
           paidAt: new Date(),
           transactionId,
-          bocHash,
+          ...(bocHash && { bocHash }), // Only set if not null/empty
           blockchainTxHash,
           senderAddress,
         },
