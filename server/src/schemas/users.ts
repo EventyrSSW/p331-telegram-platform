@@ -16,19 +16,7 @@ export const coinAmountSchema = z.object({
     }, 'Maximum 3 decimal places allowed'),
 });
 
-export const addCoinsSchema = coinAmountSchema.extend({
-  transactionHash: z.string()
-    .min(1, 'Transaction hash cannot be empty')
-    .optional(),
-  tonAmount: z.string()
-    .regex(/^\d+$/, 'Invalid TON amount')
-    .optional(), // Amount in nanoTON as string (BigInt serialization)
-});
-
-export const addCoinsVerifiedSchema = z.object({
-  transactionHash: z.string().min(1, 'Transaction hash is required'),
-  tonAmount: z.string().min(1, 'TON amount is required'),  // In nanoTON as string
-});
+// REMOVED: addCoinsSchema, addCoinsVerifiedSchema - use invoice flow instead
 
 export const linkWalletSchema = z.object({
   walletAddress: z.string().min(1, 'Wallet address is required'),

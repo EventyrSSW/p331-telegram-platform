@@ -1,8 +1,5 @@
 import { prisma } from '../db/client';
-import { Prisma } from '@prisma/client';
 import type { PrismaClient } from '@prisma/client';
-import { tonService, TonService } from './tonService';
-import { nakamaService } from './nakamaService';
 
 // Use string literals for enum values to avoid import issues during build
 const TransactionType = {
@@ -133,124 +130,7 @@ export class UserService {
     });
   }
 
-  /**
-   * Add coins after verifying TON transaction on blockchain
-   * This is the secure method that should be used for real payments
-   */
-  async addCoinsVerified(
-    telegramId: number,
-    tonAmountNano: bigint,
-    transactionHash: string
-  ): Promise<{
-    success: boolean;
-    error?: string;
-    balance?: number;
-    alreadyProcessed?: boolean;
-  }> {
-    // Step 1: Check if transaction already processed (database level)
-    const existingTx = await prisma.transaction.findUnique({
-      where: { tonTxHash: transactionHash },
-    });
-
-    if (existingTx) {
-      // Already processed - return success (idempotent)
-      const user = await prisma.user.findUnique({
-        where: { telegramId: BigInt(telegramId) },
-      });
-      return {
-        success: true,
-        alreadyProcessed: true,
-        balance: user ? decimalToNumber(user.coinBalance) : 0,
-      };
-    }
-
-    // Step 2: Verify transaction on TON blockchain
-    const verificationResult = await tonService.verifyTransaction(
-      transactionHash,
-      tonAmountNano
-    );
-
-    if (!verificationResult.verified) {
-      return {
-        success: false,
-        error: verificationResult.error || 'Transaction verification failed',
-      };
-    }
-
-    // Step 3: Calculate coin amount from TON
-    // Using a rate of 1 TON = 100 coins (configurable)
-    const TON_TO_COINS_RATE = 100;
-    const tonAmount = TonService.fromNano(tonAmountNano);
-    const coinAmount = Math.floor(tonAmount * TON_TO_COINS_RATE);
-
-    // Step 4: Get Nakama user ID
-    const nakamaUserId = await nakamaService.getNakamaUserIdFromTelegramId(telegramId);
-
-    // Step 5: Update Nakama wallet (if user exists there)
-    if (nakamaUserId) {
-      try {
-        const nakamaResult = await nakamaService.updateUserWallet({
-          userId: nakamaUserId,
-          amount: coinAmount,
-          tonTxHash: transactionHash,
-          tonAmount: tonAmountNano.toString(),
-          reason: 'ton_purchase',
-        });
-
-        if (!nakamaResult.success && !nakamaResult.alreadyProcessed) {
-          console.error('Nakama wallet update failed:', nakamaResult.error);
-          // Continue to update PostgreSQL for audit, but log the error
-        }
-      } catch (error) {
-        console.error('Nakama wallet update error:', error);
-        // Continue to update PostgreSQL for audit
-      }
-    }
-
-    // Step 6: Update PostgreSQL (for audit and backup)
-    try {
-      return await prisma.$transaction(async (tx: TransactionClient) => {
-        const user = await tx.user.update({
-          where: { telegramId: BigInt(telegramId) },
-          data: { coinBalance: { increment: coinAmount } },
-        });
-
-        await tx.transaction.create({
-          data: {
-            userId: user.id,
-            type: TransactionType.PURCHASE,
-            amount: coinAmount,
-            tonTxHash: transactionHash,
-            tonAmount: tonAmountNano,
-            tonSenderAddress: verificationResult.transaction?.sender,
-            status: TransactionStatus.COMPLETED,
-            verifiedAt: new Date(),
-          },
-        });
-
-        return {
-          success: true,
-          balance: decimalToNumber(user.coinBalance),
-        };
-      });
-    } catch (error) {
-      // Handle unique constraint violation on tonTxHash (race condition)
-      // If two requests pass the initial idempotency check simultaneously,
-      // the second one will fail here with P2002
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-        // Another request already processed this transaction
-        const user = await prisma.user.findUnique({
-          where: { telegramId: BigInt(telegramId) },
-        });
-        return {
-          success: true,
-          alreadyProcessed: true,
-          balance: user ? decimalToNumber(user.coinBalance) : 0,
-        };
-      }
-      throw error;
-    }
-  }
+  // REMOVED: addCoinsVerified - use invoice flow instead (invoicesController.verifyInvoice)
 
   /**
    * Deduct coins from user balance with transaction record
