@@ -4,6 +4,7 @@ import { invoiceService } from '../services/invoiceService';
 import { tonService } from '../services/tonService';
 import { userService } from '../services/userService';
 import { nakamaService } from '../services/nakamaService';
+import { telegramBotService } from '../services/telegramBotService';
 import { logger } from '../utils/logger';
 
 const INTERVAL_MS = 5 * 60 * 1000; // Run every 5 minutes
@@ -246,6 +247,33 @@ async function creditInvoice(
     blockchainTxHash,
     nakamaSynced,
   });
+
+  // Send Telegram notification to user (non-blocking)
+  try {
+    const tonAmount = (Number(invoice.amountNano) / 1e9).toFixed(2);
+    const notifyResult = await telegramBotService.sendPaymentNotification(
+      Number(prismaUser.telegramId),
+      tonAmount
+    );
+
+    if (notifyResult.success) {
+      logger.info('Payment notification sent', {
+        invoiceId: invoice.id,
+        telegramId: Number(prismaUser.telegramId),
+      });
+    } else {
+      logger.warn('Payment notification failed', {
+        invoiceId: invoice.id,
+        telegramId: Number(prismaUser.telegramId),
+        error: notifyResult.error,
+      });
+    }
+  } catch (error) {
+    logger.error('Payment notification error', {
+      invoiceId: invoice.id,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
 }
 
 async function expireInvoice(invoiceId: string) {
