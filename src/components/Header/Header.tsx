@@ -93,20 +93,42 @@ export const Header = () => {
       // 4. Send transaction via TonConnect
       const result = await tonConnectUI.sendTransaction(transaction);
 
-      // 5. Verify invoice with backend (3-layer duplicate protection)
-      const verification = await api.verifyInvoice(
-        invoice.invoiceId,
-        result.boc,
-        wallet.account.address
-      );
+      // 5. Verify invoice with backend (retry up to 5 times for blockchain propagation)
+      const MAX_RETRIES = 5;
+      const RETRY_DELAY_MS = 3000;
+      let verification = null;
+      let lastError = '';
 
-      if (verification.success) {
-        // Refresh wallet to get updated balance
-        await refreshWallet();
-        alert(`Successfully added ${amount} TON!`);
-      } else {
-        alert('Payment verification failed. Please try again.');
+      for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+        console.log(`[Payment] Verification attempt ${attempt}/${MAX_RETRIES}`);
+
+        try {
+          verification = await api.verifyInvoice(
+            invoice.invoiceId,
+            result.boc,
+            wallet.account.address
+          );
+
+          if (verification.success) {
+            // Refresh wallet to get updated balance
+            await refreshWallet();
+            alert(`Successfully added ${amount} TON!`);
+            return; // Success - exit early
+          }
+        } catch (error) {
+          lastError = error instanceof Error ? error.message : 'Verification failed';
+          console.log(`[Payment] Attempt ${attempt} failed:`, lastError);
+        }
+
+        // If not the last attempt, wait before retrying
+        if (attempt < MAX_RETRIES) {
+          console.log(`[Payment] Waiting ${RETRY_DELAY_MS}ms before retry...`);
+          await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS));
+        }
       }
+
+      // All retries exhausted
+      alert('Transaction sent but verification timed out. Your balance will update shortly, or contact support if it doesn\'t appear within a few minutes.');
     } catch (error) {
       console.error('Failed to send TON:', error);
 
