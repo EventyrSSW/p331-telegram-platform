@@ -228,6 +228,9 @@ class InvoiceService {
     senderAddress: string
   ): Promise<{ success: boolean; error?: string }> {
     try {
+      // Normalize sender address to user-friendly format
+      const normalizedSenderAddress = await normalizeAddress(senderAddress);
+
       await prisma.paymentInvoice.update({
         where: { id: invoiceId },
         data: {
@@ -236,7 +239,7 @@ class InvoiceService {
           transactionId,
           ...(bocHash && { bocHash }), // Only set if not null/empty
           blockchainTxHash,
-          senderAddress,
+          senderAddress: normalizedSenderAddress,
         },
       });
 
@@ -245,6 +248,7 @@ class InvoiceService {
         transactionId,
         bocHash,
         blockchainTxHash,
+        senderAddress: normalizedSenderAddress,
       });
 
       return { success: true };
@@ -358,6 +362,9 @@ class InvoiceService {
     senderAddress: string
   ): Promise<{ success: boolean; error?: string }> {
     try {
+      // Normalize sender address to user-friendly format
+      const normalizedSenderAddress = await normalizeAddress(senderAddress);
+
       await prisma.paymentInvoice.update({
         where: { id: invoiceId },
         data: {
@@ -366,7 +373,7 @@ class InvoiceService {
           transactionId,
           bocHash,
           blockchainTxHash,
-          senderAddress,
+          senderAddress: normalizedSenderAddress,
         },
       });
 
@@ -374,6 +381,7 @@ class InvoiceService {
         invoiceId,
         transactionId,
         blockchainTxHash,
+        senderAddress: normalizedSenderAddress,
       });
 
       return { success: true };
