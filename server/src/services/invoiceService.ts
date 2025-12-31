@@ -156,7 +156,10 @@ class InvoiceService {
     const updateData: { senderAddress?: string; bocHash?: string } = {};
 
     // Always update senderAddress from BOC (actual sender wins over expected)
-    if (data.senderAddress) updateData.senderAddress = data.senderAddress;
+    // Normalize to user-friendly format
+    if (data.senderAddress) {
+      updateData.senderAddress = await normalizeAddress(data.senderAddress);
+    }
     // Only save bocHash if not already set
     if (data.bocHash) updateData.bocHash = data.bocHash;
 
