@@ -178,7 +178,8 @@ export const Header = () => {
         }
 
         // All other errors (cancel, reject, etc.) - let TonConnect handle it
-        // Don't show our modal
+        // Don't show our modal, but re-throw so AddTonModal stays open
+        throw error;
       }
     }
   };
