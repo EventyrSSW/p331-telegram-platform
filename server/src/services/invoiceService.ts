@@ -13,6 +13,7 @@ export interface CreateInvoiceResult {
   amountNano: string;
   amountCoins: number;
   expiresAt: Date;
+  senderAddress: string | null;
 }
 
 export interface InvoiceStatus {
@@ -32,7 +33,7 @@ class InvoiceService {
   /**
    * Create a new payment invoice
    */
-  async createInvoice(userId: string, amountNano: bigint): Promise<CreateInvoiceResult> {
+  async createInvoice(userId: string, amountNano: bigint, walletAddress?: string): Promise<CreateInvoiceResult> {
     const memo = `p331_${nanoid(12)}`;
     const tonAmount = Number(amountNano) / 1e9;
     const coinsAmount = tonAmount * TON_TO_COINS_RATE;
@@ -46,6 +47,7 @@ class InvoiceService {
           amountCoins: new Decimal(coinsAmount),
           memo,
           expiresAt,
+          senderAddress: walletAddress || null,
         },
       });
 
@@ -54,6 +56,7 @@ class InvoiceService {
         memo,
         amountNano: amountNano.toString(),
         userId,
+        senderAddress: walletAddress || null,
       });
 
       return {
@@ -62,6 +65,7 @@ class InvoiceService {
         amountNano: amountNano.toString(),
         amountCoins: coinsAmount,
         expiresAt,
+        senderAddress: walletAddress || null,
       };
     } catch (error) {
       logger.error('Failed to create invoice', {
