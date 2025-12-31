@@ -57,7 +57,7 @@ model PaymentInvoice {
   userId        String
   user          User      @relation(fields: [userId], references: [id])
 
-  status        String    @default("pending")
+  status        String    @default("pending")  // pending | paid | expired | cancelled | paid_pending_nakama
   amountNano    String
   amountCoins   Decimal   @db.Decimal(18, 2)
   memo          String    @unique
