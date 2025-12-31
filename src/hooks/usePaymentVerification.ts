@@ -17,6 +17,7 @@ interface UsePaymentVerificationReturn {
   updateAttempt: (attempt: number, remainingSeconds: number) => void;
   setSuccess: () => void;
   setError: (message: string) => void;
+  showError: (amount: number, message: string) => void;
   reset: () => void;
 }
 
@@ -67,6 +68,16 @@ export function usePaymentVerification(): UsePaymentVerificationReturn {
     }));
   }, []);
 
+  const showError = useCallback((amount: number, message: string) => {
+    setState({
+      ...INITIAL_STATE,
+      isOpen: true,
+      status: 'error',
+      amount,
+      errorMessage: message,
+    });
+  }, []);
+
   const reset = useCallback(() => {
     setState(INITIAL_STATE);
   }, []);
@@ -77,6 +88,7 @@ export function usePaymentVerification(): UsePaymentVerificationReturn {
     updateAttempt,
     setSuccess,
     setError,
+    showError,
     reset,
   };
 }

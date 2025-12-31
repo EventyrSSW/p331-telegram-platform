@@ -159,7 +159,7 @@ export const Header = () => {
         const msg = error.message.toLowerCase();
 
         if (msg.includes('cancel')) {
-          errorMessage = 'Transaction cancelled by user.';
+          errorMessage = 'Transaction cancelled.';
         } else if (msg.includes('amount')) {
           errorMessage = error.message;
         } else if (msg.includes('network') || msg.includes('fetch') ||
@@ -170,7 +170,8 @@ export const Header = () => {
         }
       }
 
-      paymentVerification.setError(errorMessage);
+      // Show error modal on top of AddTonModal
+      paymentVerification.showError(amount, errorMessage);
     }
   };
 
