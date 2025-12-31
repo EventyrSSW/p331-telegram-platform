@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
-import { Address } from '@ton/core';
+import { Address, beginCell } from '@ton/core';
 import { useConfig } from '../../contexts/ConfigContext';
 import { useModal } from '../../contexts/ModalContext';
 import { useNakama } from '../../contexts/NakamaContext';
@@ -71,22 +71,29 @@ export const Header = () => {
         return;
       }
 
-      // 2. Build transaction with memo for matching
+      // 2. Encode memo as TON comment cell (opcode 0 + text)
+      const commentCell = beginCell()
+        .storeUint(0, 32) // Comment opcode
+        .storeStringTail(invoice.memo)
+        .endCell();
+      const payloadBase64 = commentCell.toBoc().toString('base64');
+
+      // 3. Build transaction with memo for matching
       const transaction = {
         validUntil: Math.floor(Date.now() / 1000) + 600, // 10 minutes
         messages: [
           {
             address: receiverAddress,
             amount: amountInNanoTon,
-            payload: invoice.memo, // Include memo for transaction matching
+            payload: payloadBase64, // Base64-encoded comment cell
           },
         ],
       };
 
-      // 3. Send transaction via TonConnect
+      // 4. Send transaction via TonConnect
       const result = await tonConnectUI.sendTransaction(transaction);
 
-      // 4. Verify invoice with backend (3-layer duplicate protection)
+      // 5. Verify invoice with backend (3-layer duplicate protection)
       const verification = await api.verifyInvoice(
         invoice.invoiceId,
         result.boc,
