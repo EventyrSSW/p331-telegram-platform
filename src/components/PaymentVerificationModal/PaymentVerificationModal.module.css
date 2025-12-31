@@ -1,0 +1,267 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, #0A0A0A 0%, #1A1A2E 100%);
+  z-index: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 320px;
+  width: 100%;
+}
+
+/* Indicator container */
+.indicator {
+  width: 120px;
+  height: 120px;
+  margin-bottom: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  position: relative;
+}
+
+/* Sending state - wallet pulse */
+.indicator.sending {
+  background: linear-gradient(180deg, #3B82F6 0%, #1D4ED8 100%);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.walletIcon {
+  color: white;
+  animation: walletBounce 1s ease-in-out infinite;
+}
+
+@keyframes walletBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+/* Verifying state - blockchain animation */
+.indicator.verifying {
+  background: linear-gradient(180deg, #F59E0B 0%, #D97706 100%);
+  animation: verifyPulse 1.5s ease-in-out infinite;
+}
+
+.blockchainIcon {
+  color: white;
+  animation: scan 2s ease-in-out infinite;
+}
+
+@keyframes scan {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes verifyPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+  50% { box-shadow: 0 0 0 20px rgba(245, 158, 11, 0); }
+}
+
+/* Success state */
+.indicator.success {
+  background: linear-gradient(180deg, #10B981 0%, #059669 100%);
+  animation: successPop 0.5s ease-out;
+}
+
+.successIcon {
+  color: white;
+}
+
+@keyframes successPop {
+  0% { transform: scale(0); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+/* Error state */
+.indicator.error {
+  background: linear-gradient(180deg, #EF4444 0%, #DC2626 100%);
+  animation: errorShake 0.5s ease-out;
+}
+
+.errorIcon {
+  color: white;
+}
+
+@keyframes errorShake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-5px); }
+  40%, 80% { transform: translateX(5px); }
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+  50% { box-shadow: 0 0 0 20px rgba(59, 130, 246, 0); }
+}
+
+/* Typography */
+.title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin: 0 0 8px 0;
+}
+
+.description {
+  font-size: 16px;
+  color: #9CA3AF;
+  margin: 0 0 24px 0;
+  line-height: 1.5;
+}
+
+/* Progress blocks */
+.progressBlocks {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 24px;
+}
+
+.block {
+  width: 24px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.blockActive {
+  background: #10B981;
+}
+
+.blockCurrent {
+  animation: blockPulse 1s ease-in-out infinite;
+}
+
+@keyframes blockPulse {
+  0%, 100% { background: #10B981; }
+  50% { background: #34D399; }
+}
+
+/* Countdown */
+.countdown {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.countdownValue {
+  font-size: 48px;
+  font-weight: 700;
+  color: #FFFFFF;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.countdownLabel {
+  font-size: 14px;
+  color: #6B7280;
+  margin-top: 4px;
+}
+
+/* Attempt info */
+.attemptInfo {
+  font-size: 14px;
+  color: #6B7280;
+  margin: 0 0 24px 0;
+}
+
+/* Amount badge */
+.amountBadge {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 12px 24px;
+  background: rgba(61, 61, 61, 0.3);
+  border-radius: 24px;
+  margin-bottom: 32px;
+}
+
+.amountValue {
+  font-size: 24px;
+  font-weight: 700;
+  color: #10B981;
+}
+
+.amountUnit {
+  font-size: 16px;
+  font-weight: 600;
+  color: #9CA3AF;
+}
+
+/* Buttons */
+.successButton {
+  width: 100%;
+  padding: 16px 48px;
+  background: linear-gradient(180deg, #10B981 0%, #059669 100%);
+  border: none;
+  border-radius: 28px;
+  font-size: 18px;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.successButton:active {
+  transform: scale(0.98);
+}
+
+.errorActions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.retryButton {
+  width: 100%;
+  padding: 16px 48px;
+  background: linear-gradient(180deg, #3B82F6 0%, #1D4ED8 100%);
+  border: none;
+  border-radius: 28px;
+  font-size: 18px;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.retryButton:active {
+  transform: scale(0.98);
+}
+
+.closeButton {
+  width: 100%;
+  padding: 16px 48px;
+  background: transparent;
+  border: 2px solid #4B5563;
+  border-radius: 28px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #9CA3AF;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.closeButton:hover {
+  border-color: #6B7280;
+  color: #FFFFFF;
+}
+
+.closeButton:active {
+  transform: scale(0.98);
+}
