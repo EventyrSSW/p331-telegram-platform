@@ -114,7 +114,7 @@ export const usersController = {
       // DEPRECATED: Old unverified flow - log warning
       console.warn('DEPRECATED: Using unverified addCoins flow. Update frontend to use verified flow.');
 
-      const user = await userService.addCoins(telegramUser.id, amount, {
+      const { user } = await userService.addCoins(telegramUser.id, amount, {
         tonTxHash: transactionHash,
         tonAmount: tonAmount ? BigInt(tonAmount) : undefined,
       });

@@ -127,12 +127,20 @@ class InvoiceService {
 
   /**
    * Check if blockchain tx hash already used (idempotency layer 3)
+   * Checks both PaymentInvoice and Transaction tables to handle partial failures
    */
   async isBlockchainTxHashUsed(blockchainTxHash: string): Promise<boolean> {
-    const existing = await prisma.paymentInvoice.findFirst({
+    // Check PaymentInvoice table
+    const invoiceExists = await prisma.paymentInvoice.findFirst({
       where: { blockchainTxHash, status: 'paid' },
     });
-    return !!existing;
+    if (invoiceExists) return true;
+
+    // Also check Transaction table (in case addCoins succeeded but markAsPaid failed)
+    const transactionExists = await prisma.transaction.findUnique({
+      where: { tonTxHash: blockchainTxHash },
+    });
+    return !!transactionExists;
   }
 
   /**

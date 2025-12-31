@@ -152,7 +152,7 @@ export const invoicesController = {
         lastName: telegramUser.last_name,
       });
 
-      const result = await userService.addCoins(telegramUser.id, invoice.amountCoins, {
+      const { user: updatedUser, transactionId } = await userService.addCoins(telegramUser.id, invoice.amountCoins, {
         tonTxHash: blockchainTxHash,
         tonAmount: BigInt(invoice.amountNano),
       });
@@ -160,7 +160,7 @@ export const invoicesController = {
       // Mark invoice as paid
       const markResult = await invoiceService.markAsPaid(
         invoiceId,
-        result.id,
+        transactionId,
         bocHash,
         blockchainTxHash,
         senderAddress
@@ -168,17 +168,17 @@ export const invoicesController = {
 
       if (!markResult.success) {
         // Race condition - another request already processed this
-        const updatedUser = await userService.getBalance(telegramUser.id);
+        const balance = await userService.getBalance(telegramUser.id);
         return res.json({
           success: true,
           alreadyProcessed: true,
-          balance: updatedUser?.coinBalance || 0,
+          balance: balance?.coinBalance || 0,
         });
       }
 
       res.json({
         success: true,
-        balance: Number(result.coinBalance),
+        balance: Number(updatedUser.coinBalance),
         alreadyProcessed: false,
       });
     } catch (error) {

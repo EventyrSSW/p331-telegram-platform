@@ -100,6 +100,7 @@ export class UserService {
   /**
    * Add coins to user balance with transaction record
    * Uses Prisma transaction for consistency
+   * Returns both user and transactionId for invoice linking
    */
   async addCoins(
     telegramId: number,
@@ -108,7 +109,7 @@ export class UserService {
       tonTxHash?: string;
       tonAmount?: bigint;
     }
-  ) {
+  ): Promise<{ user: Awaited<ReturnType<typeof prisma.user.update>>; transactionId: string }> {
     return prisma.$transaction(async (tx: TransactionClient) => {
       // Update user balance
       const user = await tx.user.update({
@@ -117,7 +118,7 @@ export class UserService {
       });
 
       // Create transaction record
-      await tx.transaction.create({
+      const transaction = await tx.transaction.create({
         data: {
           userId: user.id,
           type: TransactionType.PURCHASE,
@@ -128,7 +129,7 @@ export class UserService {
         },
       });
 
-      return user;
+      return { user, transactionId: transaction.id };
     });
   }
 
