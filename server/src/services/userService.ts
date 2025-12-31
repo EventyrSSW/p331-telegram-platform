@@ -1,5 +1,6 @@
 import { prisma } from '../db/client';
 import type { PrismaClient } from '@prisma/client';
+import { normalizeAddress } from '../utils/addressNormalizer';
 
 // Use string literals for enum values to avoid import issues during build
 const TransactionType = {
@@ -74,9 +75,11 @@ export class UserService {
    * Link a wallet address to a user by Telegram ID
    */
   async linkWallet(telegramId: number, walletAddress: string) {
+    const normalizedAddress = await normalizeAddress(walletAddress);
+
     return prisma.user.update({
       where: { telegramId: BigInt(telegramId) },
-      data: { walletAddress },
+      data: { walletAddress: normalizedAddress },
     });
   }
 
