@@ -385,6 +385,98 @@ export class TonService {
   }
 
   /**
+   * Verify transaction by memo with optional sender address
+   * Used by cron job when sender may or may not be available
+   * Returns API_ERROR: prefix on error to distinguish from "not found"
+   */
+  async verifyTransactionByMemoOptionalSender(
+    memo: string,
+    expectedAmountNano: bigint,
+    senderAddress: string | null
+  ): Promise<VerificationResult> {
+    logger.info('TON verification by memo (optional sender)', {
+      memo,
+      expectedAmountNano: expectedAmountNano.toString(),
+      senderAddress: senderAddress || 'ANY',
+      receiverAddress: this.receiverAddress,
+    });
+
+    if (!this.receiverAddress) {
+      return {
+        verified: false,
+        error: 'Payment receiver address not configured',
+      };
+    }
+
+    try {
+      const transactions = await this.tonweb.getTransactions(
+        this.receiverAddress,
+        MAX_TRANSACTIONS_TO_FETCH
+      );
+
+      if (!transactions || transactions.length === 0) {
+        return {
+          verified: false,
+          error: 'No transactions found. Transaction may still be processing.',
+        };
+      }
+
+      // For cron, we don't limit by age - check all fetched transactions
+      const matchingTx = transactions.find((t: TonTransaction) => {
+        if (!t.in_msg) return false;
+
+        // Check destination matches our receiver
+        if (!this.addressesMatch(t.in_msg.destination, this.receiverAddress)) return false;
+
+        // Check sender matches (if provided)
+        if (senderAddress && !this.addressesMatch(t.in_msg.source, senderAddress)) return false;
+
+        // Check amount matches
+        const receivedAmount = BigInt(t.in_msg.value || '0');
+        if (receivedAmount !== expectedAmountNano) return false;
+
+        // Check memo/message matches
+        const decodedComment = decodeComment(t.in_msg) || '';
+        if (!decodedComment.includes(memo)) return false;
+
+        return true;
+      });
+
+      if (!matchingTx) {
+        return {
+          verified: false,
+          error: 'Transaction not found in recent history.',
+        };
+      }
+
+      logger.info('TON verification by memo successful (cron)', {
+        txHash: matchingTx.transaction_id.hash,
+        memo,
+        sender: matchingTx.in_msg!.source,
+        amount: matchingTx.in_msg!.value,
+      });
+
+      return {
+        verified: true,
+        transaction: {
+          hash: matchingTx.transaction_id.hash,
+          lt: matchingTx.transaction_id.lt,
+          amount: matchingTx.in_msg!.value,
+          sender: matchingTx.in_msg!.source,
+          timestamp: matchingTx.utime,
+        },
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      logger.error('TON verification API error (cron)', { error: message });
+      return {
+        verified: false,
+        error: `API_ERROR: ${message}`,  // Prefix to identify API errors
+      };
+    }
+  }
+
+  /**
    * Compare two TON addresses (handles different formats)
    */
   private addressesMatch(addr1: string, addr2: string): boolean {
