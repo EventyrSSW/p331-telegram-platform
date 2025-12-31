@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { invoiceService } from '../services/invoiceService';
 import { userService } from '../services/userService';
 import { tonService } from '../services/tonService';
+import { nakamaService } from '../services/nakamaService';
 import { BocParser } from '../services/bocParser';
 import { logger } from '../utils/logger';
 
@@ -156,6 +157,45 @@ export const invoicesController = {
         tonTxHash: blockchainTxHash,
         tonAmount: BigInt(invoice.amountNano),
       });
+
+      // Update Nakama wallet (primary source of truth for game balance)
+      const nakamaUserId = await nakamaService.getNakamaUserIdFromTelegramId(telegramUser.id);
+      if (nakamaUserId) {
+        try {
+          const nakamaResult = await nakamaService.updateUserWallet({
+            userId: nakamaUserId,
+            amount: invoice.amountCoins,
+            tonTxHash: blockchainTxHash,
+            tonAmount: invoice.amountNano,
+            reason: 'ton_purchase',
+          });
+
+          if (!nakamaResult.success && !nakamaResult.alreadyProcessed) {
+            logger.error('Nakama wallet update failed', {
+              error: nakamaResult.error,
+              userId: nakamaUserId,
+              invoiceId,
+            });
+          } else {
+            logger.info('Nakama wallet updated', {
+              userId: nakamaUserId,
+              amount: invoice.amountCoins,
+              newBalance: nakamaResult.newBalance,
+            });
+          }
+        } catch (error) {
+          logger.error('Nakama wallet update error', {
+            error: error instanceof Error ? error.message : 'Unknown error',
+            userId: nakamaUserId,
+            invoiceId,
+          });
+        }
+      } else {
+        logger.warn('No Nakama user found for invoice payment', {
+          telegramId: telegramUser.id,
+          invoiceId,
+        });
+      }
 
       // Mark invoice as paid
       const markResult = await invoiceService.markAsPaid(
