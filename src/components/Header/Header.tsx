@@ -153,14 +153,18 @@ export const Header = () => {
       console.error('Failed to send TON:', error);
       setIsProcessing(false);
 
-      let errorMessage = 'Failed to send TON. Please try again.';
-
+      // Check if user cancelled - let native TonConnect message handle it
       if (error instanceof Error) {
         const msg = error.message.toLowerCase();
+        if (msg.includes('cancel') || msg.includes('rejected') || msg.includes('user denied')) {
+          // User cancelled - don't show our modal, native SDK message is enough
+          return;
+        }
 
-        if (msg.includes('cancel')) {
-          errorMessage = 'Transaction cancelled.';
-        } else if (msg.includes('amount')) {
+        // For other errors, show our error modal
+        let errorMessage = 'Failed to send TON. Please try again.';
+
+        if (msg.includes('amount')) {
           errorMessage = error.message;
         } else if (msg.includes('network') || msg.includes('fetch') ||
                    msg.includes('timeout') || msg.includes('connection')) {
@@ -168,10 +172,9 @@ export const Header = () => {
         } else if (msg.includes('expired')) {
           errorMessage = 'Invoice expired. Please try again.';
         }
-      }
 
-      // Show error modal on top of AddTonModal
-      paymentVerification.showError(amount, errorMessage);
+        paymentVerification.showError(amount, errorMessage);
+      }
     }
   };
 
