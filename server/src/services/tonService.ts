@@ -30,22 +30,47 @@ interface TonTransaction {
 }
 
 /**
- * Decode comment from TON message body
- * TonCenter API returns comment as plain Base64-encoded text (not a Cell BOC)
+ * Decode comment from TON message
+ * TonCenter returns comment in different fields depending on the message type:
+ * - msg_data.body: Base64-encoded body (may not exist)
+ * - msg_data.text: Plain text (rare)
+ * - message: Sometimes Base64, sometimes already decoded text
  */
-function decodeComment(bodyBase64: string | undefined): string | null {
-  if (!bodyBase64) return null;
+function decodeComment(msg: TonTransaction['in_msg']): string | null {
+  if (!msg) return null;
 
-  try {
-    // TonCenter returns the text comment as plain Base64
-    const decoded = Buffer.from(bodyBase64, 'base64').toString('utf-8');
-
-    // Filter out non-printable characters and return
-    const printable = decoded.replace(/[\x00-\x1F\x7F]/g, '').trim();
-    return printable || null;
-  } catch (error) {
-    return null;
+  // Try msg_data.body first (Base64 encoded)
+  if (msg.msg_data?.body) {
+    try {
+      const decoded = Buffer.from(msg.msg_data.body, 'base64').toString('utf-8');
+      const printable = decoded.replace(/[\x00-\x1F\x7F]/g, '').trim();
+      if (printable && printable.length > 0) return printable;
+    } catch { /* ignore */ }
   }
+
+  // Try msg_data.text
+  if (msg.msg_data?.text) {
+    return msg.msg_data.text;
+  }
+
+  // Try to decode message field as Base64 (TonCenter sometimes puts Base64 here)
+  if (msg.message) {
+    // Check if it looks like Base64 (only alphanumeric, +, /, = and reasonable length)
+    const base64Regex = /^[A-Za-z0-9+/]+=*$/;
+    if (base64Regex.test(msg.message) && msg.message.length >= 4) {
+      try {
+        const decoded = Buffer.from(msg.message, 'base64').toString('utf-8');
+        const printable = decoded.replace(/[\x00-\x1F\x7F]/g, '').trim();
+        if (printable && printable.length > 0 && !printable.includes('�')) {
+          return printable;
+        }
+      } catch { /* ignore */ }
+    }
+    // Return as-is if not Base64
+    return msg.message;
+  }
+
+  return null;
 }
 
 // Maximum age of transaction to consider (5 minutes)
@@ -246,11 +271,8 @@ export class TonService {
         const receivedAmount = BigInt(t.in_msg.value || '0');
         if (receivedAmount !== expectedAmountNano) return false;
 
-        // Check memo/message matches - decode from msg_data.body
-        const decodedComment = decodeComment(t.in_msg.msg_data?.body)
-          || t.in_msg.msg_data?.text
-          || t.in_msg.message
-          || '';
+        // Check memo/message matches
+        const decodedComment = decodeComment(t.in_msg) || '';
         if (!decodedComment.includes(memo)) return false;
 
         // Check transaction is recent
@@ -265,7 +287,7 @@ export class TonService {
         const recentTxs = transactions.slice(0, 5).map((t: TonTransaction) => ({
           hash: t.transaction_id.hash,
           amount: t.in_msg?.value,
-          comment: decodeComment(t.in_msg?.msg_data?.body) || t.in_msg?.msg_data?.text || t.in_msg?.message,
+          comment: decodeComment(t.in_msg),
           source: t.in_msg?.source,
           age: nowSeconds - t.utime,
         }));
