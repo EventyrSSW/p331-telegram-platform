@@ -75,9 +75,21 @@ export const invoicesController = {
         return res.status(404).json({ error: 'Invoice not found' });
       }
 
-      // Save sender address on first verification attempt (enables cron recovery)
-      if (senderAddress && !invoice.senderAddress) {
-        await invoiceService.updateSenderAddress(invoiceId, senderAddress);
+      // Parse BOC early to get hash (needed for first attempt save)
+      let bocHash: string;
+      try {
+        const parsed = BocParser.parse(boc);
+        bocHash = parsed.normalizedHash;
+      } catch (error) {
+        return res.status(400).json({ error: 'Invalid transaction data' });
+      }
+
+      // Save verification data on first attempt (enables cron recovery if timeout)
+      if (!invoice.senderAddress || !invoice.bocHash) {
+        await invoiceService.saveFirstAttemptData(invoiceId, {
+          senderAddress: !invoice.senderAddress ? senderAddress : undefined,
+          bocHash: !invoice.bocHash ? bocHash : undefined,
+        });
       }
 
       // Check invoice status (Layer 1: Invoice already paid?)
@@ -104,16 +116,7 @@ export const invoicesController = {
         return res.status(400).json({ error: 'Invoice has expired. Please create a new one.' });
       }
 
-      // Parse BOC and extract normalized hash (Layer 2: BOC hash duplicate?)
-      let bocHash: string;
-      try {
-        const parsed = BocParser.parse(boc);
-        bocHash = parsed.normalizedHash;
-      } catch (error) {
-        return res.status(400).json({ error: 'Invalid transaction data' });
-      }
-
-      // Check if this BOC was already processed
+      // Check if this BOC was already processed (Layer 2: BOC hash duplicate?)
       if (await invoiceService.isBocHashUsed(bocHash)) {
         logger.warn('Duplicate BOC submission', { bocHash, invoiceId });
         const user = await userService.getBalance(telegramUser.id);

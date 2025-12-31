@@ -25,6 +25,7 @@ export interface InvoiceStatus {
   expiresAt: Date;
   paidAt: Date | null;
   senderAddress: string | null;
+  bocHash: string | null;
 }
 
 class InvoiceService {
@@ -92,6 +93,7 @@ class InvoiceService {
       expiresAt: invoice.expiresAt,
       paidAt: invoice.paidAt,
       senderAddress: invoice.senderAddress,
+      bocHash: invoice.bocHash,
     };
   }
 
@@ -115,6 +117,7 @@ class InvoiceService {
       expiresAt: invoice.expiresAt,
       paidAt: invoice.paidAt,
       senderAddress: invoice.senderAddress,
+      bocHash: invoice.bocHash,
     };
   }
 
@@ -128,6 +131,28 @@ class InvoiceService {
       data: { senderAddress },
     });
     logger.info('Updated invoice sender address', { invoiceId, senderAddress });
+  }
+
+  /**
+   * Save verification data on first attempt (enables cron recovery)
+   * Called early in verification flow before blockchain check
+   */
+  async saveFirstAttemptData(
+    invoiceId: string,
+    data: { senderAddress?: string; bocHash?: string }
+  ): Promise<void> {
+    const updateData: { senderAddress?: string; bocHash?: string } = {};
+
+    if (data.senderAddress) updateData.senderAddress = data.senderAddress;
+    if (data.bocHash) updateData.bocHash = data.bocHash;
+
+    if (Object.keys(updateData).length === 0) return;
+
+    await prisma.paymentInvoice.update({
+      where: { id: invoiceId },
+      data: updateData,
+    });
+    logger.info('Saved first attempt data', { invoiceId, ...updateData });
   }
 
   /**
