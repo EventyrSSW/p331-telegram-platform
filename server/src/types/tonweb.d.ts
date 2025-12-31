@@ -36,7 +36,7 @@ declare module 'tonweb' {
     static utils: {
       toNano(amount: number | string): string;
       fromNano(amount: string): string;
-      Address: new (address: string) => { toString(isUserFriendly?: boolean, isUrlSafe?: boolean, isBounceable?: boolean): string };
+      Address: new (address: string) => { toString(isUserFriendly?: boolean, isUrlSafe?: boolean, isBounceable?: boolean, isTestOnly?: boolean): string };
     };
 
     static HttpProvider: new (host: string, options?: { apiKey?: string }) => HttpProvider;
