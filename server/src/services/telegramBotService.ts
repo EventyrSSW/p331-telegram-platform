@@ -48,7 +48,7 @@ class TelegramBotService {
       return { success: false, error: 'Bot not configured' };
     }
 
-    const message = `✅ Payment Confirmed!\n\nYour payment of ${tonAmount} TON has been verified and processed.`;
+    const message = `✅ You're All Set!\n\n${tonAmount} TON payment confirmed. Jump back in and play!`;
 
     return this.sendMessage(telegramId, message);
   }
