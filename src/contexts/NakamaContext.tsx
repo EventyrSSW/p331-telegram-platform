@@ -120,6 +120,10 @@ export function NakamaProvider({ children }: NakamaProviderProps) {
   const [isSocketConnected, setIsSocketConnected] = useState(false);
   const [isSocketConnecting, setIsSocketConnecting] = useState(false);
   const [socketError, setSocketError] = useState<string | null>(null);
+
+  // Track if we've had a successful connection before (for reconnect detection)
+  const hadPreviousConnection = useRef(false);
+  const wasDisconnected = useRef(false);
   const [match, setMatch] = useState<MatchState>(initialMatchState);
   const [coins, setCoins] = useState<number>(0);
   const [isWalletLoading, setIsWalletLoading] = useState(false);
@@ -187,12 +191,15 @@ export function NakamaProvider({ children }: NakamaProviderProps) {
     nakamaService.setSocketCallbacks({
       onDisconnect: () => {
         console.log('[NakamaContext] Socket disconnected - showing toast');
+        wasDisconnected.current = true;
         setIsSocketConnected(false);
         showToast('Connection lost. Reconnecting...', 'warning', true);
       },
       onReconnect: () => {
-        console.log('[NakamaContext] Socket reconnected - showing success toast');
+        console.log('[NakamaContext] Socket reconnected via auto-reconnect - showing success toast');
+        wasDisconnected.current = false;
         setIsSocketConnected(true);
+        hideToast();
         showToast('Reconnected!', 'success', false);
       },
       onReconnectFailed: () => {
@@ -204,7 +211,7 @@ export function NakamaProvider({ children }: NakamaProviderProps) {
     return () => {
       nakamaService.setSocketCallbacks({});
     };
-  }, [showToast]);
+  }, [showToast, hideToast]);
 
   // Fetch wallet from Nakama
   const refreshWallet = useCallback(async () => {
@@ -248,6 +255,17 @@ export function NakamaProvider({ children }: NakamaProviderProps) {
     try {
       await nakamaService.connectSocket();
       setIsSocketConnected(true);
+
+      // If we were disconnected before, this is a reconnection - show toast
+      if (wasDisconnected.current) {
+        console.log('[NakamaContext] Socket reconnected via connectSocketInternal - showing success toast');
+        wasDisconnected.current = false;
+        hideToast();
+        showToast('Reconnected!', 'success', false);
+      }
+
+      // Track that we've had a successful connection
+      hadPreviousConnection.current = true;
     } catch (err) {
       console.error('[NakamaContext] Socket connection error:', err);
       setSocketError(err instanceof Error ? err.message : 'Socket connection failed');
