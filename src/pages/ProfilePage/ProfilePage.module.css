@@ -208,35 +208,53 @@
   text-align: center;
 }
 
-/* Wallet Address Card */
-.walletAddressCard {
-  width: 100%;
+/* Wallet Row - Compact Connected State */
+.walletRow {
+  width: calc(100% - 28px);
   max-width: 600px;
-  padding: 16px 20px;
-  background: rgba(23, 23, 23, 0.9);
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 0 20px;
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  justify-content: space-between;
   align-items: center;
-  margin: 0 14px;
+  background: #171717;
+  border-radius: 10px;
+  height: 48px;
+  box-sizing: border-box;
 }
 
-.walletAddressLabel {
-  font-size: 12px;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.6);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+.walletInfo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.walletIcon {
+  font-size: 18px;
 }
 
 .walletAddress {
   font-size: 14px;
   font-weight: 600;
   color: #0098EA;
-  font-family: 'Courier New', monospace;
-  letter-spacing: 0.5px;
+  font-family: 'SF Mono', 'Courier New', monospace;
+  letter-spacing: 0.3px;
+}
+
+.disconnectButton {
+  background: transparent;
+  border: none;
+  color: #9F9F9F;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.disconnectButton:hover {
+  color: #ff4757;
+  background: rgba(255, 71, 87, 0.1);
 }
 
 /* Stats Grid */
@@ -317,13 +335,14 @@
 
 /* Cash Out Button */
 .cashOutButton {
-  /* Box model */
-  width: 362px;
-  max-width: calc(100% - 28px);
-  height: 44px;
-  padding: 10px 20px;
+  /* Box model - match stats width */
+  width: calc(100% - 28px);
+  max-width: 600px;
+  height: 48px;
+  padding: 0 20px;
   border: none;
-  border-radius: 50px;
+  border-radius: 10px;
+  box-sizing: border-box;
 
   /* Display */
   display: flex;
@@ -367,13 +386,13 @@
 
 /* Connect Wallet Button */
 .connectWalletButton {
-  /* Box model */
-  width: 362px;
-  max-width: calc(100% - 28px);
-  height: 44px;
-  padding: 10px 20px;
-  border: none;
-  border-radius: 50px;
+  /* Box model - match stats width */
+  width: calc(100% - 28px);
+  max-width: 600px;
+  height: 48px;
+  padding: 0 20px;
+  border-radius: 10px;
+  box-sizing: border-box;
 
   /* Display */
   display: flex;
@@ -381,15 +400,16 @@
   align-items: center;
 
   /* Visual */
-  background: #0098EA;
+  background: #171717;
+  border: 1px solid #0098EA;
   cursor: pointer;
 
   /* Animation */
-  transition: background 0.2s ease;
+  transition: background 0.2s ease, border-color 0.2s ease;
 }
 
 .connectWalletButton:hover {
-  background: #007AC2;
+  background: rgba(0, 152, 234, 0.1);
 }
 
 .connectWalletButton:active {
@@ -402,7 +422,7 @@
 }
 
 .connectWalletText {
-  color: white;
+  color: #0098EA;
   font-size: 16px;
   font-weight: 700;
   text-transform: uppercase;
@@ -412,7 +432,7 @@
 .connectWalletArrow {
   width: 24px;
   height: 24px;
-  color: white;
+  color: #0098EA;
 }
 
 /* Error */

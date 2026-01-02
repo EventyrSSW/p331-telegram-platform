@@ -175,32 +175,31 @@ export function ProfilePage() {
         </div>
       </div>
 
-      {/* Connect/Disconnect Wallet Button */}
-      <button
-        className={styles.connectWalletButton}
-        onClick={isWalletConnected ? handleDisconnectWallet : handleConnectWallet}
-      >
-        <span className={styles.connectWalletText}>
-          {isWalletConnected ? 'DISCONNECT WALLET' : 'CONNECT WALLET'}
-        </span>
-        <ArrowRightIcon className={styles.connectWalletArrow} />
-      </button>
-
-      {/* Wallet Address Display - shown BELOW button when connected */}
-      {isWalletConnected && wallet?.account?.address && (
-        <div className={styles.walletAddressCard}>
-          <div className={styles.walletAddressLabel}>Connected Wallet</div>
-          <div className={styles.walletAddress}>
-            {wallet.account.address.slice(0, 8)}...{wallet.account.address.slice(-6)}
-          </div>
-        </div>
-      )}
-
-      {/* Cash Out Button */}
+      {/* Cash Out Button - Primary Action */}
       <button className={styles.cashOutButton} onClick={handleCashOutClick}>
         <span className={styles.cashOutText}>CASH OUT YOUR WINNINGS</span>
         <ArrowRightIcon className={styles.cashOutArrow} />
       </button>
+
+      {/* Wallet Section - Compact Row */}
+      {isWalletConnected && wallet?.account?.address ? (
+        <div className={styles.walletRow}>
+          <div className={styles.walletInfo}>
+            <span className={styles.walletIcon}>🔗</span>
+            <span className={styles.walletAddress}>
+              {wallet.account.address.slice(0, 6)}...{wallet.account.address.slice(-4)}
+            </span>
+          </div>
+          <button className={styles.disconnectButton} onClick={handleDisconnectWallet}>
+            Disconnect
+          </button>
+        </div>
+      ) : (
+        <button className={styles.connectWalletButton} onClick={handleConnectWallet}>
+          <span className={styles.connectWalletText}>CONNECT WALLET</span>
+          <ArrowRightIcon className={styles.connectWalletArrow} />
+        </button>
+      )}
 
       {error && (
         <div className={styles.error}>{error}</div>
