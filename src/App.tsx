@@ -6,9 +6,11 @@ import { AuthProvider } from './contexts/AuthContext'
 import { ModalProvider } from './contexts/ModalContext'
 import { NakamaProvider } from './contexts/NakamaContext'
 import { GamesProvider } from './contexts/GamesContext'
+import { NetworkToastProvider } from './contexts/NetworkToastContext'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { SplashScreen } from './components/SplashScreen'
 import { NakamaConnector } from './components/NakamaConnector'
+import { NetworkToast } from './components/NetworkToast'
 import { router } from './router'
 
 function AppContent() {
@@ -30,10 +32,13 @@ function App() {
             <TelegramProvider>
               <AuthProvider>
                 <ModalProvider>
-                  <NakamaProvider>
-                    <NakamaConnector />
-                    <AppContent />
-                  </NakamaProvider>
+                  <NetworkToastProvider>
+                    <NakamaProvider>
+                      <NakamaConnector />
+                      <NetworkToast />
+                      <AppContent />
+                    </NakamaProvider>
+                  </NetworkToastProvider>
                 </ModalProvider>
               </AuthProvider>
             </TelegramProvider>
