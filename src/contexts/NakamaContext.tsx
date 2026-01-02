@@ -16,6 +16,7 @@ import {
   MatchPresence,
   PresenceInfo,
 } from '../services/nakama';
+import { useNetworkToast } from './NetworkToastContext';
 
 export type { MatchLevel, PresenceInfo, MatchPresence };
 
@@ -126,6 +127,8 @@ export function NakamaProvider({ children }: NakamaProviderProps) {
   const matchRef = useRef(match);
   matchRef.current = match;
 
+  const { showToast, hideToast } = useNetworkToast();
+
   // Setup match callbacks once when provider mounts
   useEffect(() => {
     nakamaService.setMatchCallbacks({
@@ -178,6 +181,30 @@ export function NakamaProvider({ children }: NakamaProviderProps) {
       nakamaService.setMatchCallbacks({});
     };
   }, [session]);
+
+  // Setup socket disconnect/reconnect callbacks for toast notifications
+  useEffect(() => {
+    nakamaService.setSocketCallbacks({
+      onDisconnect: () => {
+        console.log('[NakamaContext] Socket disconnected - showing toast');
+        setIsSocketConnected(false);
+        showToast('Connection lost. Reconnecting...', 'warning', true);
+      },
+      onReconnect: () => {
+        console.log('[NakamaContext] Socket reconnected - showing success toast');
+        setIsSocketConnected(true);
+        showToast('Reconnected!', 'success', false);
+      },
+      onReconnectFailed: () => {
+        console.log('[NakamaContext] Reconnect failed - showing error toast');
+        showToast('Connection failed. Check your network.', 'error', false);
+      },
+    });
+
+    return () => {
+      nakamaService.setSocketCallbacks({});
+    };
+  }, [showToast]);
 
   // Fetch wallet from Nakama
   const refreshWallet = useCallback(async () => {
@@ -324,6 +351,10 @@ export function NakamaProvider({ children }: NakamaProviderProps) {
   }, []);
 
   const rejoinMatch = useCallback(async (params: RejoinMatchParams): Promise<boolean> => {
+    // Stop any auto-reconnect and mark as manual reconnect
+    nakamaService.stopAutoReconnect();
+    nakamaService.setManualReconnect(true);
+
     console.log('[NakamaContext] Rejoining match:', params);
 
     try {
@@ -388,12 +419,18 @@ export function NakamaProvider({ children }: NakamaProviderProps) {
       });
 
       console.log('[NakamaContext] Match state updated after rejoin');
+
+      // Clear manual reconnect flag and hide any reconnecting toast
+      nakamaService.setManualReconnect(false);
+      hideToast();
+
       return true;
     } catch (error) {
       console.error('[NakamaContext] Failed to rejoin match:', error);
+      nakamaService.setManualReconnect(false);
       return false;
     }
-  }, [isSocketConnected, session]);
+  }, [isSocketConnected, session, hideToast]);
 
   const leaveMatch = useCallback(async () => {
     try {
