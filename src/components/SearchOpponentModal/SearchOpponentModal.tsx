@@ -141,7 +141,7 @@ export function SearchOpponentModal({
         {/* Bet amount display */}
         <div className={styles.betInfo}>
           <span className={styles.betLabel}>Entry:</span>
-          <span className={styles.betAmount}>{betAmount} coins</span>
+          <span className={styles.betAmount}>{(betAmount / 100).toFixed(2)} TON</span>
         </div>
 
         {/* Search tips */}
