@@ -152,6 +152,10 @@ class NakamaService {
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private reconnectTimeoutId: ReturnType<typeof setTimeout> | null = null;
+  private isManualReconnect = false;
+  private onSocketDisconnectCallback: (() => void) | null = null;
+  private onSocketReconnectCallback: (() => void) | null = null;
+  private onSocketReconnectFailedCallback: (() => void) | null = null;
 
   constructor() {
     this.client = new Client(
@@ -278,6 +282,8 @@ class NakamaService {
       clearTimeout(this.reconnectTimeoutId);
       this.reconnectTimeoutId = null;
     }
+    this.isManualReconnect = false;
+    this.reconnectAttempts = 0;
     if (this.session) {
       this.client.sessionLogout(
         this.session,
@@ -299,8 +305,26 @@ class NakamaService {
       throw new Error('Session expired, please re-authenticate');
     }
 
+    // Clear any pending auto-reconnect when manually connecting
+    if (this.reconnectTimeoutId) {
+      clearTimeout(this.reconnectTimeoutId);
+      this.reconnectTimeoutId = null;
+    }
+
     if (this.socket) {
-      return this.socket;
+      // If we have an existing socket and this is a manual reconnect, close it first
+      if (this.isManualReconnect) {
+        try {
+          const oldSocket = this.socket;
+          oldSocket.ondisconnect = () => {}; // Remove handler to prevent loop
+          oldSocket.disconnect();
+        } catch (e) {
+          console.warn('[Nakama] Error closing old socket:', e);
+        }
+        this.socket = null;
+      } else {
+        return this.socket;
+      }
     }
 
     if (this.isSocketConnecting) {
@@ -334,7 +358,14 @@ class NakamaService {
       this.socket.ondisconnect = (evt) => {
         console.log('[Nakama] Socket disconnected', evt);
         this.socket = null;
-        this.attemptReconnect();
+
+        // Notify context about disconnect
+        this.onSocketDisconnectCallback?.();
+
+        // Only auto-reconnect if not a manual reconnect in progress
+        if (!this.isManualReconnect) {
+          this.attemptReconnect();
+        }
       };
 
       console.log('[Nakama] Socket connected');
@@ -346,9 +377,15 @@ class NakamaService {
   }
 
   private attemptReconnect(): void {
+    if (this.isManualReconnect) {
+      console.log('[Nakama] Skipping auto-reconnect - manual reconnect in progress');
+      return;
+    }
+
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
       console.error('[Nakama] Max reconnection attempts reached');
       this.matchCallbacks.onError?.('Connection lost. Please refresh to reconnect.');
+      this.onSocketReconnectFailedCallback?.();
       return;
     }
 
@@ -363,6 +400,8 @@ class NakamaService {
           console.log('[Nakama] Rejoining match after reconnect:', this.currentMatch.matchId);
           await this.socket.joinMatch(this.currentMatch.matchId);
         }
+        // Notify about successful reconnection
+        this.onSocketReconnectCallback?.();
       } catch (error) {
         console.error('[Nakama] Reconnection failed:', error);
         this.attemptReconnect();
@@ -548,6 +587,29 @@ class NakamaService {
 
   isSocketConnectingState(): boolean {
     return this.isSocketConnecting;
+  }
+
+  setSocketCallbacks(callbacks: {
+    onDisconnect?: () => void;
+    onReconnect?: () => void;
+    onReconnectFailed?: () => void;
+  }): void {
+    this.onSocketDisconnectCallback = callbacks.onDisconnect || null;
+    this.onSocketReconnectCallback = callbacks.onReconnect || null;
+    this.onSocketReconnectFailedCallback = callbacks.onReconnectFailed || null;
+  }
+
+  stopAutoReconnect(): void {
+    if (this.reconnectTimeoutId) {
+      clearTimeout(this.reconnectTimeoutId);
+      this.reconnectTimeoutId = null;
+    }
+    this.reconnectAttempts = 0;
+    this.isManualReconnect = false;
+  }
+
+  setManualReconnect(value: boolean): void {
+    this.isManualReconnect = value;
   }
 
   clearMatchPresences(): void {
