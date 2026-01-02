@@ -7,6 +7,8 @@ var DEFAULT_COMMISSION_RATE = 0.10;
 var DEFAULT_HOUSE_EDGE = 0.51;
 var DEFAULT_MIN_BET = 50;    // 50 cents = $0.50
 var DEFAULT_MAX_BET = 10000; // 10000 cents = $100
+var DEFAULT_DISCONNECT_GRACE_SEC = 60; // 60 seconds grace period for PVP reconnection
+var DEFAULT_PVH_GRACE_SEC = 30; // 30 seconds grace period for PVH (then House wins)
 
 function getConfig(nk) {
   // Default config
@@ -1162,9 +1164,11 @@ function matchInit(ctx, logger, nk, params) {
     deadline: Date.now() + (config.waitTimeoutSec * 1000),
     results: {},
     level: selectedLevel,
+    allPlayersDisconnectedAt: null, // Timestamp when all players disconnected (for grace period)
     config: {
       commissionRate: config.commissionRate,
-      playTimeoutSec: config.playTimeoutSec
+      playTimeoutSec: config.playTimeoutSec,
+      disconnectGraceSec: DEFAULT_DISCONNECT_GRACE_SEC
     }
   };
 
@@ -1217,6 +1221,12 @@ function matchJoin(ctx, logger, nk, dispatcher, tick, state, presences) {
       state.players[presence.userId].disconnected = false;
       state.players[presence.userId].disconnectedAt = null;
       logger.info("Player " + presence.username + " reconnected to match");
+
+      // Clear the all-players-disconnected timer since someone reconnected
+      if (state.allPlayersDisconnectedAt) {
+        logger.info("Clearing disconnect grace period - player reconnected");
+        state.allPlayersDisconnectedAt = null;
+      }
     } else {
       // New player joining
       state.players[presence.userId] = {
@@ -1312,6 +1322,84 @@ function matchJoin(ctx, logger, nk, dispatcher, tick, state, presences) {
 
 function matchLoop(ctx, logger, nk, dispatcher, tick, state, messages) {
   var now = Date.now();
+
+  // Check if disconnect grace period has expired
+  if (state.allPlayersDisconnectedAt) {
+    // Use different grace periods for PVH vs PVP
+    var gracePeriodSec;
+    var matchType;
+    if (state.housePlayer) {
+      gracePeriodSec = DEFAULT_PVH_GRACE_SEC;
+      matchType = "PVH";
+    } else {
+      gracePeriodSec = state.config.disconnectGraceSec || DEFAULT_DISCONNECT_GRACE_SEC;
+      matchType = "PVP";
+    }
+
+    var gracePeriodMs = gracePeriodSec * 1000;
+    var timeElapsed = now - state.allPlayersDisconnectedAt;
+
+    if (timeElapsed >= gracePeriodMs) {
+      // Grace period expired - handle based on match type
+      logger.info(matchType + " disconnect grace period expired (" + Math.floor(timeElapsed / 1000) + "s)");
+
+      if (state.housePlayer) {
+        // PVH: House wins - player forfeits
+        logger.info("PVH match: House wins by forfeit");
+
+        // Assign score 0 to the real player (House will win)
+        for (var odredacted in state.players) {
+          var player = state.players[odredacted];
+          if (!player.isHouse && !state.results[odredacted]) {
+            state.results[odredacted] = { score: 0, timeMs: 999999999 };
+            logger.info("Player " + odredacted + " forfeited - assigned score 0");
+          }
+        }
+
+        // Resolve match (House will generate winning score)
+        state.status = "completed";
+        resolveMatch(ctx, nk, logger, dispatcher, state);
+        return null;
+      } else {
+        // PVP: Cancel and refund all players
+        logger.info("PVP match: Cancelling and refunding all players");
+
+        for (var odredacted in state.players) {
+          var player = state.players[odredacted];
+          if (!player.isHouse) {
+            // Refund bet
+            nk.walletUpdate(odredacted, { coins: state.betAmount }, {
+              type: "bet_refund",
+              gameId: state.gameId,
+              betAmount: state.betAmount,
+              reason: "disconnect_grace_period_expired",
+              matchId: ctx.matchId,
+              timestamp: Date.now()
+            }, true);
+            logger.info("Refunded " + state.betAmount + " coins to " + odredacted);
+
+            // Update match history to cancelled
+            updateMatchHistoryCancelled(nk, logger, ctx.matchId, odredacted);
+          }
+        }
+
+        // Broadcast cancellation
+        dispatcher.broadcastMessage(3, JSON.stringify({
+          type: "match_cancelled",
+          reason: "disconnect_grace_period_expired",
+          refunded: true
+        }), null, null, true);
+
+        return null; // Terminate match
+      }
+    } else {
+      // Log progress every 10 seconds
+      if (tick % 10 === 0) {
+        var remaining = Math.ceil((gracePeriodMs - timeElapsed) / 1000);
+        logger.info(matchType + " disconnect grace period: " + remaining + "s remaining for reconnection");
+      }
+    }
+  }
 
   if (state.status === "waiting" && now > state.deadline) {
     logger.info("Timeout waiting for opponent, adding house player");
@@ -1594,37 +1682,29 @@ function matchLeave(ctx, logger, nk, dispatcher, tick, state, presences) {
         }
       }
       resolveMatch(ctx, nk, logger, dispatcher, state);
+      return null;
     } else {
-      // Nobody submitted - cancel and refund all players
-      logger.info("No players submitted scores - cancelling match and refunding");
-      for (var odredacted in state.players) {
-        var player = state.players[odredacted];
-        if (!player.isHouse) {
-          // Refund bet
-          nk.walletUpdate(odredacted, { coins: state.betAmount }, {
-            type: "bet_refund",
-            gameId: state.gameId,
-            betAmount: state.betAmount,
-            reason: "all_players_disconnected",
-            matchId: ctx.matchId,
-            timestamp: Date.now()
-          }, true);
-          logger.info("Refunded " + state.betAmount + " coins to " + odredacted);
-
-          // Update match history to cancelled
-          updateMatchHistoryCancelled(nk, logger, ctx.matchId, odredacted);
+      // Nobody submitted yet - start grace period for reconnection
+      // Don't cancel immediately, let matchLoop handle it after grace period expires
+      if (!state.allPlayersDisconnectedAt) {
+        state.allPlayersDisconnectedAt = Date.now();
+        var graceSec;
+        var matchType;
+        if (state.housePlayer) {
+          graceSec = DEFAULT_PVH_GRACE_SEC;
+          matchType = "PVH";
+        } else {
+          graceSec = state.config.disconnectGraceSec || DEFAULT_DISCONNECT_GRACE_SEC;
+          matchType = "PVP";
+        }
+        logger.info("Starting " + graceSec + "s " + matchType + " grace period (all players disconnected, no scores submitted)");
+        if (state.housePlayer) {
+          logger.info("PVH match: House will win if player doesn't reconnect within " + graceSec + "s");
         }
       }
-
-      // Broadcast cancellation
-      dispatcher.broadcastMessage(3, JSON.stringify({
-        type: "match_cancelled",
-        reason: "all_players_disconnected",
-        refunded: true
-      }), null, null, true);
+      // Keep match alive - don't return null
+      return { state: state };
     }
-
-    return null;
   }
 
   return { state: state };
