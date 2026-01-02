@@ -400,16 +400,16 @@
   align-items: center;
 
   /* Visual */
-  background: #171717;
-  border: 1px solid #0098EA;
+  background: #0098EA;
+  border: none;
   cursor: pointer;
 
   /* Animation */
-  transition: background 0.2s ease, border-color 0.2s ease;
+  transition: background 0.2s ease;
 }
 
 .connectWalletButton:hover {
-  background: rgba(0, 152, 234, 0.1);
+  background: #007AC2;
 }
 
 .connectWalletButton:active {
@@ -422,7 +422,7 @@
 }
 
 .connectWalletText {
-  color: #0098EA;
+  color: white;
   font-size: 16px;
   font-weight: 700;
   text-transform: uppercase;
@@ -432,7 +432,7 @@
 .connectWalletArrow {
   width: 24px;
   height: 24px;
-  color: #0098EA;
+  color: white;
 }
 
 /* Error */
