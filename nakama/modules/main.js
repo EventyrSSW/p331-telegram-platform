@@ -1288,9 +1288,17 @@ function matchJoin(ctx, logger, nk, dispatcher, tick, state, presences) {
     }), null, null, true);
 
     // Update match history for both players with opponent info
+    // Skip house player - it doesn't have a real userId for storage operations
     var playerIds = Object.keys(state.players);
     for (var p = 0; p < playerIds.length; p++) {
       var odredacted = playerIds[p];
+      var playerInfo = state.players[odredacted];
+
+      // Skip house player - "house" is not a valid Nakama userId
+      if (playerInfo.isHouse) {
+        continue;
+      }
+
       var opponentId = playerIds[p === 0 ? 1 : 0];
       var opponentInfo = state.players[opponentId];
 
