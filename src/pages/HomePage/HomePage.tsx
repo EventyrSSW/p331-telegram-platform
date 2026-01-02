@@ -80,9 +80,9 @@ export const HomePage = () => {
           <WelcomeBonusBanner variant="blue" onDepositClick={handleBonusClick} />
         </section>
 
-        {/* Games Grid */}
-        <Section title="Most Popular Games">
-          <GameGrid games={games} onGameClick={handleGameClick} />
+        {/* Games Grid - Locked/Coming Soon */}
+        <Section title="Soon to Be Unlocked">
+          <GameGrid games={games} onGameClick={handleGameClick} locked />
         </Section>
       </main>
 

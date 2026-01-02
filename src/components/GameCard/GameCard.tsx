@@ -85,7 +85,7 @@ export const GameCard: React.FC<GameCardProps> = ({ game, onClick }) => {
       )}
 
       <div className={styles.thumbnailWrapper}>
-        {showVideo && !game.locked && (
+        {showVideo && (
           <video
             ref={videoRef}
             className={styles.video}
@@ -102,7 +102,7 @@ export const GameCard: React.FC<GameCardProps> = ({ game, onClick }) => {
           src={game.thumbnail}
           alt={game.title}
           className={styles.thumbnail}
-          style={{ display: showVideo && !game.locked ? 'none' : 'block' }}
+          style={{ display: showVideo ? 'none' : 'block' }}
         />
 
         {/* Locked Overlay */}
