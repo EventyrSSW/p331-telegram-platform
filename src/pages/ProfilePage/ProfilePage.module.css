@@ -240,6 +240,28 @@
   letter-spacing: 0.3px;
 }
 
+.copyButton {
+  background: transparent;
+  border: none;
+  color: #9F9F9F;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.copyButton:hover {
+  color: #0098EA;
+  background: rgba(0, 152, 234, 0.1);
+}
+
+.copyButton:active {
+  color: #00CC66;
+}
+
 .disconnectButton {
   background: transparent;
   border: none;
