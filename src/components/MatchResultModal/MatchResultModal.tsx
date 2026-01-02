@@ -80,7 +80,7 @@ export function MatchResultModal({
                 {isWinner ? 'You Won!' : 'You Lost'}
               </h2>
               {payout !== null && payout > 0 && (
-                <div className={styles.payout}>+{payout} coins</div>
+                <div className={styles.payout}>+{(payout / 100).toFixed(2)} TON</div>
               )}
             </>
           )}
