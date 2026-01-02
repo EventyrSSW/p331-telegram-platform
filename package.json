@@ -46,11 +46,14 @@
   },
   "dependencies": {
     "@heroiclabs/nakama-js": "^2.8.0",
+    "@launchdarkly/observability": "^0.5.0",
+    "@launchdarkly/session-replay": "^0.5.0",
     "@tma.js/sdk": "^3.1.2",
     "@tma.js/sdk-react": "^3.0.11",
     "@ton/core": "^0.62.0",
     "@tonconnect/ui-react": "^2.3.1",
     "buffer": "^6.0.3",
+    "launchdarkly-react-client-sdk": "^3.9.0",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "react-router-dom": "^7.11.0"

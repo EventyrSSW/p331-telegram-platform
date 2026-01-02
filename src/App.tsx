@@ -1,6 +1,7 @@
 import { RouterProvider } from 'react-router-dom'
 import { TelegramProvider, useTelegram } from './providers/TelegramProvider'
 import { TonConnectProvider } from './providers/TonConnectProvider'
+import { LaunchDarklyProvider } from './providers/LaunchDarklyProvider'
 import { ConfigProvider } from './contexts/ConfigContext'
 import { AuthProvider } from './contexts/AuthContext'
 import { ModalProvider } from './contexts/ModalContext'
@@ -31,15 +32,17 @@ function App() {
           <GamesProvider>
             <TelegramProvider>
               <AuthProvider>
-                <ModalProvider>
-                  <NetworkToastProvider>
-                    <NakamaProvider>
-                      <NakamaConnector />
-                      <NetworkToast />
-                      <AppContent />
-                    </NakamaProvider>
-                  </NetworkToastProvider>
-                </ModalProvider>
+                <LaunchDarklyProvider>
+                  <ModalProvider>
+                    <NetworkToastProvider>
+                      <NakamaProvider>
+                        <NakamaConnector />
+                        <NetworkToast />
+                        <AppContent />
+                      </NakamaProvider>
+                    </NetworkToastProvider>
+                  </ModalProvider>
+                </LaunchDarklyProvider>
               </AuthProvider>
             </TelegramProvider>
           </GamesProvider>
