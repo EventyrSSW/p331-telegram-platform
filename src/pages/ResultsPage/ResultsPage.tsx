@@ -141,7 +141,7 @@ export function ResultsPage() {
       const result = await nakamaService.cancelMatch(entry.matchId);
 
       if (result.success) {
-        alert(`Match cancelled. ${(result.refundAmount / 100).toFixed(2)} TON refunded.`);
+        alert(`Match cancelled. ${((result.refundAmount ?? 0) / 100).toFixed(2)} TON refunded.`);
         fetchHistory(); // Refresh the list
       } else {
         alert(result.error || 'Failed to cancel match');

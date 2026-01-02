@@ -61,7 +61,7 @@ export const ResultCard: React.FC<ResultCardProps> = ({
     if (isCompleted && entry.result) {
       const isWon = entry.result === 'won';
       const amount = isWon ? entry.payout : entry.betAmount;
-      const amountTon = (amount / 100).toFixed(2);
+      const amountTon = ((amount ?? 0) / 100).toFixed(2);
       return (
         <div className={`${styles.result} ${isWon ? styles.won : styles.lost}`}>
           {isWon ? '+' : '-'}{amountTon}
