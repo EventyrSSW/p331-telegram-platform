@@ -47,7 +47,7 @@ export const WelcomeBonusBanner: React.FC<WelcomeBonusBannerProps> = ({
         </div>
 
         <div className={styles.depositButton}>
-          Deposit Now →
+          DEPOSIT NOW
         </div>
       </div>
 
