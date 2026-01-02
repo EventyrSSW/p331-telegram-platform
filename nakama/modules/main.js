@@ -975,20 +975,26 @@ function rpcSyncMatchStatus(ctx, logger, nk, payload) {
       }
 
       if (!matchExists) {
-        logger.info("Match " + matchId + " no longer exists in Nakama - updating history to cancelled");
+        logger.info("Match " + matchId + " no longer exists in Nakama");
         canReconnect = false;
 
-        // Update the history entry since the match is gone
-        entry.status = "cancelled";
-        entry.updatedAt = Date.now();
-        nk.storageWrite([{
-          collection: "match_history",
-          key: matchId,
-          userId: userId,
-          value: entry,
-          permissionRead: 1,
-          permissionWrite: 0
-        }]);
+        // Only update to cancelled if match wasn't already completed/cancelled
+        // This prevents overwriting a valid result (e.g., House win after grace period)
+        if (entry.status !== "completed" && entry.status !== "cancelled" && entry.status !== "submitted") {
+          logger.info("Updating match history to cancelled (was: " + entry.status + ")");
+          entry.status = "cancelled";
+          entry.updatedAt = Date.now();
+          nk.storageWrite([{
+            collection: "match_history",
+            key: matchId,
+            userId: userId,
+            value: entry,
+            permissionRead: 1,
+            permissionWrite: 0
+          }]);
+        } else {
+          logger.info("Match history status already terminal: " + entry.status + " - not overwriting");
+        }
       }
     } catch (e) {
       logger.warn("Could not check match existence: " + e.message);
@@ -1345,20 +1351,24 @@ function matchLoop(ctx, logger, nk, dispatcher, tick, state, messages) {
 
       if (state.housePlayer) {
         // PVH: House wins - player forfeits
-        logger.info("PVH match: House wins by forfeit");
+        logger.info("=== PVH FORFEIT: House wins by player disconnect ===");
+        logger.info("Match ID: " + ctx.matchId);
+        logger.info("Bet amount: " + state.betAmount);
 
         // Assign score 0 to the real player (House will win)
         for (var odredacted in state.players) {
           var player = state.players[odredacted];
           if (!player.isHouse && !state.results[odredacted]) {
             state.results[odredacted] = { score: 0, timeMs: 999999999 };
-            logger.info("Player " + odredacted + " forfeited - assigned score 0");
+            logger.info("Player " + odredacted + " (" + player.username + ") forfeited - assigned score 0");
           }
         }
 
         // Resolve match (House will generate winning score)
         state.status = "completed";
+        logger.info("Calling resolveMatch for PVH forfeit...");
         resolveMatch(ctx, nk, logger, dispatcher, state);
+        logger.info("=== PVH FORFEIT COMPLETE ===");
         return null;
       } else {
         // PVP: Cancel and refund all players
