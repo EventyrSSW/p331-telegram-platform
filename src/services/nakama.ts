@@ -317,7 +317,7 @@ class NakamaService {
         try {
           const oldSocket = this.socket;
           oldSocket.ondisconnect = () => {}; // Remove handler to prevent loop
-          oldSocket.disconnect();
+          oldSocket.disconnect(false);
         } catch (e) {
           console.warn('[Nakama] Error closing old socket:', e);
         }
