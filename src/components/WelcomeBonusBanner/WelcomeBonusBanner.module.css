@@ -79,7 +79,7 @@
 
 /* Deposit Button */
 .depositButton {
-  padding: 10px 20px;
+  padding: 10px 20px 10px 0;
   position: relative;
   color: white;
   font-size: 16px;
@@ -88,18 +88,6 @@
   text-transform: uppercase;
   letter-spacing: 0.32px;
   pointer-events: none; /* Prevent event bubbling, parent handles click */
-}
-
-.depositButton::before {
-  content: '';
-  position: absolute;
-  width: 149px;
-  height: 39px;
-  left: 0;
-  top: 0;
-  background: rgba(255, 255, 255, 0.20);
-  border-radius: 50px;
-  z-index: -1;
 }
 
 /* Right Section */
