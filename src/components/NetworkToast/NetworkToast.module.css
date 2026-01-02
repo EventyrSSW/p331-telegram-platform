@@ -1,11 +1,10 @@
 .toastContainer {
   position: fixed;
-  top: 0;
+  bottom: 80px; /* Above BottomNavBar (68px) + padding */
   left: 0;
   right: 0;
-  z-index: 9999;
-  padding: calc(var(--tg-viewport-stable-height, 0px) * 0 + 8px) 16px 0;
-  padding-top: calc(env(safe-area-inset-top, 0px) + 8px);
+  z-index: 1050;
+  padding: 0 16px;
   pointer-events: none;
   display: flex;
   justify-content: center;
@@ -15,15 +14,23 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px 20px;
+  padding: 14px 20px;
   border-radius: 12px;
   backdrop-filter: blur(10px);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   pointer-events: auto;
-  transform: translateY(-100%);
+  transform: translateY(100px);
   opacity: 0;
   transition: transform 0.3s ease, opacity 0.3s ease;
   max-width: 90%;
+  cursor: grab;
+  user-select: none;
+  touch-action: pan-y;
+  position: relative;
+}
+
+.toast:active {
+  cursor: grabbing;
 }
 
 .toast.visible {
@@ -31,23 +38,31 @@
   opacity: 1;
 }
 
+.toast.swiping {
+  transition: none;
+}
+
+.toast.dismissing {
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
 .toast.info {
-  background: rgba(59, 130, 246, 0.9);
+  background: rgba(59, 130, 246, 0.95);
   border: 1px solid rgba(59, 130, 246, 0.5);
 }
 
 .toast.success {
-  background: rgba(16, 185, 129, 0.9);
+  background: rgba(16, 185, 129, 0.95);
   border: 1px solid rgba(16, 185, 129, 0.5);
 }
 
 .toast.warning {
-  background: rgba(245, 158, 11, 0.9);
+  background: rgba(245, 158, 11, 0.95);
   border: 1px solid rgba(245, 158, 11, 0.5);
 }
 
 .toast.error {
-  background: rgba(239, 68, 68, 0.9);
+  background: rgba(239, 68, 68, 0.95);
   border: 1px solid rgba(239, 68, 68, 0.5);
 }
 
@@ -77,4 +92,16 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+/* Swipe indicator bar */
+.swipeHint {
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 32px;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
 }

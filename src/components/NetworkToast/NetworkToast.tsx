@@ -1,9 +1,10 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useNetworkToast, ToastType } from '../../contexts/NetworkToastContext';
 import styles from './NetworkToast.module.css';
 
 const AUTO_DISMISS_MS = 4000;
+const SWIPE_THRESHOLD = 50; // pixels to swipe down to dismiss
 
 function ToastIcon({ type }: { type: ToastType }) {
   switch (type) {
@@ -35,15 +36,21 @@ function ToastIcon({ type }: { type: ToastType }) {
 export function NetworkToast() {
   const { toast, hideToast } = useNetworkToast();
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const toastRef = useRef<HTMLDivElement>(null);
 
+  // Swipe state
+  const [isSwiping, setIsSwiping] = useState(false);
+  const [isDismissing, setIsDismissing] = useState(false);
+  const [swipeOffset, setSwipeOffset] = useState(0);
+  const touchStartY = useRef(0);
+
+  // Auto-dismiss timer
   useEffect(() => {
-    // Clear any existing timeout
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
 
-    // Set auto-dismiss timeout if toast is visible and not persistent
     if (toast.visible && !toast.persistent) {
       timeoutRef.current = setTimeout(() => {
         hideToast();
@@ -57,11 +64,90 @@ export function NetworkToast() {
     };
   }, [toast.visible, toast.persistent, hideToast]);
 
+  // Reset swipe state when toast changes
+  useEffect(() => {
+    if (toast.visible) {
+      setIsSwiping(false);
+      setIsDismissing(false);
+      setSwipeOffset(0);
+    }
+  }, [toast.visible, toast.message]);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+    setIsSwiping(true);
+  }, []);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!isSwiping) return;
+
+    const currentY = e.touches[0].clientY;
+    const diff = currentY - touchStartY.current;
+
+    // Only allow swiping down (positive diff)
+    if (diff > 0) {
+      setSwipeOffset(diff);
+    }
+  }, [isSwiping]);
+
+  const handleTouchEnd = useCallback(() => {
+    if (!isSwiping) return;
+
+    if (swipeOffset > SWIPE_THRESHOLD) {
+      // Dismiss the toast
+      setIsDismissing(true);
+      setSwipeOffset(100); // Animate out
+      setTimeout(() => {
+        hideToast();
+        setIsDismissing(false);
+        setSwipeOffset(0);
+      }, 200);
+    } else {
+      // Snap back
+      setSwipeOffset(0);
+    }
+
+    setIsSwiping(false);
+  }, [isSwiping, swipeOffset, hideToast]);
+
+  // Calculate transform and opacity based on swipe
+  const getToastStyle = () => {
+    if (!toast.visible && !isDismissing) {
+      return {};
+    }
+
+    if (swipeOffset > 0) {
+      const opacity = Math.max(0, 1 - swipeOffset / 100);
+      return {
+        transform: `translateY(${swipeOffset}px)`,
+        opacity,
+      };
+    }
+
+    return {};
+  };
+
+  const toastClasses = [
+    styles.toast,
+    styles[toast.type],
+    toast.visible && !isDismissing ? styles.visible : '',
+    isSwiping ? styles.swiping : '',
+    isDismissing ? styles.dismissing : '',
+  ].filter(Boolean).join(' ');
+
   const toastElement = (
     <div className={styles.toastContainer}>
-      <div className={`${styles.toast} ${styles[toast.type]} ${toast.visible ? styles.visible : ''}`}>
+      <div
+        ref={toastRef}
+        className={toastClasses}
+        style={getToastStyle()}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
         <ToastIcon type={toast.type} />
         <span className={styles.message}>{toast.message}</span>
+        <div className={styles.swipeHint} />
       </div>
     </div>
   );
