@@ -82,7 +82,7 @@
   color: white;
   font-size: 14px;
   font-family: 'Roboto', sans-serif;
-  font-weight: 500;
+  font-weight: 700;
   letter-spacing: 0.28px;
   opacity: 0.8;
   pointer-events: none; /* Prevent event bubbling, parent handles click */
