@@ -61,9 +61,10 @@ export const ResultCard: React.FC<ResultCardProps> = ({
     if (isCompleted && entry.result) {
       const isWon = entry.result === 'won';
       const amount = isWon ? entry.payout : entry.betAmount;
+      const amountTon = (amount / 100).toFixed(2);
       return (
         <div className={`${styles.result} ${isWon ? styles.won : styles.lost}`}>
-          {isWon ? '+' : '-'}{amount}
+          {isWon ? '+' : '-'}{amountTon}
         </div>
       );
     }
@@ -83,7 +84,7 @@ export const ResultCard: React.FC<ResultCardProps> = ({
         <div className={styles.priceRow}>
           <span className={styles.priceLabel}>Price</span>
           <TonCoinIcon className={styles.coinIcon} />
-          <span className={styles.priceValue}>{entry.betAmount}</span>
+          <span className={styles.priceValue}>{(entry.betAmount / 100).toFixed(2)}</span>
         </div>
       );
     }

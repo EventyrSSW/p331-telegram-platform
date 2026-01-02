@@ -134,14 +134,14 @@ export function ResultsPage() {
   const handleCancel = async (entry: MatchHistoryEntry) => {
     haptic.medium();
 
-    const confirmed = window.confirm(`Cancel match and get refund of ${entry.betAmount} coins?`);
+    const confirmed = window.confirm(`Cancel match and get refund of ${(entry.betAmount / 100).toFixed(2)} TON?`);
     if (!confirmed) return;
 
     try {
       const result = await nakamaService.cancelMatch(entry.matchId);
 
       if (result.success) {
-        alert(`Match cancelled. ${result.refundAmount} coins refunded.`);
+        alert(`Match cancelled. ${(result.refundAmount / 100).toFixed(2)} TON refunded.`);
         fetchHistory(); // Refresh the list
       } else {
         alert(result.error || 'Failed to cancel match');
