@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "400658621899",
+    "firebase_url": "https://mahjong-2-3a3ea-default-rtdb.firebaseio.com",
+    "project_id": "mahjong-2-3a3ea",
+    "storage_bucket": "mahjong-2-3a3ea.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:400658621899:android:949cd63cde7bde7018824e",
+        "android_client_info": {
+          "package_name": "com.Eventyr.MAH"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "400658621899-jfsjsromlepvdcja8rhbt4k9iahhibvv.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.Eventyr.MAH",
+            "certificate_hash": "ebad2ad224b8837176e09c90b9e2c734e2803bc6"
+          }
+        },
+        {
+          "client_id": "400658621899-khed5fdfl4mhgojg26vqq0iokt0i3mm8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAOtS__SLG-H-txv7gmiab-eQcDDgMFCjE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "400658621899-khed5fdfl4mhgojg26vqq0iokt0i3mm8.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "400658621899-vv3smjdrag09qttsa0h7bj00gtj1o9gn.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.Eventyr.MAH"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

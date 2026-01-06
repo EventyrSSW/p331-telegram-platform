@@ -648,6 +648,49 @@ function InitModule(ctx, logger, nk, initializer) {
     logger.info("Created " + sampleLevels.length + " mahjong levels");
   }
 
+  // Initialize mahjong-dash levels (new format with levelJson + timeLimit)
+  var mahjongDashLevelsReads = nk.storageRead([
+    { collection: "levels", key: "mahjong-dash" }
+  ]);
+
+  if (mahjongDashLevelsReads.length === 0) {
+    nk.storageWrite([
+      {
+        collection: "levels",
+        key: "mahjong-dash",
+        value: {
+          levels: [
+            {
+              id: 1,
+              name: "Level 1",
+              tier: "beginner",
+              tiles: [],
+              totalPairs: 6,
+              timeBonus: 300,
+              timeLimit: 300,
+              levelJson: '{"Layers":[{"Index":0,"Stones":[{"X":9,"Y":10},{"X":11,"Y":10},{"X":13,"Y":10},{"X":9,"Y":12},{"X":11,"Y":12},{"X":13,"Y":12}]}]}',
+              metadata: { difficulty: 1, theme: "classic", createdAt: Date.now() }
+            },
+            {
+              id: 2,
+              name: "Level 2",
+              tier: "intermediate",
+              tiles: [],
+              totalPairs: 16,
+              timeBonus: 300,
+              timeLimit: 300,
+              levelJson: '{"Layers":[{"Index":0,"Stones":[{"X":5,"Y":2},{"X":17,"Y":2},{"X":9,"Y":3},{"X":11,"Y":4},{"X":11,"Y":6},{"X":7,"Y":7},{"X":9,"Y":7},{"X":17,"Y":7},{"X":5,"Y":8},{"X":13,"Y":8},{"X":15,"Y":8},{"X":11,"Y":9},{"X":11,"Y":11},{"X":5,"Y":12},{"X":13,"Y":12},{"X":17,"Y":12}]},{"Index":1,"Stones":[{"X":5,"Y":2},{"X":17,"Y":2},{"X":9,"Y":3},{"X":11,"Y":4},{"X":11,"Y":6},{"X":7,"Y":7},{"X":9,"Y":7},{"X":17,"Y":7},{"X":5,"Y":8},{"X":13,"Y":8},{"X":15,"Y":8},{"X":11,"Y":9},{"X":11,"Y":11},{"X":5,"Y":12},{"X":13,"Y":12},{"X":17,"Y":12}]},{"Index":2,"Stones":[{"X":9,"Y":3},{"X":11,"Y":4},{"X":11,"Y":6},{"X":7,"Y":7},{"X":9,"Y":7},{"X":17,"Y":7},{"X":5,"Y":8},{"X":13,"Y":8},{"X":15,"Y":8},{"X":11,"Y":9},{"X":11,"Y":11},{"X":13,"Y":12}]},{"Index":3,"Stones":[{"X":11,"Y":4},{"X":11,"Y":6},{"X":7,"Y":7},{"X":9,"Y":7},{"X":13,"Y":8},{"X":15,"Y":8},{"X":11,"Y":9},{"X":11,"Y":11}]},{"Index":4,"Stones":[{"X":11,"Y":6},{"X":9,"Y":7},{"X":13,"Y":8},{"X":11,"Y":9}]}]}',
+              metadata: { difficulty: 2, theme: "classic", createdAt: Date.now() }
+            }
+          ]
+        },
+        permissionRead: 2,
+        permissionWrite: 0
+      }
+    ]);
+    logger.info("Created 2 mahjong-dash levels with levelJson format");
+  }
+
   logger.info("Game match module initialized!");
 }
 
@@ -1274,6 +1317,8 @@ function matchJoin(ctx, logger, nk, dispatcher, tick, state, presences) {
         tiles: state.level.tiles,
         totalPairs: state.level.totalPairs,
         timeBonus: state.level.timeBonus,
+        levelJson: state.level.levelJson || null,
+        timeLimit: state.level.timeLimit || state.level.timeBonus,
         metadata: state.level.metadata
       } : null
     };
@@ -1450,6 +1495,8 @@ function matchLoop(ctx, logger, nk, dispatcher, tick, state, messages) {
         tiles: state.level.tiles,
         totalPairs: state.level.totalPairs,
         timeBonus: state.level.timeBonus,
+        levelJson: state.level.levelJson || null,
+        timeLimit: state.level.timeLimit || state.level.timeBonus,
         metadata: state.level.metadata
       } : null
     };

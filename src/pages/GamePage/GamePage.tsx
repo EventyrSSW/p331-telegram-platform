@@ -7,8 +7,8 @@ import styles from './GamePage.module.css';
 
 // Map game IDs to their Unity build slugs
 const GAME_SLUGS: Record<string, string> = {
-  'mahjong-dash': 'mahjong3',
-  'puzzle-master': 'mahjong-dash',
+  'mahjong-dash': 'mahjong-dash',
+  'puzzle-master': 'puzzle-master',
 };
 
 interface LocationState {
@@ -35,8 +35,14 @@ export const GamePage = () => {
   const levelData = state?.level ?? match.level?.id;
   const matchId = state?.matchId ?? match.matchId;
 
+  // For mahjong-dash: get levelJson and timeLimit from match
+  const levelJson = match.level?.levelJson;
+  const timeLimit = match.level?.timeLimit;
+
   console.log('[GamePage] Render state:', {
     levelData,
+    levelJson: levelJson ? levelJson.substring(0, 50) + '...' : null,
+    timeLimit,
     matchId,
     matchStatus: match.status,
     presences: match.presences
@@ -104,6 +110,8 @@ export const GamePage = () => {
         <UnityGame
           gameSlug={gameSlug}
           levelData={levelData}
+          levelJson={levelJson}
+          timeLimit={timeLimit}
           onBack={handleBack}
           onLevelComplete={handleLevelComplete}
         />

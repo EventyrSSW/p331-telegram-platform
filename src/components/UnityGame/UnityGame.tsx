@@ -5,16 +5,24 @@ interface LevelCompleteData {
   level: number;
   score: number;
   coins: number;
+  timeLeft?: number;
+  timerDuration?: number;
 }
 
 interface UnityGameProps {
   gameSlug: string;
   levelData?: number;
+  levelJson?: string;    // For mahjong-dash: JSON level data with Layers/Stones
+  timeLimit?: number;    // For mahjong-dash: timer in seconds
   onLevelComplete?: (data: LevelCompleteData) => void;
   onBack?: () => void;
 }
 
-export const UnityGame: React.FC<UnityGameProps> = ({ gameSlug, levelData, onLevelComplete, onBack }) => {
+// Games that use the new level format (ReceiveLevelData + ReceiveTimer)
+const NEW_FORMAT_GAMES = ['mahjong-dash'];
+
+export const UnityGame: React.FC<UnityGameProps> = ({ gameSlug, levelData, levelJson, timeLimit, onLevelComplete, onBack }) => {
+  const usesNewFormat = NEW_FORMAT_GAMES.includes(gameSlug);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const unityInstanceRef = useRef<any>(null);
@@ -97,11 +105,15 @@ export const UnityGame: React.FC<UnityGameProps> = ({ gameSlug, levelData, onLev
     updateCanvasSize();
     window.addEventListener('resize', updateCanvasSize);
 
-    // Set level data BEFORE Unity loads so it can read it during initialization
-    const levelToSet = levelData !== undefined ? levelData.toString() : "5";
-    (window as any).urlLevelData = levelToSet;
-    console.log('[UnityGame] Setting urlLevelData BEFORE Unity loads:', levelToSet);
-    console.log('[UnityGame] window.urlLevelData is now:', (window as any).urlLevelData);
+    // For OLD format games: Set urlLevelData BEFORE Unity loads
+    // For NEW format games (mahjong-dash): Don't set urlLevelData, game waits for setLevelData call
+    if (!usesNewFormat) {
+      const levelToSet = levelData !== undefined ? levelData.toString() : "5";
+      (window as any).urlLevelData = levelToSet;
+      console.log('[UnityGame] OLD FORMAT: Setting urlLevelData BEFORE Unity loads:', levelToSet);
+    } else {
+      console.log('[UnityGame] NEW FORMAT: Game will wait for setLevelData call');
+    }
 
     const script = document.createElement('script');
     script.src = loaderUrl;
@@ -112,7 +124,7 @@ export const UnityGame: React.FC<UnityGameProps> = ({ gameSlug, levelData, onLev
         })
           .then((instance: any) => {
             console.log('[UnityGame] Unity instance created successfully');
-            console.log('[UnityGame] window.urlLevelData at Unity ready:', (window as any).urlLevelData);
+            console.log('[UnityGame] gameSlug:', gameSlug, 'usesNewFormat:', usesNewFormat);
 
             unityInstanceRef.current = instance;
             setIsLoading(false);
@@ -120,16 +132,42 @@ export const UnityGame: React.FC<UnityGameProps> = ({ gameSlug, levelData, onLev
             // Store Unity instance globally for level control
             (window as any).unityInstance = instance;
 
-            // Setup setLevelData function
-            (window as any).setLevelData = (levelDataString: string) => {
-              if (instance) {
-                console.log('[UnityGame] setLevelData called with:', levelDataString);
-                instance.SendMessage('WebGLBridge', 'SetLevelDataString', levelDataString);
-                return true;
+            // Setup setLevelData function based on game format
+            if (usesNewFormat) {
+              // NEW FORMAT (mahjong-dash): ReceiveLevelData + ReceiveTimer
+              (window as any).setLevelData = (jsonData: string, timer?: number) => {
+                if (instance) {
+                  const timerValue = timer ?? 300;
+                  console.log('[UnityGame] NEW FORMAT setLevelData:', { jsonData: jsonData.substring(0, 50) + '...', timer: timerValue });
+                  instance.SendMessage('WebGLBridge', 'ReceiveLevelData', jsonData);
+                  instance.SendMessage('WebGLBridge', 'ReceiveTimer', timerValue.toString());
+                  return true;
+                }
+                console.error('[UnityGame] Unity instance not ready yet');
+                return false;
+              };
+
+              // If levelJson provided, send it after Unity is ready
+              if (levelJson) {
+                const timer = timeLimit ?? 300;
+                console.log('[UnityGame] Sending level data after Unity ready:', { timer });
+                setTimeout(() => {
+                  instance.SendMessage('WebGLBridge', 'ReceiveLevelData', levelJson);
+                  instance.SendMessage('WebGLBridge', 'ReceiveTimer', timer.toString());
+                }, 1000);
               }
-              console.error('[UnityGame] Unity instance not ready yet');
-              return false;
-            };
+            } else {
+              // OLD FORMAT (puzzle-master): SetLevelDataString
+              (window as any).setLevelData = (levelDataString: string) => {
+                if (instance) {
+                  console.log('[UnityGame] OLD FORMAT setLevelData:', levelDataString);
+                  instance.SendMessage('WebGLBridge', 'SetLevelDataString', levelDataString);
+                  return true;
+                }
+                console.error('[UnityGame] Unity instance not ready yet');
+                return false;
+              };
+            }
 
             // Setup level completion callback
             (window as any).onLevelComplete = (data: LevelCompleteData) => {
@@ -157,6 +195,10 @@ export const UnityGame: React.FC<UnityGameProps> = ({ gameSlug, levelData, onLev
       (window as any).setLevelData = null;
       (window as any).onLevelComplete = null;
       (window as any).urlLevelData = null;
+
+      // Cleanup localStorage used by new format games
+      localStorage.removeItem('levelDataPersistent');
+      localStorage.removeItem('timerPersistent');
 
       // Close all tracked audio contexts
       audioContextsRef.current.forEach(ctx => {
@@ -188,7 +230,7 @@ export const UnityGame: React.FC<UnityGameProps> = ({ gameSlug, levelData, onLev
         // Script might already be removed
       }
     };
-  }, [gameSlug, levelData, onLevelComplete]);
+  }, [gameSlug, levelData, levelJson, timeLimit, usesNewFormat, onLevelComplete]);
 
   return (
     <div ref={containerRef} className={styles.container}>

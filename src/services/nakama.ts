@@ -31,6 +31,8 @@ interface MatchLevel {
   tiles: unknown[];
   totalPairs: number;
   timeBonus: number;
+  levelJson?: string;   // For mahjong-dash: JSON level data
+  timeLimit?: number;   // For mahjong-dash: timer in seconds
 }
 
 interface PlayerInfo {

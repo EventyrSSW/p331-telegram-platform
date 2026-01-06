@@ -35,7 +35,8 @@ export function GameDetailPage() {
     joinGame,
     leaveMatch,
     resetMatch,
-    isConnected
+    isConnected,
+    session
   } = useNakama();
   const [game, setGame] = useState<Game | null>(null);
   const [loading, setLoading] = useState(true);
@@ -344,12 +345,12 @@ export function GameDetailPage() {
         status={match.status as 'waiting' | 'playing' | 'submitted' | 'completed'}
         matchType={match.matchType}
         players={[
-          { username: 'You', score: match.myScore, isMe: true, isWinner: match.winner === 'You' },
-          { username: match.matchType === 'PVH' ? 'House' : 'Opponent', score: match.opponentScore, isMe: false, isWinner: match.winner !== 'You' && match.winner !== null },
+          { username: 'You', score: match.myScore, isMe: true, isWinner: match.winner === session?.username },
+          { username: match.matchType === 'PVH' ? 'House' : 'Opponent', score: match.opponentScore, isMe: false, isWinner: match.winner !== session?.username && match.winner !== null },
         ]}
         myScore={match.myScore}
         payout={match.payout}
-        isWinner={match.winner === 'You' || (match.payout !== null && match.payout > 0)}
+        isWinner={match.winner === session?.username}
         onPlayAgain={handlePlayAgain}
       />
     </div>
