@@ -1,0 +1,160 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, rgba(30, 20, 50, 0.95) 0%, rgba(15, 10, 25, 0.98) 100%);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.content {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48px 24px;
+  cursor: default;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 48px;
+}
+
+.title {
+  font-size: 36px;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin: 0 0 8px 0;
+  text-align: center;
+}
+
+.payout {
+  font-size: 28px;
+  font-weight: 700;
+  color: #F59E0B;
+}
+
+.playersSection {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-start;
+  width: 100%;
+  gap: 24px;
+  margin-bottom: 48px;
+}
+
+.player {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+
+.winner .avatarContainer {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 0 0 30px rgba(245, 158, 11, 0.6), 0 0 60px rgba(245, 158, 11, 0.3);
+  animation: winnerGlow 2s ease-in-out infinite;
+}
+
+.loser .avatarContainer {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  overflow: hidden;
+  opacity: 0.7;
+  margin-top: 20px; /* Align with winner avatar center */
+}
+
+.avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatarPlaceholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+  font-size: 36px;
+  font-weight: 700;
+  color: #FFFFFF;
+}
+
+.loser .avatarPlaceholder {
+  font-size: 24px;
+}
+
+.username {
+  font-size: 16px;
+  font-weight: 600;
+  color: #FFFFFF;
+  margin-top: 12px;
+  text-align: center;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.winner .username {
+  font-size: 18px;
+}
+
+.loser .username {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.score {
+  font-size: 24px;
+  font-weight: 700;
+  color: #10B981;
+  margin-top: 4px;
+}
+
+.winner .score {
+  font-size: 28px;
+}
+
+.loser .score {
+  font-size: 20px;
+  color: rgba(16, 185, 129, 0.7);
+}
+
+.footer {
+  position: absolute;
+  bottom: 48px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+}
+
+.footerText {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+@keyframes winnerGlow {
+  0%, 100% {
+    box-shadow: 0 0 30px rgba(245, 158, 11, 0.6), 0 0 60px rgba(245, 158, 11, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(245, 158, 11, 0.8), 0 0 80px rgba(245, 158, 11, 0.4);
+  }
+}
