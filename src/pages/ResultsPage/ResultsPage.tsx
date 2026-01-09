@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Header, BottomNavBar, ResultCard } from '../../components';
+import { Header, BottomNavBar, ResultCard, MatchDetailModal } from '../../components';
 import { useGames } from '../../contexts/GamesContext';
 import { useNakama } from '../../contexts/NakamaContext';
 import { MatchHistoryEntry, nakamaService } from '../../services/nakama';
@@ -53,10 +53,11 @@ function groupResults(history: MatchHistoryEntry[]): GroupedResults {
 export function ResultsPage() {
   const navigate = useNavigate();
   const { allGames, isLoading: gamesLoading } = useGames();
-  const { rejoinMatch } = useNakama();
+  const { rejoinMatch, session } = useNakama();
   const [history, setHistory] = useState<MatchHistoryEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedMatch, setSelectedMatch] = useState<MatchHistoryEntry | null>(null);
 
   const fetchHistory = useCallback(async () => {
     if (!nakamaService.isAuthenticated()) {
@@ -156,6 +157,21 @@ export function ResultsPage() {
     fetchHistory();
   };
 
+  const handleMatchClick = (entry: MatchHistoryEntry) => {
+    if (entry.status === 'completed') {
+      setSelectedMatch(entry);
+    }
+  };
+
+  const handleCloseDetail = () => {
+    setSelectedMatch(null);
+  };
+
+  const currentUser = {
+    username: session?.username || 'You',
+    avatarUrl: undefined,
+  };
+
   const grouped = groupResults(history);
   const dateKeys = Object.keys(grouped.byDate);
   const hasAnyResults = grouped.pending.length > 0 || dateKeys.length > 0;
@@ -226,6 +242,7 @@ export function ResultsPage() {
                   key={entry.matchId}
                   entry={entry}
                   game={getGameBySlug(entry.gameId)}
+                  onClick={() => handleMatchClick(entry)}
                 />
               ))}
             </div>
@@ -233,6 +250,14 @@ export function ResultsPage() {
         ))}
       </main>
       <BottomNavBar />
+      {selectedMatch && (
+        <MatchDetailModal
+          isOpen={!!selectedMatch}
+          onClose={handleCloseDetail}
+          entry={selectedMatch}
+          currentUser={currentUser}
+        />
+      )}
     </div>
   );
 }
