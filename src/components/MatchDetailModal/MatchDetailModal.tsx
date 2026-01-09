@@ -1,8 +1,9 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import styles from './MatchDetailModal.module.css';
 import { haptic } from '../../providers/TelegramProvider';
 import type { MatchHistoryEntry } from '../../services/nakama';
+import { useCountUp } from '../../hooks/useCountUp';
 
 interface CurrentUser {
   username: string;
@@ -16,16 +17,35 @@ interface MatchDetailModalProps {
   currentUser: CurrentUser;
 }
 
+function AnimatedScore({ score, delay = 0 }: { score: number; delay?: number }) {
+  const animatedScore = useCountUp({
+    start: 0,
+    end: score,
+    duration: 1500,
+    delay,
+  });
+
+  return <>{animatedScore.toLocaleString()}</>;
+}
+
 export function MatchDetailModal({
   isOpen,
   onClose,
   entry,
   currentUser,
 }: MatchDetailModalProps) {
+  const [animationStarted, setAnimationStarted] = useState(false);
+
+  // Start animation when modal opens
+  if (isOpen && !animationStarted) {
+    setAnimationStarted(true);
+  }
+
   if (!isOpen) return null;
 
   const handleClose = () => {
     haptic.light();
+    setAnimationStarted(false);
     onClose();
   };
 
@@ -119,7 +139,7 @@ export function MatchDetailModal({
               )}
             </div>
             <span className={styles.username}>{winner.isMe ? 'You' : winner.username}</span>
-            <span className={styles.score}>{winner.score.toLocaleString()}</span>
+            <span className={styles.score}>{animationStarted ? <AnimatedScore score={winner.score} delay={300} /> : '0'}</span>
           </div>
 
           <div className={`${styles.player} ${styles.loser}`}>
@@ -137,7 +157,7 @@ export function MatchDetailModal({
               )}
             </div>
             <span className={styles.username}>{loser.isMe ? 'You' : loser.username}</span>
-            <span className={styles.score}>{loser.score.toLocaleString()}</span>
+            <span className={styles.score}>{animationStarted ? <AnimatedScore score={loser.score} delay={300} /> : '0'}</span>
           </div>
         </div>
 
