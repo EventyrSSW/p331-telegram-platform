@@ -1,9 +1,9 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Header, BottomNavBar, ResultCard, MatchDetailModal } from '../../components';
 import { useGames } from '../../contexts/GamesContext';
 import { useNakama } from '../../contexts/NakamaContext';
-import { MatchHistoryEntry, nakamaService } from '../../services/nakama';
+import { MatchHistoryEntry, UserProfile, nakamaService } from '../../services/nakama';
 import { haptic } from '../../providers/TelegramProvider';
 import styles from './ResultsPage.module.css';
 
@@ -55,11 +55,13 @@ export function ResultsPage() {
   const { allGames, isLoading: gamesLoading } = useGames();
   const { rejoinMatch, session } = useNakama();
   const [history, setHistory] = useState<MatchHistoryEntry[]>([]);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedMatch, setSelectedMatch] = useState<MatchHistoryEntry | null>(null);
+  const fetchInitiatedRef = useRef(false);
 
-  const fetchHistory = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     if (!nakamaService.isAuthenticated()) {
       setLoading(false);
       return;
@@ -68,10 +70,17 @@ export function ResultsPage() {
     try {
       setLoading(true);
       setError(null);
-      const response = await nakamaService.getMatchHistory(50);
-      setHistory(response.history || []);
+
+      // Fetch history and user profile in parallel
+      const [historyResponse, profile] = await Promise.all([
+        nakamaService.getMatchHistory(50),
+        nakamaService.getUserProfile(),
+      ]);
+
+      setHistory(historyResponse.history || []);
+      setUserProfile(profile);
     } catch (err) {
-      console.error('[ResultsPage] Failed to fetch history:', err);
+      console.error('[ResultsPage] Failed to fetch data:', err);
       setError('Failed to load match history');
     } finally {
       setLoading(false);
@@ -79,8 +88,10 @@ export function ResultsPage() {
   }, []);
 
   useEffect(() => {
-    fetchHistory();
-  }, [fetchHistory]);
+    if (fetchInitiatedRef.current) return;
+    fetchInitiatedRef.current = true;
+    fetchData();
+  }, [fetchData]);
 
   const getGameBySlug = useCallback((gameId: string) => {
     return allGames.find(g => g.slug === gameId || g.id === gameId) || null;
@@ -96,7 +107,7 @@ export function ResultsPage() {
       if (!syncResult.canReconnect) {
         // Match has ended, refresh the page
         alert('Match has ended');
-        fetchHistory();
+        fetchData();
         return;
       }
 
@@ -143,7 +154,7 @@ export function ResultsPage() {
 
       if (result.success) {
         alert(`Match cancelled. ${((result.refundAmount ?? 0) / 100).toFixed(2)} TON refunded.`);
-        fetchHistory(); // Refresh the list
+        fetchData(); // Refresh the list
       } else {
         alert(result.error || 'Failed to cancel match');
       }
@@ -154,7 +165,7 @@ export function ResultsPage() {
   };
 
   const handleRetry = () => {
-    fetchHistory();
+    fetchData();
   };
 
   const handleMatchClick = (entry: MatchHistoryEntry) => {
@@ -168,8 +179,8 @@ export function ResultsPage() {
   };
 
   const currentUser = {
-    username: session?.username || 'You',
-    avatarUrl: undefined,
+    username: userProfile?.username || userProfile?.displayName || session?.username || 'You',
+    avatarUrl: userProfile?.avatarUrl || undefined,
   };
 
   const grouped = groupResults(history);

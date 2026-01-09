@@ -85,6 +85,11 @@ interface TelegramUserData {
 // Match History types (for Results page)
 export type MatchHistoryStatus = 'waiting' | 'ready' | 'playing' | 'submitted' | 'completed' | 'cancelled';
 
+export interface GameAnalytics {
+  timeLeft?: number;
+  timerDuration?: number;
+}
+
 export interface MatchHistoryEntry {
   matchId: string;
   status: MatchHistoryStatus;
@@ -101,6 +106,10 @@ export interface MatchHistoryEntry {
   opponentName: string | null;
   opponentScore: number | null;
   opponentAvatar: string | null;
+  // Game analytics
+  myTimeLeft: number | null;
+  opponentTimeLeft: number | null;
+  timerDuration: number | null;
 }
 
 export interface MatchHistoryResponse {
@@ -158,6 +167,7 @@ class NakamaService {
   private onSocketDisconnectCallback: (() => void) | null = null;
   private onSocketReconnectCallback: (() => void) | null = null;
   private onSocketReconnectFailedCallback: (() => void) | null = null;
+  private onSessionExpiredCallback: (() => void) | null = null;
 
   constructor() {
     this.client = new Client(
@@ -535,15 +545,20 @@ class NakamaService {
     return result;
   }
 
-  async submitScore(matchId: string, score: number, timeMs: number): Promise<void> {
-    console.log('[Nakama] submitScore called:', { matchId, score, timeMs });
+  async submitScore(matchId: string, score: number, timeMs: number, analytics?: GameAnalytics): Promise<void> {
+    console.log('[Nakama] submitScore called:', { matchId, score, timeMs, analytics });
 
     if (!this.socket) {
       console.error('[Nakama] Socket not connected - cannot submit score');
       throw new Error('Socket not connected');
     }
 
-    const data = JSON.stringify({ score, timeMs });
+    const data = JSON.stringify({
+      score,
+      timeMs,
+      timeLeft: analytics?.timeLeft,
+      timerDuration: analytics?.timerDuration,
+    });
     console.log('[Nakama] Sending match state with OpCode:', MatchOpCodes.SCORE_SUBMIT, 'data:', data);
 
     await this.socket.sendMatchState(matchId, MatchOpCodes.SCORE_SUBMIT, data);
@@ -552,6 +567,8 @@ class NakamaService {
     console.log('[Nakama] Match:', matchId);
     console.log('[Nakama] Score:', score);
     console.log('[Nakama] Time:', timeMs, 'ms');
+    console.log('[Nakama] TimeLeft:', analytics?.timeLeft);
+    console.log('[Nakama] TimerDuration:', analytics?.timerDuration);
   }
 
   async leaveMatch(matchId: string): Promise<void> {
@@ -601,6 +618,29 @@ class NakamaService {
     this.onSocketReconnectFailedCallback = callbacks.onReconnectFailed || null;
   }
 
+  setSessionExpiredCallback(callback: (() => void) | null): void {
+    this.onSessionExpiredCallback = callback;
+  }
+
+  private handleAuthError(error: unknown): boolean {
+    // Check if this is a 401 authentication error (session refresh failed)
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const isAuthError =
+      (error instanceof Response && error.status === 401) ||
+      errorMessage.includes('401') ||
+      errorMessage.includes('Unauthorized') ||
+      errorMessage.includes('refresh');
+
+    if (isAuthError) {
+      console.log('[Nakama] Session expired or invalid, clearing session');
+      this.session = null;
+      localStorage.removeItem(SESSION_KEY);
+      this.onSessionExpiredCallback?.();
+      return true;
+    }
+    return false;
+  }
+
   stopAutoReconnect(): void {
     if (this.reconnectTimeoutId) {
       clearTimeout(this.reconnectTimeoutId);
@@ -644,13 +684,18 @@ class NakamaService {
       throw new Error('Not authenticated');
     }
 
-    const response = await this.client.rpc(this.session, 'get_match_history', { limit, cursor });
-    const result = typeof response.payload === 'string'
-      ? JSON.parse(response.payload)
-      : response.payload;
+    try {
+      const response = await this.client.rpc(this.session, 'get_match_history', { limit, cursor });
+      const result = typeof response.payload === 'string'
+        ? JSON.parse(response.payload)
+        : response.payload;
 
-    console.log('[Nakama] Got', result.history?.length || 0, 'match history entries');
-    return result as MatchHistoryResponse;
+      console.log('[Nakama] Got', result.history?.length || 0, 'match history entries');
+      return result as MatchHistoryResponse;
+    } catch (error) {
+      this.handleAuthError(error);
+      throw error;
+    }
   }
 
   async cancelMatch(matchId: string): Promise<CancelMatchResponse> {
@@ -694,14 +739,19 @@ class NakamaService {
       throw new Error('Not authenticated');
     }
 
-    console.log('[Nakama] Getting user profile');
-    const response = await this.client.rpc(this.session, 'get_user_profile', {});
-    const result = typeof response.payload === 'string'
-      ? JSON.parse(response.payload)
-      : response.payload;
+    try {
+      console.log('[Nakama] Getting user profile');
+      const response = await this.client.rpc(this.session, 'get_user_profile', {});
+      const result = typeof response.payload === 'string'
+        ? JSON.parse(response.payload)
+        : response.payload;
 
-    console.log('[Nakama] User profile:', result.username, 'stats:', result.stats);
-    return result as UserProfile;
+      console.log('[Nakama] User profile:', result.username, 'stats:', result.stats);
+      return result as UserProfile;
+    } catch (error) {
+      this.handleAuthError(error);
+      throw error;
+    }
   }
 }
 

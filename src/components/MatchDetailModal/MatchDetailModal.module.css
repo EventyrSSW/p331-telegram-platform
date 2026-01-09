@@ -44,7 +44,7 @@
 .payout {
   font-size: 28px;
   font-weight: 700;
-  color: #F59E0B;
+  color: #10B981;
 }
 
 .playersSection {
@@ -74,8 +74,12 @@
   height: 120px;
   border-radius: 50%;
   overflow: hidden;
-  box-shadow: 0 0 30px rgba(245, 158, 11, 0.6), 0 0 60px rgba(245, 158, 11, 0.3);
-  animation: winnerGlow 2s ease-in-out infinite;
+  box-shadow:
+    0 0 30px rgba(245, 158, 11, 0.8),
+    0 0 60px rgba(245, 158, 11, 0.5),
+    0 0 100px rgba(245, 158, 11, 0.3),
+    inset 0 0 20px rgba(255, 255, 255, 0.1);
+  animation: winnerGlow 1.5s ease-in-out infinite, winnerPulse 2s ease-in-out infinite;
 }
 
 .loser .avatarContainer {
@@ -131,17 +135,121 @@
 .score {
   font-size: 24px;
   font-weight: 700;
-  color: #10B981;
+  color: #FFFFFF;
   margin-top: 4px;
 }
 
 .winner .score {
   font-size: 28px;
+  color: #10B981;
 }
 
 .loser .score {
   font-size: 20px;
-  color: rgba(16, 185, 129, 0.7);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Stats Section */
+.statsSection {
+  width: 100%;
+  padding: 0 12px;
+  animation: fadeIn 0.5s ease-out 0.6s both;
+}
+
+.statsTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 16px 0;
+  text-align: center;
+}
+
+.progressBlock {
+  margin-bottom: 16px;
+}
+
+.progressBlock:last-of-type {
+  margin-bottom: 0;
+}
+
+.progressHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.progressLabel {
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.8);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 70%;
+}
+
+.progressBarContainer {
+  flex: 1;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progressBar {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 1s ease-out;
+  position: relative;
+  overflow: hidden;
+}
+
+.progressBar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.2) 50%,
+    transparent 100%
+  );
+  animation: shimmer 2s infinite;
+}
+
+.progressBarWinner {
+  background: linear-gradient(90deg, #10B981 0%, #34D399 100%);
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.5);
+}
+
+.progressBarLoser {
+  background: linear-gradient(90deg, #6B7280 0%, #9CA3AF 100%);
+}
+
+.progressTime {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.winnerStat {
+  color: #10B981;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 .footer {
@@ -159,10 +267,27 @@
 
 @keyframes winnerGlow {
   0%, 100% {
-    box-shadow: 0 0 30px rgba(245, 158, 11, 0.6), 0 0 60px rgba(245, 158, 11, 0.3);
+    box-shadow:
+      0 0 30px rgba(245, 158, 11, 0.8),
+      0 0 60px rgba(245, 158, 11, 0.5),
+      0 0 100px rgba(245, 158, 11, 0.3),
+      inset 0 0 20px rgba(255, 255, 255, 0.1);
   }
   50% {
-    box-shadow: 0 0 40px rgba(245, 158, 11, 0.8), 0 0 80px rgba(245, 158, 11, 0.4);
+    box-shadow:
+      0 0 50px rgba(245, 158, 11, 1),
+      0 0 100px rgba(245, 158, 11, 0.7),
+      0 0 150px rgba(245, 158, 11, 0.4),
+      inset 0 0 30px rgba(255, 255, 255, 0.2);
+  }
+}
+
+@keyframes winnerPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
   }
 }
 

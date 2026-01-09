@@ -239,7 +239,7 @@ function updateMatchHistoryScore(nk, logger, matchId, userId, score) {
   return null;
 }
 
-function updateMatchHistoryComplete(nk, logger, matchId, userId, result, payout, opponentScore) {
+function updateMatchHistoryComplete(nk, logger, matchId, userId, result, payout, opponentScore, analytics) {
   var reads = nk.storageRead([
     { collection: "match_history", key: matchId, userId: userId }
   ]);
@@ -251,6 +251,10 @@ function updateMatchHistoryComplete(nk, logger, matchId, userId, result, payout,
     entry.result = result;  // "won" or "lost"
     entry.payout = payout;
     entry.opponentScore = opponentScore;
+    // Game analytics
+    entry.myTimeLeft = analytics.myTimeLeft;
+    entry.opponentTimeLeft = analytics.opponentTimeLeft;
+    entry.timerDuration = analytics.timerDuration;
 
     nk.storageWrite([{
       collection: "match_history",
@@ -1277,16 +1281,27 @@ function matchJoin(ctx, logger, nk, dispatcher, tick, state, presences) {
         state.allPlayersDisconnectedAt = null;
       }
     } else {
-      // New player joining
+      // New player joining - fetch avatar from account
+      var avatarUrl = null;
+      try {
+        var accounts = nk.accountsGetId([presence.userId]);
+        if (accounts && accounts.length > 0 && accounts[0].user) {
+          avatarUrl = accounts[0].user.avatarUrl || null;
+        }
+      } catch (e) {
+        logger.warn("Failed to fetch avatar for user " + presence.userId + ": " + e.message);
+      }
+
       state.players[presence.userId] = {
         userId: presence.userId,
         sessionId: presence.sessionId,
         username: presence.username,
+        avatarUrl: avatarUrl,
         isHouse: false,
         disconnected: false,
         disconnectedAt: null
       };
-      logger.info("Player " + presence.username + " joined match");
+      logger.info("Player " + presence.username + " joined match (avatar: " + (avatarUrl ? "yes" : "no") + ")");
     }
   }
 
@@ -1358,6 +1373,7 @@ function matchJoin(ctx, logger, nk, dispatcher, tick, state, presences) {
         entry.updatedAt = Date.now();
         entry.opponentId = opponentId;
         entry.opponentName = opponentInfo.username;
+        entry.opponentAvatar = opponentInfo.avatarUrl || null;
         entry.levelId = state.level ? state.level.id : null;
         entry.matchType = "PVP";
 
@@ -1412,7 +1428,7 @@ function matchLoop(ctx, logger, nk, dispatcher, tick, state, messages) {
         for (var odredacted in state.players) {
           var player = state.players[odredacted];
           if (!player.isHouse && !state.results[odredacted]) {
-            state.results[odredacted] = { score: 0, timeMs: 999999999 };
+            state.results[odredacted] = { score: 0, timeMs: 999999999, timeLeft: null, timerDuration: null };
             logger.info("Player " + odredacted + " (" + player.username + ") forfeited - assigned score 0");
           }
         }
@@ -1524,6 +1540,7 @@ function matchLoop(ctx, logger, nk, dispatcher, tick, state, messages) {
           entry.updatedAt = Date.now();
           entry.opponentId = "house";
           entry.opponentName = "House";
+          entry.opponentAvatar = null;  // House has no avatar
           entry.levelId = state.level ? state.level.id : null;
           entry.matchType = "PVH";
 
@@ -1549,7 +1566,7 @@ function matchLoop(ctx, logger, nk, dispatcher, tick, state, messages) {
     for (var userId in state.players) {
       var player = state.players[userId];
       if (!player.isHouse && !state.results[userId]) {
-        state.results[userId] = { score: 0, timeMs: 999999999 };
+        state.results[userId] = { score: 0, timeMs: 999999999, timeLeft: null, timerDuration: null };
       }
     }
 
@@ -1582,7 +1599,9 @@ function matchLoop(ctx, logger, nk, dispatcher, tick, state, messages) {
 
       state.results[message.sender.userId] = {
         score: data.score,
-        timeMs: data.timeMs
+        timeMs: data.timeMs,
+        timeLeft: data.timeLeft || null,
+        timerDuration: data.timerDuration || null
       };
 
       // Update match history with submitted score
@@ -1631,7 +1650,7 @@ function matchLoop(ctx, logger, nk, dispatcher, tick, state, messages) {
           for (var odredacted in state.players) {
             var player = state.players[odredacted];
             if (!player.isHouse && !state.results[odredacted] && player.disconnected) {
-              state.results[odredacted] = { score: 0, timeMs: 999999999 };
+              state.results[odredacted] = { score: 0, timeMs: 999999999, timeLeft: null, timerDuration: null };
               logger.info("Assigned forfeit score (0) to disconnected player " + odredacted);
             }
           }
@@ -1742,7 +1761,7 @@ function matchLeave(ctx, logger, nk, dispatcher, tick, state, presences) {
       for (var odredacted in state.players) {
         var player = state.players[odredacted];
         if (!player.isHouse && !state.results[odredacted]) {
-          state.results[odredacted] = { score: 0, timeMs: 999999999 };
+          state.results[odredacted] = { score: 0, timeMs: 999999999, timeLeft: null, timerDuration: null };
           logger.info("Assigned forfeit score to disconnected player " + odredacted);
         }
       }
@@ -1793,14 +1812,25 @@ function checkAllResultsSubmitted(state) {
   return true;
 }
 
-function generateHouseScore(playerScore, houseEdge) {
+// Generate house time based on player's time and house edge
+// Returns { timeSpent, houseWins } where timeSpent is the generated time for display
+function generateHouseResult(playerTimeSpent, houseEdge) {
   var edge = houseEdge || DEFAULT_HOUSE_EDGE;
   var houseWins = Math.random() < edge;
+
+  var houseTimeSpent;
   if (houseWins) {
-    return Math.floor(playerScore * (1 + 0.01 + Math.random() * 0.14));
+    // House wins - generate time slightly faster (1-15% faster)
+    houseTimeSpent = Math.floor(playerTimeSpent * (0.85 + Math.random() * 0.14));
   } else {
-    return Math.floor(playerScore * (1 - 0.01 - Math.random() * 0.14));
+    // House loses - generate time slightly slower (1-15% slower)
+    houseTimeSpent = Math.floor(playerTimeSpent * (1.01 + Math.random() * 0.14));
   }
+
+  return {
+    timeSpent: houseTimeSpent,
+    houseWins: houseWins
+  };
 }
 
 function resolveMatch(ctx, nk, logger, dispatcher, state) {
@@ -1812,30 +1842,65 @@ function resolveMatch(ctx, nk, logger, dispatcher, state) {
   var winner = null;
   var winnerId = "";
   var winnerScore = -1;
+  var winnerTimeSpent = Infinity;
 
+  // For PVH matches: generate house time based on player's time
   if (state.housePlayer) {
     for (var userId in state.players) {
       var player = state.players[userId];
       if (!player.isHouse) {
         var playerResult = state.results[userId];
         if (playerResult) {
-          var houseScore = generateHouseScore(playerResult.score, state.config.houseEdge);
-          state.results["house"] = { score: houseScore, timeMs: 0 };
-          logger.info("House score: " + houseScore + ", Player score: " + playerResult.score);
+          // Calculate player's time spent
+          var playerTimeSpent = Infinity;
+          if (playerResult.timerDuration && playerResult.timeLeft !== null && playerResult.timeLeft !== undefined) {
+            playerTimeSpent = playerResult.timerDuration - playerResult.timeLeft;
+          }
+
+          // Generate house result (decides win/lose first, then generates matching time)
+          var houseResult = generateHouseResult(playerTimeSpent, state.config.houseEdge);
+
+          // Convert house time spent back to timeLeft format for storage
+          var houseTimeLeft = playerResult.timerDuration ? playerResult.timerDuration - houseResult.timeSpent : null;
+
+          state.results["house"] = {
+            score: playerResult.score, // House matches player score (irrelevant now)
+            timeMs: 0,
+            timeLeft: houseTimeLeft,
+            timerDuration: playerResult.timerDuration
+          };
+
+          logger.info("PVH - Player time: " + playerTimeSpent + "s, House time: " + houseResult.timeSpent + "s, House wins: " + houseResult.houseWins);
         }
         break;
       }
     }
   }
 
+  // Determine winner by fastest time (lowest timeSpent)
+  // Tiebreaker: higher score wins
   for (var userId in state.players) {
     var result = state.results[userId];
-    if (result && result.score > winnerScore) {
-      winnerScore = result.score;
-      winner = state.players[userId];
-      winnerId = userId;
+    if (result) {
+      // Calculate time spent: timerDuration - timeLeft (lower = faster = better)
+      var timeSpent = Infinity;
+      if (result.timerDuration && result.timeLeft !== null && result.timeLeft !== undefined) {
+        timeSpent = result.timerDuration - result.timeLeft;
+      }
+
+      // Winner is whoever finished fastest (least time spent)
+      // Tiebreaker: if same time, higher score wins
+      if (timeSpent < winnerTimeSpent ||
+          (timeSpent === winnerTimeSpent && result.score > winnerScore)) {
+        winnerTimeSpent = timeSpent;
+        winnerScore = result.score;
+        winner = state.players[userId];
+        winnerId = userId;
+      }
     }
   }
+
+  logger.info("Winner determination: " + (winner ? winner.username : "none") + " with time " + winnerTimeSpent + "s, score " + winnerScore);
 
   // Update player stats for all real players
   for (var userId in state.players) {
@@ -1851,7 +1916,7 @@ function resolveMatch(ctx, nk, logger, dispatcher, state) {
     }
   }
 
-  logger.info("Winner: " + (winner ? winner.username : "none") + ", Payout: " + payout);
+  logger.info("Winner: " + (winner ? winner.username : "none") + ", Time: " + winnerTimeSpent + "s, Score: " + winnerScore + ", Payout: " + payout);
 
   // Handle house winning - player loses bet (already deducted, just record it)
   if (winner && winner.isHouse) {
@@ -1860,14 +1925,26 @@ function resolveMatch(ctx, nk, logger, dispatcher, state) {
       var player = state.players[odredacted];
       if (!player.isHouse) {
         // Record loss to house (bet was already deducted at join time)
+        // Calculate times for logging
+        var playerTimeSpent = null;
+        var houseTimeSpent = null;
+        var playerRes = state.results[odredacted];
+        var houseRes = state.results["house"];
+        if (playerRes && playerRes.timerDuration && playerRes.timeLeft !== null) {
+          playerTimeSpent = playerRes.timerDuration - playerRes.timeLeft;
+        }
+        if (houseRes && houseRes.timerDuration && houseRes.timeLeft !== null) {
+          houseTimeSpent = houseRes.timerDuration - houseRes.timeLeft;
+        }
+
         nk.walletUpdate(odredacted, { coins: 0 }, {
           type: "match_lost_to_house",
           gameId: state.gameId,
           matchType: "PVH",
           betAmount: state.betAmount,
           lostAmount: state.betAmount,
-          playerScore: state.results[odredacted] ? state.results[odredacted].score : 0,
-          houseScore: state.results["house"] ? state.results["house"].score : 0,
+          playerTime: playerTimeSpent,
+          houseTime: houseTimeSpent,
           timestamp: Date.now()
         }, true);
 
@@ -1878,8 +1955,8 @@ function resolveMatch(ctx, nk, logger, dispatcher, state) {
             {
               matchType: "PVH",
               lostAmount: state.betAmount,
-              playerScore: state.results[odredacted] ? state.results[odredacted].score : 0,
-              houseScore: state.results["house"] ? state.results["house"].score : 0
+              playerTime: playerTimeSpent,
+              houseTime: houseTimeSpent
             },
             102,  // Different code for house loss
             null,
@@ -1980,20 +2057,32 @@ function resolveMatch(ctx, nk, logger, dispatcher, state) {
     if (!player.isHouse) {
       var playerWon = (odredacted === winnerId);
       var playerPayout = playerWon ? payout : null;
+      var myResult = state.results[odredacted];
 
-      // Find opponent score
+      // Find opponent score and analytics
       var opponentScore = null;
+      var opponentTimeLeft = null;
       if (state.housePlayer) {
         opponentScore = state.results["house"] ? state.results["house"].score : null;
+        opponentTimeLeft = null; // House has no time tracking
       } else {
-        // PVP - find the other player's score
+        // PVP - find the other player's score and timeLeft
         for (var oppId in state.players) {
           if (oppId !== odredacted && !state.players[oppId].isHouse) {
-            opponentScore = state.results[oppId] ? state.results[oppId].score : null;
+            var oppResult = state.results[oppId];
+            opponentScore = oppResult ? oppResult.score : null;
+            opponentTimeLeft = oppResult ? oppResult.timeLeft : null;
             break;
           }
         }
       }
+
+      // Build analytics object
+      var analytics = {
+        myTimeLeft: myResult ? myResult.timeLeft : null,
+        opponentTimeLeft: opponentTimeLeft,
+        timerDuration: myResult ? myResult.timerDuration : null
+      };
 
       updateMatchHistoryComplete(
         nk,
@@ -2002,7 +2091,8 @@ function resolveMatch(ctx, nk, logger, dispatcher, state) {
         odredacted,
         playerWon ? "won" : "lost",
         playerPayout,
-        opponentScore
+        opponentScore,
+        analytics
       );
     }
   }
@@ -2011,6 +2101,7 @@ function resolveMatch(ctx, nk, logger, dispatcher, state) {
     type: "match_result",
     winner: winner ? winner.username : "House",
     winnerScore: winnerScore,
+    winnerTime: winnerTimeSpent === Infinity ? null : winnerTimeSpent,
     results: state.results,
     payout: (winner && !winner.isHouse) ? payout : 0
   }), null, null, true);

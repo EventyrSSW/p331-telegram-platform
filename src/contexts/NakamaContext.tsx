@@ -65,6 +65,11 @@ interface RejoinMatchParams {
   matchType: 'PVP' | 'PVH';
 }
 
+export interface GameAnalytics {
+  timeLeft?: number;
+  timerDuration?: number;
+}
+
 interface NakamaContextValue {
   // Session state
   session: Session | null;
@@ -94,7 +99,7 @@ interface NakamaContextValue {
   // Match actions
   joinGame: (gameId: string, betAmount: number) => Promise<JoinGameResponse | null>;
   rejoinMatch: (params: RejoinMatchParams) => Promise<boolean>;
-  submitScore: (score: number, timeMs: number) => Promise<void>;
+  submitScore: (score: number, timeMs: number, analytics?: GameAnalytics) => Promise<void>;
   leaveMatch: () => Promise<void>;
   resetMatch: () => void;
   setMatchStatus: (status: MatchState['status']) => void;
@@ -213,6 +218,20 @@ export function NakamaProvider({ children }: NakamaProviderProps) {
     };
   }, [showToast, hideToast]);
 
+  // Setup session expired callback to handle 401 errors
+  useEffect(() => {
+    nakamaService.setSessionExpiredCallback(() => {
+      console.log('[NakamaContext] Session expired - clearing state and showing toast');
+      setSession(null);
+      setIsSocketConnected(false);
+      showToast('Session expired. Please refresh the page.', 'error', false);
+    });
+
+    return () => {
+      nakamaService.setSessionExpiredCallback(null);
+    };
+  }, [showToast]);
+
   // Fetch wallet from Nakama
   const refreshWallet = useCallback(async () => {
     if (!nakamaService.isAuthenticated()) {
@@ -318,8 +337,11 @@ export function NakamaProvider({ children }: NakamaProviderProps) {
     }));
 
     try {
-      // Ensure socket is connected
-      if (!isSocketConnected) {
+      // Check actual socket state (not React state) to handle race conditions
+      // where socket disconnects but React state hasn't updated yet
+      const actualSocket = nakamaService.getSocket();
+      if (!actualSocket) {
+        console.log('[NakamaContext] Socket not available, connecting...');
         await connectSocketInternal();
       }
 
@@ -337,10 +359,10 @@ export function NakamaProvider({ children }: NakamaProviderProps) {
       setMatch(prev => ({ ...prev, error: message, status: 'idle' }));
       return null;
     }
-  }, [session, isSocketConnected]);
+  }, [session]);
 
-  const submitScore = useCallback(async (score: number, timeMs: number) => {
-    console.log('[NakamaContext] submitScore called:', { score, timeMs });
+  const submitScore = useCallback(async (score: number, timeMs: number, analytics?: GameAnalytics) => {
+    console.log('[NakamaContext] submitScore called:', { score, timeMs, analytics });
 
     if (!matchRef.current.matchId) {
       console.error('[NakamaContext] No active match - cannot submit score');
@@ -359,7 +381,7 @@ export function NakamaProvider({ children }: NakamaProviderProps) {
 
     try {
       console.log('[NakamaContext] Calling nakamaService.submitScore...');
-      await nakamaService.submitScore(matchId, score, timeMs);
+      await nakamaService.submitScore(matchId, score, timeMs, analytics);
       console.log('[NakamaContext] Score submitted successfully!');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to submit score';

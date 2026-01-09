@@ -21,6 +21,8 @@ interface LevelCompleteData {
   level: number;
   score: number;
   coins: number;
+  timeLeft?: number;
+  timerDuration?: number;
 }
 
 export const GamePage = () => {
@@ -72,7 +74,12 @@ export const GamePage = () => {
       console.log('[GamePage] Match:', matchId);
       console.log('[GamePage] Score:', data.score);
       console.log('[GamePage] Time:', timeMs, 'ms');
-      submitScore(data.score, timeMs);
+      console.log('[GamePage] TimeLeft:', data.timeLeft);
+      console.log('[GamePage] TimerDuration:', data.timerDuration);
+      submitScore(data.score, timeMs, {
+        timeLeft: data.timeLeft,
+        timerDuration: data.timerDuration,
+      });
     } else {
       console.log('[GamePage] No matchId - skipping score submission');
     }
