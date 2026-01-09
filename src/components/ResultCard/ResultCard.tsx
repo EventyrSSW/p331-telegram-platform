@@ -9,6 +9,7 @@ interface ResultCardProps {
   game: Game | null;
   onContinue?: () => void;
   onCancel?: () => void;
+  onClick?: () => void;
 }
 
 const STATUS_CONFIG: Record<MatchHistoryStatus, { label: string; showPrice: boolean }> = {
@@ -25,19 +26,30 @@ export const ResultCard: React.FC<ResultCardProps> = ({
   game,
   onContinue,
   onCancel,
+  onClick,
 }) => {
   const isPending = !['completed', 'cancelled'].includes(entry.status);
   const isCompleted = entry.status === 'completed';
   const config = STATUS_CONFIG[entry.status];
+  const isClickable = isCompleted && onClick;
 
-  const handleContinue = () => {
+  const handleContinue = (e: React.MouseEvent) => {
+    e.stopPropagation();
     haptic.medium();
     onContinue?.();
   };
 
-  const handleCancel = () => {
+  const handleCancel = (e: React.MouseEvent) => {
+    e.stopPropagation();
     haptic.medium();
     onCancel?.();
+  };
+
+  const handleCardClick = () => {
+    if (isCompleted && onClick) {
+      haptic.light();
+      onClick();
+    }
   };
 
   // Determine what to show on the right side
@@ -97,7 +109,12 @@ export const ResultCard: React.FC<ResultCardProps> = ({
   };
 
   return (
-    <div className={`${styles.card} ${isPending ? styles.pending : ''}`}>
+    <div
+      className={`${styles.card} ${isPending ? styles.pending : ''} ${isClickable ? styles.clickable : ''}`}
+      onClick={handleCardClick}
+      role={isClickable ? 'button' : undefined}
+      tabIndex={isClickable ? 0 : undefined}
+    >
       {/* Game Thumbnail */}
       <div className={styles.thumbnail}>
         {game?.thumbnail ? (

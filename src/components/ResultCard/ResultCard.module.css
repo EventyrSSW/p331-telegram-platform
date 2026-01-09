@@ -154,3 +154,16 @@
 .lost {
   color: #FF4757;
 }
+
+.clickable {
+  cursor: pointer;
+  transition: transform 0.15s ease, background-color 0.15s ease;
+}
+
+.clickable:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.clickable:active {
+  transform: scale(0.98);
+}
