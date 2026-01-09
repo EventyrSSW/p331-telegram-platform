@@ -16,6 +16,7 @@
 .content {
   width: 100%;
   max-width: 400px;
+  min-height: 80vh;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -50,7 +51,7 @@
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   width: 100%;
   gap: 24px;
   margin-bottom: 48px;
@@ -83,7 +84,6 @@
   border-radius: 50%;
   overflow: hidden;
   opacity: 0.7;
-  margin-top: 20px; /* Align with winner avatar center */
 }
 
 .avatar {
@@ -145,10 +145,8 @@
 }
 
 .footer {
-  position: absolute;
-  bottom: 48px;
-  left: 0;
-  right: 0;
+  margin-top: auto;
+  padding-top: 48px;
   display: flex;
   justify-content: center;
   animation: fadeIn 0.5s ease-out 1s both;

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import styles from './MatchDetailModal.module.css';
 import { haptic } from '../../providers/TelegramProvider';
@@ -36,18 +36,22 @@ export function MatchDetailModal({
 }: MatchDetailModalProps) {
   const [animationStarted, setAnimationStarted] = useState(false);
 
-  // Start animation when modal opens
-  if (isOpen && !animationStarted) {
-    setAnimationStarted(true);
-  }
-
-  if (!isOpen) return null;
-
-  const handleClose = () => {
+  // Stable close handler
+  const handleClose = useCallback(() => {
     haptic.light();
     setAnimationStarted(false);
     onClose();
-  };
+  }, [onClose]);
+
+
+  // Start animation when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setAnimationStarted(true);
+    } else {
+      setAnimationStarted(false);
+    }
+  }, [isOpen]);
 
   // Close on Escape key
   useEffect(() => {
@@ -64,42 +68,32 @@ export function MatchDetailModal({
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isOpen]);
+  }, [isOpen, handleClose]);
+
+  if (!isOpen) return null;
 
   const isWinner = entry.result === 'won';
   const payout = entry.payout ?? 0;
 
-  // Determine winner and loser data
+  // Current user always on left, opponent always on right
   const myScore = entry.myScore ?? 0;
   const opponentScore = entry.opponentScore ?? 0;
 
-  const winner = isWinner
-    ? {
-        username: currentUser.username,
-        avatarUrl: currentUser.avatarUrl,
-        score: myScore,
-        isMe: true,
-      }
-    : {
-        username: entry.opponentName ?? 'Opponent',
-        avatarUrl: entry.opponentAvatar,
-        score: opponentScore,
-        isMe: false,
-      };
+  const leftPlayer = {
+    username: currentUser.username,
+    avatarUrl: currentUser.avatarUrl,
+    score: myScore,
+    isMe: true,
+    isWinner: isWinner,
+  };
 
-  const loser = isWinner
-    ? {
-        username: entry.opponentName ?? 'Opponent',
-        avatarUrl: entry.opponentAvatar,
-        score: opponentScore,
-        isMe: false,
-      }
-    : {
-        username: currentUser.username,
-        avatarUrl: currentUser.avatarUrl,
-        score: myScore,
-        isMe: true,
-      };
+  const rightPlayer = {
+    username: entry.opponentName ?? 'Opponent',
+    avatarUrl: entry.opponentAvatar,
+    score: opponentScore,
+    isMe: false,
+    isWinner: !isWinner,
+  };
 
   const modalContent = (
     <div
@@ -109,7 +103,7 @@ export function MatchDetailModal({
       aria-modal="true"
       aria-label="Match Result"
     >
-      <div className={styles.content} onClick={(e) => e.stopPropagation()}>
+      <div className={styles.content}>
         {isWinner && (
           <div className={styles.header}>
             <h1 className={styles.title}>You win!</h1>
@@ -119,45 +113,45 @@ export function MatchDetailModal({
 
         {!isWinner && (
           <div className={styles.header}>
-            <h1 className={styles.title}>You lost</h1>
+            <h1 className={styles.title}>Results</h1>
           </div>
         )}
 
         <div className={styles.playersSection}>
-          <div className={`${styles.player} ${styles.winner}`}>
+          <div className={`${styles.player} ${leftPlayer.isWinner ? styles.winner : styles.loser}`}>
             <div className={styles.avatarContainer}>
-              {winner.avatarUrl ? (
+              {leftPlayer.avatarUrl ? (
                 <img
-                  src={winner.avatarUrl}
-                  alt={winner.username}
+                  src={leftPlayer.avatarUrl}
+                  alt={leftPlayer.username}
                   className={styles.avatar}
                 />
               ) : (
                 <div className={styles.avatarPlaceholder}>
-                  {(winner.username || 'U').charAt(0).toUpperCase()}
+                  {(leftPlayer.username || 'U').charAt(0).toUpperCase()}
                 </div>
               )}
             </div>
-            <span className={styles.username}>{winner.isMe ? 'You' : winner.username}</span>
-            <span className={styles.score}>{animationStarted ? <AnimatedScore score={winner.score} delay={300} /> : '0'}</span>
+            <span className={styles.username}>{leftPlayer.isMe ? 'You' : leftPlayer.username}</span>
+            <span className={styles.score}>{animationStarted ? <AnimatedScore score={leftPlayer.score} delay={300} /> : '0'}</span>
           </div>
 
-          <div className={`${styles.player} ${styles.loser}`}>
+          <div className={`${styles.player} ${rightPlayer.isWinner ? styles.winner : styles.loser}`}>
             <div className={styles.avatarContainer}>
-              {loser.avatarUrl ? (
+              {rightPlayer.avatarUrl ? (
                 <img
-                  src={loser.avatarUrl}
-                  alt={loser.username}
+                  src={rightPlayer.avatarUrl}
+                  alt={rightPlayer.username}
                   className={styles.avatar}
                 />
               ) : (
                 <div className={styles.avatarPlaceholder}>
-                  {(loser.username || 'U').charAt(0).toUpperCase()}
+                  {(rightPlayer.username || 'U').charAt(0).toUpperCase()}
                 </div>
               )}
             </div>
-            <span className={styles.username}>{loser.isMe ? 'You' : loser.username}</span>
-            <span className={styles.score}>{animationStarted ? <AnimatedScore score={loser.score} delay={300} /> : '0'}</span>
+            <span className={styles.username}>{rightPlayer.isMe ? 'You' : rightPlayer.username}</span>
+            <span className={styles.score}>{animationStarted ? <AnimatedScore score={rightPlayer.score} delay={300} /> : '0'}</span>
           </div>
         </div>
 
