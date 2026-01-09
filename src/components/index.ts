@@ -19,3 +19,4 @@ export { MatchResultModal } from './MatchResultModal';
 export { SearchOpponentModal } from './SearchOpponentModal';
 export { MatchPresenceOverlay } from './MatchPresenceOverlay/MatchPresenceOverlay';
 export { ResultCard } from './ResultCard';
+export { MatchDetailModal } from './MatchDetailModal';
