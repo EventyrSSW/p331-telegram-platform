@@ -583,7 +583,13 @@ function rpcMigrateLeaderboard(ctx, logger, nk, payload) {
       var stats;
 
       try {
-        stats = typeof row.value === 'string' ? JSON.parse(row.value) : row.value;
+        var valueData = row.value;
+        // SQL returns value as byte array - convert to string first
+        if (Array.isArray(valueData) || (valueData && typeof valueData === 'object' && valueData.length)) {
+          var bytes = Array.isArray(valueData) ? valueData : Array.prototype.slice.call(valueData);
+          valueData = String.fromCharCode.apply(null, bytes);
+        }
+        stats = typeof valueData === 'string' ? JSON.parse(valueData) : valueData;
         // Debug first few
         if (i < 3) {
           logger.info("Row " + i + " parsed stats: wins=" + stats.wins + ", gamesPlayed=" + stats.gamesPlayed);
