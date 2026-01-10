@@ -11,7 +11,7 @@ import { AddTonModal } from '../AddTonModal/AddTonModal';
 import { PaymentVerificationModal } from '../PaymentVerificationModal';
 import { usePaymentVerification } from '../../hooks/usePaymentVerification';
 import { haptic } from '../../providers/TelegramProvider';
-import { MOCK_RANK, MOCK_USER, shouldUseMockData } from '../../utils/mockData';
+import { MOCK_USER, shouldUseMockData } from '../../utils/mockData';
 import TonCoinIcon from '../../assets/icons/toncoin-ton-logo 1.svg?react';
 import PlusIcon from '../../assets/icons/vector.svg?react';
 import UserIcon from '../../assets/icons/user.svg?react';
@@ -19,7 +19,7 @@ import starIconPng from '../../assets/icons/cfcfda09650d68463d93067e00c49b9af785
 import styles from './Header.module.css';
 
 export const Header = () => {
-  const { coins, refreshWallet } = useNakama();
+  const { coins, refreshWallet, leaderboardRank } = useNakama();
   const { config } = useConfig();
   const { user } = useAuth();
   const { isAddTonModalOpen, openAddTonModal, closeAddTonModal } = useModal();
@@ -196,7 +196,7 @@ export const Header = () => {
           </div>
         )}
         <img src={starIconPng} alt="star" className={styles.starIcon} />
-        <span className={styles.rankValue}>{MOCK_RANK}</span>
+        <span className={styles.rankValue}>{leaderboardRank ?? '-'}</span>
       </Link>
 
       {/* Right Section - TON */}

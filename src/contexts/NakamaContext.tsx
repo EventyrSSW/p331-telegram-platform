@@ -103,6 +103,11 @@ interface NakamaContextValue {
   leaveMatch: () => Promise<void>;
   resetMatch: () => void;
   setMatchStatus: (status: MatchState['status']) => void;
+
+  // Leaderboard state
+  leaderboardRank: number | null;
+  isLeaderboardLoading: boolean;
+  refreshLeaderboardRank: () => Promise<void>;
 }
 
 const NakamaContext = createContext<NakamaContextValue | null>(null);
@@ -132,6 +137,8 @@ export function NakamaProvider({ children }: NakamaProviderProps) {
   const [match, setMatch] = useState<MatchState>(initialMatchState);
   const [coins, setCoins] = useState<number>(0);
   const [isWalletLoading, setIsWalletLoading] = useState(false);
+  const [leaderboardRank, setLeaderboardRank] = useState<number | null>(null);
+  const [isLeaderboardLoading, setIsLeaderboardLoading] = useState(false);
 
   const matchRef = useRef(match);
   matchRef.current = match;
@@ -250,23 +257,43 @@ export function NakamaProvider({ children }: NakamaProviderProps) {
     }
   }, []);
 
-  // Refresh wallet when match completes (to show updated balance after win/loss)
+  // Fetch leaderboard rank from Nakama
+  const refreshLeaderboardRank = useCallback(async () => {
+    if (!nakamaService.isAuthenticated()) {
+      return;
+    }
+
+    setIsLeaderboardLoading(true);
+    try {
+      const response = await nakamaService.getLeaderboard(1);
+      setLeaderboardRank(response.myRank);
+      console.log('[NakamaContext] Leaderboard rank refreshed:', response.myRank);
+    } catch (err) {
+      console.error('[NakamaContext] Failed to fetch leaderboard rank:', err);
+    } finally {
+      setIsLeaderboardLoading(false);
+    }
+  }, []);
+
+  // Refresh wallet and leaderboard rank when match completes
   useEffect(() => {
     if (match.status === 'completed') {
-      console.log('[NakamaContext] Match completed, refreshing wallet...');
+      console.log('[NakamaContext] Match completed, refreshing wallet and leaderboard rank...');
       refreshWallet();
+      refreshLeaderboardRank();
     }
-  }, [match.status, refreshWallet]);
+  }, [match.status, refreshWallet, refreshLeaderboardRank]);
 
-  // Auto-connect socket and fetch wallet when session is established
+  // Auto-connect socket and fetch wallet/leaderboard when session is established
   useEffect(() => {
     if (session && !isSocketConnected && !isSocketConnecting) {
       console.log('[NakamaContext] Session established, connecting socket...');
       connectSocketInternal();
-      // Also fetch wallet
+      // Also fetch wallet and leaderboard rank
       refreshWallet();
+      refreshLeaderboardRank();
     }
-  }, [session, isSocketConnected, isSocketConnecting, refreshWallet]);
+  }, [session, isSocketConnected, isSocketConnecting, refreshWallet, refreshLeaderboardRank]);
 
   const connectSocketInternal = async () => {
     setIsSocketConnecting(true);
@@ -522,6 +549,9 @@ export function NakamaProvider({ children }: NakamaProviderProps) {
     leaveMatch,
     resetMatch,
     setMatchStatus,
+    leaderboardRank,
+    isLeaderboardLoading,
+    refreshLeaderboardRank,
   };
 
   return (

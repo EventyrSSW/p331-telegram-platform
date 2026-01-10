@@ -537,6 +537,103 @@ function rpcUpdateUserWallet(ctx, logger, nk, payload) {
   });
 }
 
+function rpcGetLeaderboard(ctx, logger, nk, payload) {
+  var userId = ctx.userId;
+  logger.info("get_leaderboard called by " + userId);
+
+  var data;
+  try {
+    data = JSON.parse(payload || "{}");
+  } catch (e) {
+    data = {};
+  }
+
+  var limit = data.limit || 50;
+  var cursor = data.cursor || "";
+
+  var records = [];
+  var nextCursor = "";
+  var myRank = null;
+  var myRecord = null;
+
+  try {
+    var result = nk.leaderboardRecordsList("all_games_wins", [], limit, cursor, 0);
+
+    if (result && result.records) {
+      var userIds = [];
+      for (var i = 0; i < result.records.length; i++) {
+        userIds.push(result.records[i].ownerId);
+      }
+
+      var accounts = {};
+      if (userIds.length > 0) {
+        try {
+          var accountsList = nk.accountsGetId(userIds);
+          for (var j = 0; j < accountsList.length; j++) {
+            accounts[accountsList[j].user.id] = accountsList[j].user;
+          }
+        } catch (e) {
+          logger.warn("Failed to fetch accounts: " + e.message);
+        }
+      }
+
+      for (var k = 0; k < result.records.length; k++) {
+        var record = result.records[k];
+        var account = accounts[record.ownerId];
+
+        records.push({
+          odredacted: record.ownerId,
+          rank: record.rank,
+          username: record.username || (account ? account.username : "Unknown"),
+          displayName: account ? account.displayName : null,
+          avatarUrl: account ? account.avatarUrl : null,
+          score: record.score,
+          subscore: record.subscore,
+          metadata: record.metadata
+        });
+      }
+
+      nextCursor = result.nextCursor || "";
+    }
+
+    var myRecordResult = nk.leaderboardRecordsList("all_games_wins", [userId], 1, "", 0);
+
+    if (myRecordResult && myRecordResult.records && myRecordResult.records.length > 0) {
+      var myRec = myRecordResult.records[0];
+      var myAccount = null;
+      try {
+        var myAccountsList = nk.accountsGetId([userId]);
+        if (myAccountsList && myAccountsList.length > 0) {
+          myAccount = myAccountsList[0].user;
+        }
+      } catch (e) {}
+
+      myRecord = {
+        odredacted: myRec.ownerId,
+        rank: myRec.rank,
+        username: myRec.username || (myAccount ? myAccount.username : "Unknown"),
+        displayName: myAccount ? myAccount.displayName : null,
+        avatarUrl: myAccount ? myAccount.avatarUrl : null,
+        score: myRec.score,
+        subscore: myRec.subscore,
+        metadata: myRec.metadata
+      };
+      myRank = myRec.rank;
+    }
+
+  } catch (e) {
+    logger.error("Failed to get leaderboard: " + e.message);
+    return JSON.stringify({ error: "Failed to get leaderboard", code: "LEADERBOARD_ERROR" });
+  }
+
+  return JSON.stringify({
+    records: records,
+    myRank: myRank,
+    myRecord: myRecord,
+    nextCursor: nextCursor
+  });
+}
+
 function InitModule(ctx, logger, nk, initializer) {
   logger.info("Initializing game match module...");
 
@@ -565,6 +662,9 @@ function InitModule(ctx, logger, nk, initializer) {
   // Wallet sync RPC - called by Node.js backend only
   initializer.registerRpc("update_user_wallet", rpcUpdateUserWallet);
 
+  // Leaderboard RPC
+  initializer.registerRpc("get_leaderboard", rpcGetLeaderboard);
+
   // Create leaderboards for each game type
   var gameTypes = ["mahjong", "solitaire", "puzzle"];
   for (var i = 0; i < gameTypes.length; i++) {
@@ -584,6 +684,21 @@ function InitModule(ctx, logger, nk, initializer) {
       // Leaderboard already exists, ignore
       logger.debug("Leaderboard " + leaderboardId + " already exists or error: " + e.message);
     }
+  }
+
+  // Create unified "all games" leaderboard
+  try {
+    nk.leaderboardCreate(
+      "all_games_wins",
+      false,
+      "desc",
+      "incr",
+      "",
+      { type: "unified", description: "All games combined wins" }
+    );
+    logger.info("Created leaderboard: all_games_wins");
+  } catch (e) {
+    logger.debug("Leaderboard all_games_wins already exists or error: " + e.message);
   }
 
   // Initialize game config if not exists
@@ -2018,6 +2133,54 @@ function resolveMatch(ctx, nk, logger, dispatcher, state) {
       logger.info("Leaderboard updated for " + winner.username + " on " + leaderboardId);
     } catch (e) {
       logger.warn("Failed to update leaderboard: " + e.message);
+    }
+
+    // Update unified "all games" leaderboard
+    try {
+      var totalGamesPlayed = 0;
+      var statsResult = nk.storageList(winner.userId, "player_stats", 100, "");
+      if (statsResult && statsResult.objects) {
+        for (var j = 0; j < statsResult.objects.length; j++) {
+          totalGamesPlayed += statsResult.objects[j].value.gamesPlayed || 0;
+        }
+      }
+
+      // Check if user already has a unified leaderboard record (lazy migration)
+      var existingRecord = nk.leaderboardRecordsList("all_games_wins", [winner.userId], 1, "", 0);
+      var isFirstEntry = !existingRecord || !existingRecord.records || existingRecord.records.length === 0;
+
+      if (isFirstEntry) {
+        // First entry - calculate total existing wins for migration
+        var totalExistingWins = 0;
+        if (statsResult && statsResult.objects) {
+          for (var k = 0; k < statsResult.objects.length; k++) {
+            totalExistingWins += statsResult.objects[k].value.wins || 0;
+          }
+        }
+        nk.leaderboardRecordWrite(
+          "all_games_wins",
+          winner.userId,
+          winner.username,
+          totalExistingWins,
+          totalGamesPlayed,
+          { lastGameId: state.gameId, lastMatchId: ctx ? ctx.matchId : "unknown", lastMatchType: state.housePlayer ? "PVH" : "PVP" },
+          1  // operator: 1 = set
+        );
+        logger.info("Unified leaderboard: created initial record for " + winner.username + " with " + totalExistingWins + " wins");
+      } else {
+        nk.leaderboardRecordWrite(
+          "all_games_wins",
+          winner.userId,
+          winner.username,
+          1,
+          totalGamesPlayed,
+          { lastGameId: state.gameId, lastMatchId: ctx ? ctx.matchId : "unknown", lastMatchType: state.housePlayer ? "PVH" : "PVP" },
+          2  // operator: 2 = increment
+        );
+        logger.info("Unified leaderboard: incremented wins for " + winner.username);
+      }
+    } catch (e) {
+      logger.warn("Failed to update unified leaderboard: " + e.message);
     }
   }
 

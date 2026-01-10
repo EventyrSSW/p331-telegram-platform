@@ -129,6 +129,28 @@ export interface SyncMatchStatusResponse {
   entry: MatchHistoryEntry | null;
 }
 
+export interface LeaderboardRecord {
+  odredacted: string;
+  rank: number;
+  username: string;
+  displayName: string | null;
+  avatarUrl: string | null;
+  score: number;
+  subscore: number;
+  metadata?: {
+    lastGameId?: string;
+    lastMatchId?: string;
+    lastMatchType?: string;
+  };
+}
+
+export interface LeaderboardResponse {
+  records: LeaderboardRecord[];
+  myRank: number | null;
+  myRecord: LeaderboardRecord | null;
+  nextCursor: string;
+}
+
 export interface GameStats {
   gamesPlayed: number;
   wins: number;
@@ -748,6 +770,27 @@ class NakamaService {
 
       console.log('[Nakama] User profile:', result.username, 'stats:', result.stats);
       return result as UserProfile;
+    } catch (error) {
+      this.handleAuthError(error);
+      throw error;
+    }
+  }
+
+  // Leaderboard methods
+  async getLeaderboard(limit: number = 50, cursor: string = ''): Promise<LeaderboardResponse> {
+    if (!this.session) {
+      throw new Error('Not authenticated');
+    }
+
+    try {
+      console.log('[Nakama] Getting leaderboard, limit:', limit);
+      const response = await this.client.rpc(this.session, 'get_leaderboard', { limit, cursor });
+      const result = typeof response.payload === 'string'
+        ? JSON.parse(response.payload)
+        : response.payload;
+
+      console.log('[Nakama] Got', result.records?.length || 0, 'leaderboard records, myRank:', result.myRank);
+      return result as LeaderboardResponse;
     } catch (error) {
       this.handleAuthError(error);
       throw error;

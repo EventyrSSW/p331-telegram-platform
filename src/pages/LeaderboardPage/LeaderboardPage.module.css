@@ -112,3 +112,27 @@
   font-size: 48px;
   opacity: 0.5;
 }
+
+.avatarImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: var(--radius-full);
+}
+
+.myRankSection {
+  margin-top: 24px;
+}
+
+.myRankDivider {
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: 20px;
+  letter-spacing: 4px;
+  margin-bottom: 12px;
+}
+
+.myRankCard {
+  border: 2px solid var(--color-accent-primary);
+  background: var(--color-bg-tertiary);
+}

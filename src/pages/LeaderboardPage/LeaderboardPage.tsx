@@ -1,27 +1,7 @@
+import { useEffect, useState, useRef } from 'react';
 import { Header, BottomNavBar } from '../../components';
+import { nakamaService, LeaderboardRecord, LeaderboardResponse } from '../../services/nakama';
 import styles from './LeaderboardPage.module.css';
-
-interface LeaderboardPlayer {
-  id: string;
-  rank: number;
-  username: string;
-  avatar: string;
-  score: number;
-  gamesPlayed: number;
-}
-
-const MOCK_LEADERBOARD: LeaderboardPlayer[] = [
-  { id: '1', rank: 1, username: 'CryptoKing', avatar: '👑', score: 125000, gamesPlayed: 342 },
-  { id: '2', rank: 2, username: 'GameMaster', avatar: '🎮', score: 98500, gamesPlayed: 287 },
-  { id: '3', rank: 3, username: 'TonPlayer', avatar: '💎', score: 87200, gamesPlayed: 256 },
-  { id: '4', rank: 4, username: 'LuckyWinner', avatar: '🍀', score: 72100, gamesPlayed: 198 },
-  { id: '5', rank: 5, username: 'ProGamer', avatar: '🏆', score: 65800, gamesPlayed: 175 },
-  { id: '6', rank: 6, username: 'CardShark', avatar: '🃏', score: 54300, gamesPlayed: 163 },
-  { id: '7', rank: 7, username: 'PuzzlePro', avatar: '🧩', score: 48900, gamesPlayed: 142 },
-  { id: '8', rank: 8, username: 'ArcadeAce', avatar: '👾', score: 42500, gamesPlayed: 128 },
-  { id: '9', rank: 9, username: 'BoardBoss', avatar: '♟️', score: 38200, gamesPlayed: 115 },
-  { id: '10', rank: 10, username: 'SportsStar', avatar: '⚽', score: 31800, gamesPlayed: 98 },
-];
 
 const getRankClass = (rank: number): string => {
   if (rank === 1) return styles.rankTop1;
@@ -34,8 +14,47 @@ const formatScore = (score: number): string => {
   return score.toLocaleString();
 };
 
+const getAvatarEmoji = (username: string): string => {
+  const emojis = ['👑', '🎮', '💎', '🍀', '🏆', '🃏', '🧩', '👾', '♟️', '⚽', '🎯', '🎲'];
+  const hash = username.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return emojis[hash % emojis.length];
+};
+
 export const LeaderboardPage = () => {
-  const players = MOCK_LEADERBOARD;
+  const [records, setRecords] = useState<LeaderboardRecord[]>([]);
+  const [myRecord, setMyRecord] = useState<LeaderboardRecord | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const fetchInitiatedRef = useRef(false);
+
+  useEffect(() => {
+    if (fetchInitiatedRef.current) return;
+    fetchInitiatedRef.current = true;
+    loadLeaderboard();
+  }, []);
+
+  const loadLeaderboard = async () => {
+    if (!nakamaService.isAuthenticated()) {
+      setLoading(false);
+      setError('Please sign in to view the leaderboard');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+      const response: LeaderboardResponse = await nakamaService.getLeaderboard(50);
+      setRecords(response.records);
+      setMyRecord(response.myRecord);
+    } catch (err) {
+      console.error('Failed to load leaderboard:', err);
+      setError('Failed to load leaderboard');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const myRankVisible = myRecord && records.some(r => r.odredacted === myRecord.odredacted);
 
   return (
     <div className={styles.page}>
@@ -43,29 +62,74 @@ export const LeaderboardPage = () => {
       <main className={styles.main}>
         <h1 className={styles.title}>Leaderboard</h1>
 
-        {players.length === 0 ? (
+        {loading ? (
+          <div className={styles.emptyState}>
+            <span className={styles.emptyIcon}>⏳</span>
+            <p>Loading...</p>
+          </div>
+        ) : error ? (
+          <div className={styles.emptyState}>
+            <span className={styles.emptyIcon}>⚠️</span>
+            <p>{error}</p>
+          </div>
+        ) : records.length === 0 ? (
           <div className={styles.emptyState}>
             <span className={styles.emptyIcon}>🏆</span>
             <p>No players yet. Be the first!</p>
           </div>
         ) : (
-          <div className={styles.leaderboardList}>
-            {players.map((player) => (
-              <div key={player.id} className={styles.playerCard}>
-                <div className={`${styles.rank} ${getRankClass(player.rank)}`}>
-                  {player.rank}
+          <>
+            <div className={styles.leaderboardList}>
+              {records.map((player) => (
+                <div key={player.odredacted} className={styles.playerCard}>
+                  <div className={`${styles.rank} ${getRankClass(player.rank)}`}>
+                    {player.rank}
+                  </div>
+                  <div className={styles.avatar}>
+                    {player.avatarUrl ? (
+                      <img src={player.avatarUrl} alt="" className={styles.avatarImage} />
+                    ) : (
+                      getAvatarEmoji(player.username)
+                    )}
+                  </div>
+                  <div className={styles.playerInfo}>
+                    <span className={styles.playerName}>
+                      {player.displayName || player.username}
+                    </span>
+                    <span className={styles.playerStats}>
+                      {player.subscore} games played
+                    </span>
+                  </div>
+                  <div className={styles.score}>{formatScore(player.score)} wins</div>
                 </div>
-                <div className={styles.avatar}>{player.avatar}</div>
-                <div className={styles.playerInfo}>
-                  <span className={styles.playerName}>{player.username}</span>
-                  <span className={styles.playerStats}>
-                    {player.gamesPlayed} games played
-                  </span>
+              ))}
+            </div>
+
+            {myRecord && !myRankVisible && (
+              <div className={styles.myRankSection}>
+                <div className={styles.myRankDivider}>...</div>
+                <div className={`${styles.playerCard} ${styles.myRankCard}`}>
+                  <div className={styles.rank}>{myRecord.rank}</div>
+                  <div className={styles.avatar}>
+                    {myRecord.avatarUrl ? (
+                      <img src={myRecord.avatarUrl} alt="" className={styles.avatarImage} />
+                    ) : (
+                      getAvatarEmoji(myRecord.username)
+                    )}
+                  </div>
+                  <div className={styles.playerInfo}>
+                    <span className={styles.playerName}>
+                      {myRecord.displayName || myRecord.username} (You)
+                    </span>
+                    <span className={styles.playerStats}>
+                      {myRecord.subscore} games played
+                    </span>
+                  </div>
+                  <div className={styles.score}>{formatScore(myRecord.score)} wins</div>
                 </div>
-                <div className={styles.score}>{formatScore(player.score)}</div>
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
       </main>
       <BottomNavBar />
