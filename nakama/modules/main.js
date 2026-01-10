@@ -666,7 +666,7 @@ function InitModule(ctx, logger, nk, initializer) {
   initializer.registerRpc("get_leaderboard", rpcGetLeaderboard);
 
   // Create leaderboards for each game type
-  var gameTypes = ["mahjong", "solitaire", "puzzle"];
+  var gameTypes = ["mahjong", "mahjong-dash", "solitaire", "puzzle"];
   for (var i = 0; i < gameTypes.length; i++) {
     var gameId = gameTypes[i];
     var leaderboardId = gameId + "_wins";
@@ -2115,20 +2115,25 @@ function resolveMatch(ctx, nk, logger, dispatcher, state) {
 
     // Update leaderboard for winner
     var leaderboardId = state.gameId + "_wins";
+    var lbUserId = String(winner.userId);
+    var lbUsername = String(winner.username || "");
+    var lbScore = 1;
+    var lbSubscore = Number(winnerScore) || 0;
+    logger.info("Leaderboard params: id=" + leaderboardId + ", odredacted=" + lbUserId + ", username=" + lbUsername + ", score=" + lbScore + ", subscore=" + lbSubscore);
     try {
+      // JS runtime uses leaderboard's preconfigured operator (incr), no override param
       nk.leaderboardRecordWrite(
         leaderboardId,
-        String(winner.userId),
-        String(winner.username || ""),
-        1,  // score: increment wins by 1
-        Number(winnerScore) || 0,  // subscore: their game score (ensure it's a number)
+        lbUserId,
+        lbUsername,
+        lbScore,
+        lbSubscore,
         {
           matchId: ctx ? ctx.matchId : "unknown",
           matchType: state.housePlayer ? "PVH" : "PVP",
           betAmount: state.betAmount,
           payout: payout
-        },
-        3  // operator: 3 = INCREMENT in Nakama JS runtime
+        }
       );
       logger.info("Leaderboard updated for " + winner.username + " on " + leaderboardId);
     } catch (e) {
@@ -2149,33 +2154,40 @@ function resolveMatch(ctx, nk, logger, dispatcher, state) {
       var existingRecord = nk.leaderboardRecordsList("all_games_wins", [winner.userId], 1, "", 0);
       var isFirstEntry = !existingRecord || !existingRecord.records || existingRecord.records.length === 0;
 
+      var unifiedUserId = String(winner.userId);
+      var unifiedUsername = String(winner.username || "");
+      logger.info("Unified leaderboard params: odredacted=" + unifiedUserId + ", username=" + unifiedUsername + ", gamesPlayed=" + totalGamesPlayed + ", isFirstEntry=" + isFirstEntry);
+
       if (isFirstEntry) {
         // First entry - calculate total existing wins for migration
+        // With incr operator, passing totalExistingWins will add to 0 = correct initial value
         var totalExistingWins = 0;
         if (statsResult && statsResult.objects) {
           for (var k = 0; k < statsResult.objects.length; k++) {
             totalExistingWins += Number(statsResult.objects[k].value.wins) || 0;
           }
         }
+        logger.info("Unified leaderboard first entry: wins=" + totalExistingWins);
+        // JS runtime uses leaderboard's preconfigured operator (incr), no override param
         nk.leaderboardRecordWrite(
           "all_games_wins",
-          String(winner.userId),
-          String(winner.username || ""),
+          unifiedUserId,
+          unifiedUsername,
           Number(totalExistingWins) || 0,
           Number(totalGamesPlayed) || 0,
-          { lastGameId: state.gameId, lastMatchId: ctx ? ctx.matchId : "unknown", lastMatchType: state.housePlayer ? "PVH" : "PVP" },
-          2  // operator: 2 = SET in Nakama JS runtime
+          { lastGameId: state.gameId, lastMatchId: ctx ? ctx.matchId : "unknown", lastMatchType: state.housePlayer ? "PVH" : "PVP" }
         );
         logger.info("Unified leaderboard: created initial record for " + winner.username + " with " + totalExistingWins + " wins");
       } else {
+        logger.info("Unified leaderboard INCREMENT by 1");
+        // JS runtime uses leaderboard's preconfigured operator (incr), no override param
         nk.leaderboardRecordWrite(
           "all_games_wins",
-          String(winner.userId),
-          String(winner.username || ""),
+          unifiedUserId,
+          unifiedUsername,
           1,
           Number(totalGamesPlayed) || 0,
-          { lastGameId: state.gameId, lastMatchId: ctx ? ctx.matchId : "unknown", lastMatchType: state.housePlayer ? "PVH" : "PVP" },
-          3  // operator: 3 = INCREMENT in Nakama JS runtime
+          { lastGameId: state.gameId, lastMatchId: ctx ? ctx.matchId : "unknown", lastMatchType: state.housePlayer ? "PVH" : "PVP" }
         );
         logger.info("Unified leaderboard: incremented wins for " + winner.username);
       }
