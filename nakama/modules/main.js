@@ -537,6 +537,140 @@ function rpcUpdateUserWallet(ctx, logger, nk, payload) {
   });
 }
 
+// Migration RPC to backfill leaderboard from existing player_stats
+function rpcMigrateLeaderboard(ctx, logger, nk, payload) {
+  logger.info("migrate_leaderboard called by " + ctx.userId);
+
+  var migratedCount = 0;
+  var skippedCount = 0;
+  var errorCount = 0;
+  var results = [];
+
+  try {
+    // Get all users who have player_stats
+    // We'll query storage by listing all objects in player_stats collection
+    var gameTypes = ["mahjong", "mahjong-dash", "solitaire", "puzzle"];
+    var userStats = {}; // userId -> { totalWins, totalGamesPlayed, username }
+
+    // For each game type, list all player_stats records
+    for (var g = 0; g < gameTypes.length; g++) {
+      var gameId = gameTypes[g];
+      var cursor = "";
+
+      do {
+        // List storage objects for this game type across all users
+        var listResult = nk.storageList(null, "player_stats", 100, cursor);
+
+        if (listResult && listResult.objects) {
+          for (var i = 0; i < listResult.objects.length; i++) {
+            var obj = listResult.objects[i];
+
+            // Only process objects for this game type
+            if (obj.key !== gameId) continue;
+
+            var odredacted = obj.userId;
+            var stats = obj.value;
+
+            if (!userStats[odredacted]) {
+              userStats[odredacted] = { totalWins: 0, totalGamesPlayed: 0, username: null };
+            }
+
+            userStats[odredacted].totalWins += Number(stats.wins) || 0;
+            userStats[odredacted].totalGamesPlayed += Number(stats.gamesPlayed) || 0;
+          }
+        }
+
+        cursor = listResult.nextCursor || "";
+      } while (cursor !== "");
+    }
+
+    logger.info("Found " + Object.keys(userStats).length + " users with player_stats");
+
+    // Get usernames for all users
+    var userIds = Object.keys(userStats);
+    if (userIds.length > 0) {
+      try {
+        var accounts = nk.accountsGetId(userIds);
+        for (var j = 0; j < accounts.length; j++) {
+          var acc = accounts[j];
+          var usr = acc.user || acc;
+          var odredacted = usr.id || acc.id;
+          if (odredacted && userStats[odredacted]) {
+            userStats[odredacted].username = usr.username || usr.displayName || "Unknown";
+          }
+        }
+      } catch (e) {
+        logger.warn("Failed to fetch accounts: " + e.message);
+      }
+    }
+
+    // Write leaderboard records for each user
+    for (var odredacted in userStats) {
+      var data = userStats[odredacted];
+
+      // Skip users with 0 wins
+      if (data.totalWins === 0) {
+        skippedCount++;
+        continue;
+      }
+
+      try {
+        // Check if user already has a leaderboard record
+        var existingRecord = nk.leaderboardRecordsList("all_games_wins", [odredacted], 1, "", 0);
+        var hasExisting = existingRecord && existingRecord.records && existingRecord.records.length > 0;
+
+        if (hasExisting) {
+          // User already in leaderboard, skip to avoid overwriting
+          skippedCount++;
+          results.push({ odredacted: odredacted, status: "skipped", reason: "already exists" });
+          continue;
+        }
+
+        // Write to leaderboard (using incr operator, so this sets initial value)
+        nk.leaderboardRecordWrite(
+          "all_games_wins",
+          String(odredacted),
+          String(data.username || ""),
+          data.totalWins,
+          data.totalGamesPlayed,
+          { migrated: true, migratedAt: new Date().toISOString() }
+        );
+
+        migratedCount++;
+        results.push({
+          odredacted: odredacted,
+          status: "migrated",
+          wins: data.totalWins,
+          gamesPlayed: data.totalGamesPlayed
+        });
+        logger.info("Migrated " + odredacted + ": " + data.totalWins + " wins, " + data.totalGamesPlayed + " games");
+
+      } catch (e) {
+        errorCount++;
+        results.push({ odredacted: odredacted, status: "error", error: e.message });
+        logger.warn("Failed to migrate " + odredacted + ": " + e.message);
+      }
+    }
+
+  } catch (e) {
+    logger.error("Migration failed: " + e.message);
+    return JSON.stringify({
+      success: false,
+      error: e.message
+    });
+  }
+
+  logger.info("Migration complete: " + migratedCount + " migrated, " + skippedCount + " skipped, " + errorCount + " errors");
+
+  return JSON.stringify({
+    success: true,
+    migrated: migratedCount,
+    skipped: skippedCount,
+    errors: errorCount,
+    results: results
+  });
+}
+
 function rpcGetLeaderboard(ctx, logger, nk, payload) {
   var userId = ctx.userId;
   logger.info("get_leaderboard called by " + userId);
@@ -677,6 +811,7 @@ function InitModule(ctx, logger, nk, initializer) {
 
   // Leaderboard RPC
   initializer.registerRpc("get_leaderboard", rpcGetLeaderboard);
+  initializer.registerRpc("migrate_leaderboard", rpcMigrateLeaderboard);
 
   // Create leaderboards for each game type
   var gameTypes = ["mahjong", "mahjong-dash", "solitaire", "puzzle"];
