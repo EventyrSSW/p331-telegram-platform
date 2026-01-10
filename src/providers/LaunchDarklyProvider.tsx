@@ -110,7 +110,7 @@ const observabilityPlugin = new Observability({
 
 const sessionReplayPlugin = new SessionReplay({
   manualStart: true,
-  privacySetting: 'default',
+  privacySetting: 'strict', // Obfuscate sensitive data in replays
 });
 
 export function LaunchDarklyProvider({ children }: { children: ReactNode }) {
