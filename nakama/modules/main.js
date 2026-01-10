@@ -788,32 +788,57 @@ function rpcGetLeaderboard(ctx, logger, nk, payload) {
       nextCursor = result.nextCursor || "";
     }
 
-    var myRecordResult = nk.leaderboardRecordsList("all_games_wins", [userId], 1, "", 0);
+    // First check if user is in the already-fetched records
+    for (var m = 0; m < records.length; m++) {
+      if (records[m].odredacted === userId) {
+        myRecord = records[m];
+        myRank = records[m].rank;
+        break;
+      }
+    }
 
-    if (myRecordResult && myRecordResult.records && myRecordResult.records.length > 0) {
-      var myRec = myRecordResult.records[0];
-      var myAccount = null;
+    // If user not in top records, use haystack to get their rank
+    if (!myRecord) {
       try {
-        var myAccountsList = nk.accountsGetId([userId]);
-        if (myAccountsList && myAccountsList.length > 0) {
-          var acc = myAccountsList[0];
-          myAccount = acc.user || acc;
+        // leaderboardRecordsHaystack returns records around user's position with correct global rank
+        var haystackResult = nk.leaderboardRecordsHaystack("all_games_wins", userId, 1, 0);
+        logger.info("Haystack result for " + userId + ": " + JSON.stringify(haystackResult));
+
+        if (haystackResult && haystackResult.records && haystackResult.records.length > 0) {
+          // Find the user's record in the haystack results
+          for (var h = 0; h < haystackResult.records.length; h++) {
+            if (haystackResult.records[h].ownerId === userId) {
+              var myRec = haystackResult.records[h];
+
+              var myAccount = null;
+              try {
+                var myAccountsList = nk.accountsGetId([userId]);
+                if (myAccountsList && myAccountsList.length > 0) {
+                  var acc = myAccountsList[0];
+                  myAccount = acc.user || acc;
+                }
+              } catch (e) {
+                logger.warn("Failed to fetch my account: " + e.message);
+              }
+
+              myRecord = {
+                odredacted: myRec.ownerId,
+                rank: myRec.rank,
+                username: myRec.username || (myAccount ? (myAccount.username || myAccount.displayName) : "Unknown"),
+                displayName: myAccount ? (myAccount.displayName || myAccount.display_name) : null,
+                avatarUrl: myAccount ? (myAccount.avatarUrl || myAccount.avatar_url) : null,
+                score: myRec.score,
+                subscore: myRec.subscore,
+                metadata: myRec.metadata
+              };
+              myRank = myRec.rank;
+              break;
+            }
+          }
         }
       } catch (e) {
-        logger.warn("Failed to fetch my account: " + e.message);
+        logger.warn("Failed to get haystack: " + e.message);
       }
-
-      myRecord = {
-        odredacted: myRec.ownerId,
-        rank: myRec.rank,
-        username: myRec.username || (myAccount ? (myAccount.username || myAccount.displayName) : "Unknown"),
-        displayName: myAccount ? (myAccount.displayName || myAccount.display_name) : null,
-        avatarUrl: myAccount ? (myAccount.avatarUrl || myAccount.avatar_url) : null,
-        score: myRec.score,
-        subscore: myRec.subscore,
-        metadata: myRec.metadata
-      };
-      myRank = myRec.rank;
     }
 
   } catch (e) {
