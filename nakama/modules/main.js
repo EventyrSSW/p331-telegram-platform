@@ -538,7 +538,7 @@ function rpcUpdateUserWallet(ctx, logger, nk, payload) {
 }
 
 // Migration RPC to backfill leaderboard from existing player_stats
-// Pass { "force": true } to update existing records (overwrites current leaderboard data)
+// Force update is ON by default - pass { "force": false } to skip existing records
 function rpcMigrateLeaderboard(ctx, logger, nk, payload) {
   logger.info("migrate_leaderboard called by " + ctx.userId);
 
@@ -548,7 +548,8 @@ function rpcMigrateLeaderboard(ctx, logger, nk, payload) {
   } catch (e) {
     params = {};
   }
-  var forceUpdate = params.force === true;
+  // Default to force=true (update existing records)
+  var forceUpdate = params.force !== false;
   logger.info("Force update: " + forceUpdate);
 
   var migratedCount = 0;
