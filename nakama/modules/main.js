@@ -538,59 +538,62 @@ function rpcUpdateUserWallet(ctx, logger, nk, payload) {
 }
 
 // Migration RPC to backfill leaderboard from existing player_stats
+// Pass { "force": true } to update existing records (overwrites current leaderboard data)
 function rpcMigrateLeaderboard(ctx, logger, nk, payload) {
   logger.info("migrate_leaderboard called by " + ctx.userId);
 
+  var params;
+  try {
+    params = JSON.parse(payload || "{}");
+  } catch (e) {
+    params = {};
+  }
+  var forceUpdate = params.force === true;
+  logger.info("Force update: " + forceUpdate);
+
   var migratedCount = 0;
+  var updatedCount = 0;
   var skippedCount = 0;
   var errorCount = 0;
   var results = [];
 
   try {
-    // Get all users who have player_stats
-    // We'll query storage by listing all objects in player_stats collection
-    var gameTypes = ["mahjong", "mahjong-dash", "solitaire", "puzzle"];
-    var userStats = {}; // userId -> { totalWins, totalGamesPlayed, username }
+    // Use SQL to get all player_stats records across ALL users
+    var query = "SELECT user_id, key, value FROM storage WHERE collection = 'player_stats'";
+    var rows = nk.sqlQuery(query, []);
+    logger.info("SQL returned " + rows.length + " player_stats rows");
 
-    // For each game type, list all player_stats records
-    for (var g = 0; g < gameTypes.length; g++) {
-      var gameId = gameTypes[g];
-      var cursor = "";
+    var userStats = {}; // odredacted -> { totalWins, totalGamesPlayed, username }
 
-      do {
-        // List storage objects for this game type across all users
-        var listResult = nk.storageList(null, "player_stats", 100, cursor);
+    // Process each row
+    for (var i = 0; i < rows.length; i++) {
+      var row = rows[i];
+      var odredacted = row.user_id;
+      var stats;
 
-        if (listResult && listResult.objects) {
-          for (var i = 0; i < listResult.objects.length; i++) {
-            var obj = listResult.objects[i];
+      try {
+        stats = typeof row.value === 'string' ? JSON.parse(row.value) : row.value;
+      } catch (e) {
+        logger.warn("Failed to parse stats for " + odredacted + ": " + e.message);
+        continue;
+      }
 
-            // Only process objects for this game type
-            if (obj.key !== gameId) continue;
+      if (!userStats[odredacted]) {
+        userStats[odredacted] = { totalWins: 0, totalGamesPlayed: 0, username: null };
+      }
 
-            var odredacted = obj.userId;
-            var stats = obj.value;
-
-            if (!userStats[odredacted]) {
-              userStats[odredacted] = { totalWins: 0, totalGamesPlayed: 0, username: null };
-            }
-
-            userStats[odredacted].totalWins += Number(stats.wins) || 0;
-            userStats[odredacted].totalGamesPlayed += Number(stats.gamesPlayed) || 0;
-          }
-        }
-
-        cursor = listResult.nextCursor || "";
-      } while (cursor !== "");
+      userStats[odredacted].totalWins += Number(stats.wins) || 0;
+      userStats[odredacted].totalGamesPlayed += Number(stats.gamesPlayed) || 0;
     }
 
-    logger.info("Found " + Object.keys(userStats).length + " users with player_stats");
+    logger.info("Found " + Object.keys(userStats).length + " unique users");
 
-    // Get usernames for all users
+    // Get usernames for all users (batch in groups of 100)
     var userIds = Object.keys(userStats);
-    if (userIds.length > 0) {
+    for (var batch = 0; batch < userIds.length; batch += 100) {
+      var batchIds = userIds.slice(batch, batch + 100);
       try {
-        var accounts = nk.accountsGetId(userIds);
+        var accounts = nk.accountsGetId(batchIds);
         for (var j = 0; j < accounts.length; j++) {
           var acc = accounts[j];
           var usr = acc.user || acc;
@@ -611,6 +614,7 @@ function rpcMigrateLeaderboard(ctx, logger, nk, payload) {
       // Skip users with 0 wins
       if (data.totalWins === 0) {
         skippedCount++;
+        results.push({ odredacted: odredacted, status: "skipped", reason: "0 wins", gamesPlayed: data.totalGamesPlayed });
         continue;
       }
 
@@ -618,15 +622,26 @@ function rpcMigrateLeaderboard(ctx, logger, nk, payload) {
         // Check if user already has a leaderboard record
         var existingRecord = nk.leaderboardRecordsList("all_games_wins", [odredacted], 1, "", 0);
         var hasExisting = existingRecord && existingRecord.records && existingRecord.records.length > 0;
+        var existingScore = hasExisting ? existingRecord.records[0].score : 0;
 
-        if (hasExisting) {
-          // User already in leaderboard, skip to avoid overwriting
+        if (hasExisting && !forceUpdate) {
           skippedCount++;
-          results.push({ odredacted: odredacted, status: "skipped", reason: "already exists" });
+          results.push({
+            odredacted: odredacted,
+            status: "skipped",
+            reason: "already exists",
+            existingScore: existingScore,
+            calculatedWins: data.totalWins
+          });
           continue;
         }
 
-        // Write to leaderboard (using incr operator, so this sets initial value)
+        // Delete existing record first if force updating (to reset score instead of increment)
+        if (hasExisting && forceUpdate) {
+          nk.leaderboardRecordDelete("all_games_wins", odredacted);
+        }
+
+        // Write to leaderboard
         nk.leaderboardRecordWrite(
           "all_games_wins",
           String(odredacted),
@@ -636,14 +651,25 @@ function rpcMigrateLeaderboard(ctx, logger, nk, payload) {
           { migrated: true, migratedAt: new Date().toISOString() }
         );
 
-        migratedCount++;
-        results.push({
-          odredacted: odredacted,
-          status: "migrated",
-          wins: data.totalWins,
-          gamesPlayed: data.totalGamesPlayed
-        });
-        logger.info("Migrated " + odredacted + ": " + data.totalWins + " wins, " + data.totalGamesPlayed + " games");
+        if (hasExisting) {
+          updatedCount++;
+          results.push({
+            odredacted: odredacted,
+            status: "updated",
+            oldScore: existingScore,
+            newScore: data.totalWins,
+            gamesPlayed: data.totalGamesPlayed
+          });
+        } else {
+          migratedCount++;
+          results.push({
+            odredacted: odredacted,
+            status: "migrated",
+            wins: data.totalWins,
+            gamesPlayed: data.totalGamesPlayed
+          });
+        }
+        logger.info((hasExisting ? "Updated " : "Migrated ") + odredacted + ": " + data.totalWins + " wins");
 
       } catch (e) {
         errorCount++;
@@ -660,11 +686,12 @@ function rpcMigrateLeaderboard(ctx, logger, nk, payload) {
     });
   }
 
-  logger.info("Migration complete: " + migratedCount + " migrated, " + skippedCount + " skipped, " + errorCount + " errors");
+  logger.info("Migration complete: " + migratedCount + " migrated, " + updatedCount + " updated, " + skippedCount + " skipped, " + errorCount + " errors");
 
   return JSON.stringify({
     success: true,
     migrated: migratedCount,
+    updated: updatedCount,
     skipped: skippedCount,
     errors: errorCount,
     results: results
