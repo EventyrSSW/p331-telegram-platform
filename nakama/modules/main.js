@@ -2118,17 +2118,17 @@ function resolveMatch(ctx, nk, logger, dispatcher, state) {
     try {
       nk.leaderboardRecordWrite(
         leaderboardId,
-        winner.userId,
-        winner.username,
+        String(winner.userId),
+        String(winner.username || ""),
         1,  // score: increment wins by 1
-        winnerScore,  // subscore: their game score
+        Number(winnerScore) || 0,  // subscore: their game score (ensure it's a number)
         {
           matchId: ctx ? ctx.matchId : "unknown",
           matchType: state.housePlayer ? "PVH" : "PVP",
           betAmount: state.betAmount,
           payout: payout
         },
-        2  // operator: 2 = increment
+        3  // operator: 3 = INCREMENT in Nakama JS runtime
       );
       logger.info("Leaderboard updated for " + winner.username + " on " + leaderboardId);
     } catch (e) {
@@ -2141,7 +2141,7 @@ function resolveMatch(ctx, nk, logger, dispatcher, state) {
       var statsResult = nk.storageList(winner.userId, "player_stats", 100, "");
       if (statsResult && statsResult.objects) {
         for (var j = 0; j < statsResult.objects.length; j++) {
-          totalGamesPlayed += statsResult.objects[j].value.gamesPlayed || 0;
+          totalGamesPlayed += Number(statsResult.objects[j].value.gamesPlayed) || 0;
         }
       }
 
@@ -2154,28 +2154,28 @@ function resolveMatch(ctx, nk, logger, dispatcher, state) {
         var totalExistingWins = 0;
         if (statsResult && statsResult.objects) {
           for (var k = 0; k < statsResult.objects.length; k++) {
-            totalExistingWins += statsResult.objects[k].value.wins || 0;
+            totalExistingWins += Number(statsResult.objects[k].value.wins) || 0;
           }
         }
         nk.leaderboardRecordWrite(
           "all_games_wins",
-          winner.userId,
-          winner.username,
-          totalExistingWins,
-          totalGamesPlayed,
+          String(winner.userId),
+          String(winner.username || ""),
+          Number(totalExistingWins) || 0,
+          Number(totalGamesPlayed) || 0,
           { lastGameId: state.gameId, lastMatchId: ctx ? ctx.matchId : "unknown", lastMatchType: state.housePlayer ? "PVH" : "PVP" },
-          1  // operator: 1 = set
+          2  // operator: 2 = SET in Nakama JS runtime
         );
         logger.info("Unified leaderboard: created initial record for " + winner.username + " with " + totalExistingWins + " wins");
       } else {
         nk.leaderboardRecordWrite(
           "all_games_wins",
-          winner.userId,
-          winner.username,
+          String(winner.userId),
+          String(winner.username || ""),
           1,
-          totalGamesPlayed,
+          Number(totalGamesPlayed) || 0,
           { lastGameId: state.gameId, lastMatchId: ctx ? ctx.matchId : "unknown", lastMatchType: state.housePlayer ? "PVH" : "PVP" },
-          2  // operator: 2 = increment
+          3  // operator: 3 = INCREMENT in Nakama JS runtime
         );
         logger.info("Unified leaderboard: incremented wins for " + winner.username);
       }
