@@ -106,6 +106,7 @@ interface NakamaContextValue {
 
   // Leaderboard state
   leaderboardRank: number | null;
+  userAvatarUrl: string | null;
   isLeaderboardLoading: boolean;
   refreshLeaderboardRank: () => Promise<void>;
 }
@@ -138,6 +139,7 @@ export function NakamaProvider({ children }: NakamaProviderProps) {
   const [coins, setCoins] = useState<number>(0);
   const [isWalletLoading, setIsWalletLoading] = useState(false);
   const [leaderboardRank, setLeaderboardRank] = useState<number | null>(null);
+  const [userAvatarUrl, setUserAvatarUrl] = useState<string | null>(null);
   const [isLeaderboardLoading, setIsLeaderboardLoading] = useState(false);
 
   const matchRef = useRef(match);
@@ -267,7 +269,8 @@ export function NakamaProvider({ children }: NakamaProviderProps) {
     try {
       const response = await nakamaService.getLeaderboard(1);
       setLeaderboardRank(response.myRank);
-      console.log('[NakamaContext] Leaderboard rank refreshed:', response.myRank);
+      setUserAvatarUrl(response.myRecord?.avatarUrl || null);
+      console.log('[NakamaContext] Leaderboard rank refreshed:', response.myRank, 'avatar:', response.myRecord?.avatarUrl);
     } catch (err) {
       console.error('[NakamaContext] Failed to fetch leaderboard rank:', err);
     } finally {
@@ -550,6 +553,7 @@ export function NakamaProvider({ children }: NakamaProviderProps) {
     resetMatch,
     setMatchStatus,
     leaderboardRank,
+    userAvatarUrl,
     isLeaderboardLoading,
     refreshLeaderboardRank,
   };

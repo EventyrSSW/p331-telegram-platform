@@ -569,8 +569,18 @@ function rpcGetLeaderboard(ctx, logger, nk, payload) {
       if (userIds.length > 0) {
         try {
           var accountsList = nk.accountsGetId(userIds);
+          logger.info("Fetched " + accountsList.length + " accounts for leaderboard");
           for (var j = 0; j < accountsList.length; j++) {
-            accounts[accountsList[j].user.id] = accountsList[j].user;
+            var acc = accountsList[j];
+            // Handle both nested (.user) and flat account structures
+            var usr = acc.user || acc;
+            var odredacted = usr.id || usr.userId || acc.id;
+            if (odredacted) {
+              accounts[odredacted] = usr;
+              if (j === 0) {
+                logger.info("Account[0]: id=" + odredacted + ", displayName=" + (usr.displayName || usr.display_name) + ", avatarUrl=" + (usr.avatarUrl || usr.avatar_url));
+              }
+            }
           }
         } catch (e) {
           logger.warn("Failed to fetch accounts: " + e.message);
@@ -584,9 +594,9 @@ function rpcGetLeaderboard(ctx, logger, nk, payload) {
         records.push({
           odredacted: record.ownerId,
           rank: record.rank,
-          username: record.username || (account ? account.username : "Unknown"),
-          displayName: account ? account.displayName : null,
-          avatarUrl: account ? account.avatarUrl : null,
+          username: record.username || (account ? (account.username || account.displayName) : "Unknown"),
+          displayName: account ? (account.displayName || account.display_name) : null,
+          avatarUrl: account ? (account.avatarUrl || account.avatar_url) : null,
           score: record.score,
           subscore: record.subscore,
           metadata: record.metadata
@@ -604,16 +614,19 @@ function rpcGetLeaderboard(ctx, logger, nk, payload) {
       try {
         var myAccountsList = nk.accountsGetId([userId]);
         if (myAccountsList && myAccountsList.length > 0) {
-          myAccount = myAccountsList[0].user;
+          var acc = myAccountsList[0];
+          myAccount = acc.user || acc;
         }
-      } catch (e) {}
+      } catch (e) {
+        logger.warn("Failed to fetch my account: " + e.message);
+      }
 
       myRecord = {
         odredacted: myRec.ownerId,
         rank: myRec.rank,
-        username: myRec.username || (myAccount ? myAccount.username : "Unknown"),
-        displayName: myAccount ? myAccount.displayName : null,
-        avatarUrl: myAccount ? myAccount.avatarUrl : null,
+        username: myRec.username || (myAccount ? (myAccount.username || myAccount.displayName) : "Unknown"),
+        displayName: myAccount ? (myAccount.displayName || myAccount.display_name) : null,
+        avatarUrl: myAccount ? (myAccount.avatarUrl || myAccount.avatar_url) : null,
         score: myRec.score,
         subscore: myRec.subscore,
         metadata: myRec.metadata

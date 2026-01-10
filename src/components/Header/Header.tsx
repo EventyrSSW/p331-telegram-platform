@@ -19,7 +19,7 @@ import starIconPng from '../../assets/icons/cfcfda09650d68463d93067e00c49b9af785
 import styles from './Header.module.css';
 
 export const Header = () => {
-  const { coins, refreshWallet, leaderboardRank } = useNakama();
+  const { coins, refreshWallet, leaderboardRank, userAvatarUrl } = useNakama();
   const { config } = useConfig();
   const { user } = useAuth();
   const { isAddTonModalOpen, openAddTonModal, closeAddTonModal } = useModal();
@@ -30,10 +30,10 @@ export const Header = () => {
 
   const isTestnet = config?.ton.network === 'testnet';
 
-  // Get user avatar - use Telegram photo if available
+  // Get user avatar - prefer Nakama avatar, fallback to backend user photo
   const useMockData = shouldUseMockData();
   const displayUser = useMockData ? MOCK_USER : user;
-  const userAvatar = displayUser?.photoUrl;
+  const userAvatar = userAvatarUrl || displayUser?.photoUrl;
 
   const handleConnectWallet = () => {
     console.log('[TonConnect] Opening modal...');
