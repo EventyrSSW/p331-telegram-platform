@@ -563,6 +563,16 @@ function rpcMigrateLeaderboard(ctx, logger, nk, payload) {
     var rows = nk.sqlQuery(query, []);
     logger.info("SQL returned " + rows.length + " player_stats rows");
 
+    // Debug: log first row to see structure
+    if (rows.length > 0) {
+      var firstRow = rows[0];
+      logger.info("First row keys: " + Object.keys(firstRow).join(", "));
+      logger.info("First row user_id: " + firstRow.user_id);
+      logger.info("First row key: " + firstRow.key);
+      logger.info("First row value type: " + typeof firstRow.value);
+      logger.info("First row value: " + JSON.stringify(firstRow.value).substring(0, 200));
+    }
+
     var userStats = {}; // odredacted -> { totalWins, totalGamesPlayed, username }
 
     // Process each row
@@ -573,6 +583,10 @@ function rpcMigrateLeaderboard(ctx, logger, nk, payload) {
 
       try {
         stats = typeof row.value === 'string' ? JSON.parse(row.value) : row.value;
+        // Debug first few
+        if (i < 3) {
+          logger.info("Row " + i + " parsed stats: wins=" + stats.wins + ", gamesPlayed=" + stats.gamesPlayed);
+        }
       } catch (e) {
         logger.warn("Failed to parse stats for " + odredacted + ": " + e.message);
         continue;
