@@ -797,48 +797,18 @@ function rpcGetLeaderboard(ctx, logger, nk, payload) {
       }
     }
 
-    // If user not in top records, get their record and calculate rank
+    // If user not in top records, get their record from ownerRecords
     if (!myRecord) {
       try {
-        // First get the user's record
+        // Query with userId - ownerRecords contains the user's record with correct global rank
         var myRecordResult = nk.leaderboardRecordsList("all_games_wins", [userId], 1, "", 0);
-        logger.info("My record result for " + userId + ": " + JSON.stringify(myRecordResult));
 
-        if (myRecordResult && myRecordResult.records && myRecordResult.records.length > 0) {
-          var myRec = myRecordResult.records[0];
-          var myScore = myRec.score;
-
-          // Calculate rank by counting how many users have higher scores
-          // Query all records and count those with score > myScore
-          var rankCount = 0;
-          var cursor = "";
-          var counting = true;
-
-          while (counting) {
-            var countResult = nk.leaderboardRecordsList("all_games_wins", [], 100, cursor, 0);
-            if (!countResult || !countResult.records || countResult.records.length === 0) {
-              break;
-            }
-
-            for (var c = 0; c < countResult.records.length; c++) {
-              if (countResult.records[c].score > myScore) {
-                rankCount++;
-              } else if (countResult.records[c].score === myScore && countResult.records[c].ownerId !== userId) {
-                // Same score, check subscore (games played) - lower is better for tiebreaker
-                if (countResult.records[c].subscore < myRec.subscore) {
-                  rankCount++;
-                }
-              }
-            }
-
-            cursor = countResult.nextCursor || "";
-            if (!cursor) {
-              counting = false;
-            }
-          }
-
-          myRank = rankCount + 1; // Rank is count of users ahead + 1
-          logger.info("Calculated rank for " + userId + ": " + myRank + " (score: " + myScore + ")");
+        // Use ownerRecords (NOT records!) - records contains top leaderboard entries,
+        // ownerRecords contains the queried user's record with their actual rank
+        if (myRecordResult && myRecordResult.ownerRecords && myRecordResult.ownerRecords.length > 0) {
+          var myRec = myRecordResult.ownerRecords[0];
+          myRank = myRec.rank;
+          logger.info("User rank from ownerRecords: " + myRank + " (score: " + myRec.score + ")");
 
           var myAccount = null;
           try {
@@ -853,7 +823,7 @@ function rpcGetLeaderboard(ctx, logger, nk, payload) {
 
           myRecord = {
             odredacted: myRec.ownerId,
-            rank: myRank,
+            rank: myRec.rank,
             username: myRec.username || (myAccount ? (myAccount.username || myAccount.displayName) : "Unknown"),
             displayName: myAccount ? (myAccount.displayName || myAccount.display_name) : null,
             avatarUrl: myAccount ? (myAccount.avatarUrl || myAccount.avatar_url) : null,
